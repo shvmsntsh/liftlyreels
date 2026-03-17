@@ -1,5 +1,6 @@
 const { config } = require("dotenv");
 const { createClient } = require("@supabase/supabase-js");
+const { Client } = require("pg");
 
 config({ path: ".env.local" });
 
@@ -125,10 +126,49 @@ async function seed() {
   const key =
     process.env.SUPABASE_SERVICE_ROLE_KEY ??
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const dbUrl = process.env.SUPABASE_DB_URL;
+
+  const posts = buildSeedPosts();
+
+  if (dbUrl && !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const client = new Client({ connectionString: dbUrl });
+    await client.connect();
+
+    try {
+      for (const post of posts) {
+        await client.query(
+          `
+            insert into public.posts (title, content, category, source, image_url, created_at)
+            values ($1, $2::jsonb, $3, $4, $5, $6)
+            on conflict (title) do update
+            set
+              content = excluded.content,
+              category = excluded.category,
+              source = excluded.source,
+              image_url = excluded.image_url,
+              created_at = excluded.created_at
+          `,
+          [
+            post.title,
+            JSON.stringify(post.content),
+            post.category,
+            post.source,
+            post.image_url,
+            post.created_at,
+          ],
+        );
+      }
+    } finally {
+      await client.end();
+    }
+
+    console.log(`Seeded ${posts.length} posts through direct database connection`);
+    return;
+  }
 
   if (!url || !key) {
     throw new Error(
-      "Missing Supabase credentials. Set NEXT_PUBLIC_SUPABASE_URL and either SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local.",
+      "Missing Supabase credentials. Set NEXT_PUBLIC_SUPABASE_URL and either SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local, or provide SUPABASE_DB_URL.",
     );
   }
 
@@ -136,7 +176,6 @@ async function seed() {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const posts = buildSeedPosts();
   const { error } = await supabase.from("posts").upsert(posts, {
     onConflict: "title",
   });
