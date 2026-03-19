@@ -2,37 +2,55 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bookmark, Grid2x2, House } from "lucide-react";
+import { Home, Compass, PlusCircle, Flame, User } from "lucide-react";
 import clsx from "clsx";
 
 const items = [
-  { href: "/feed", label: "Feed", icon: House },
-  { href: "/categories", label: "Categories", icon: Grid2x2 },
-  { href: "/saved", label: "Saved", icon: Bookmark },
+  { href: "/feed", icon: Home, label: "Feed" },
+  { href: "/explore", icon: Compass, label: "Explore" },
+  { href: "/create", icon: PlusCircle, label: "Create", accent: true },
+  { href: "/challenge", icon: Flame, label: "Challenge" },
+  { href: "/profile/me", icon: User, label: "Profile" },
 ];
 
-export function BottomNav() {
+export function BottomNav({ streak }: { streak?: number }) {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-md border-t border-white/10 bg-slate-950/92 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl">
-      <div className="mx-auto grid grid-cols-3 gap-2">
-        {items.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href;
-
+    <nav className="fixed bottom-0 inset-x-0 z-30 mx-auto max-w-md">
+      <div className="mx-3 mb-3 flex items-center justify-around rounded-2xl border border-white/10 bg-slate-950/85 px-2 py-3 backdrop-blur-xl shadow-2xl shadow-black/50">
+        {items.map(({ href, icon: Icon, label, accent }) => {
+          const isActive =
+            pathname === href ||
+            (href === "/profile/me" && pathname.startsWith("/profile"));
           return (
             <Link
               key={href}
               href={href}
               className={clsx(
-                "flex flex-col items-center justify-center rounded-2xl px-3 py-2 text-xs font-medium transition",
-                active
-                  ? "bg-sky-400/15 text-sky-300"
-                  : "text-slate-400 hover:bg-white/5 hover:text-white",
+                "flex flex-col items-center gap-1 px-3 py-1 rounded-xl transition-all",
+                isActive ? "text-sky-300" : "text-slate-500 hover:text-slate-300"
               )}
             >
-              <Icon className="mb-1 h-5 w-5" />
-              {label}
+              {accent ? (
+                <div
+                  className={clsx(
+                    "flex h-10 w-10 items-center justify-center rounded-full bg-sky-500/20 border border-sky-400/30",
+                    isActive && "bg-sky-500/40 border-sky-400/60"
+                  )}
+                >
+                  <Icon className="h-5 w-5 text-sky-300" />
+                </div>
+              ) : (
+                <>
+                  <Icon className={clsx("h-5 w-5", isActive && "fill-current")} />
+                  <span className="text-[10px] font-medium">
+                    {label === "Challenge" && streak && streak > 0
+                      ? `🔥 ${streak}`
+                      : label}
+                  </span>
+                </>
+              )}
             </Link>
           );
         })}

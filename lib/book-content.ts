@@ -192,6 +192,11 @@ export async function fetchCuratedBookReels(limit = 12): Promise<ExternalBookRee
         category: "Books",
         source: `Open Library · ${toTitleCase(author)}`,
         image_url: coverUrl,
+        author_id: null,
+        is_user_created: false,
+        tags: [],
+        views_count: 0,
+        gradient: "ocean",
         created_at: new Date().toISOString(),
       });
     } catch {

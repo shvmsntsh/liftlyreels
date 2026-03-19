@@ -2,8 +2,20 @@ import { PostRecord } from "@/lib/types";
 
 const now = Date.now();
 
+const BASE = {
+  author_id: null,
+  author: null,
+  is_user_created: false,
+  tags: [],
+  views_count: 0,
+  reactions_summary: { sparked: 0, fired_up: 0, bookmarked: 0 },
+  user_reactions: [],
+  comments_count: 0,
+};
+
 const fallbackPosts: PostRecord[] = [
   {
+    ...BASE,
     id: "fallback-1",
     title: "Stop solving imaginary problems",
     content: [
@@ -16,9 +28,11 @@ const fallbackPosts: PostRecord[] = [
     source: "Daily Practice",
     image_url:
       "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1200&q=80",
+    gradient: "aurora",
     created_at: new Date(now).toISOString(),
   },
   {
+    ...BASE,
     id: "fallback-2",
     title: "Muscle comes from boring consistency",
     content: [
@@ -31,9 +45,11 @@ const fallbackPosts: PostRecord[] = [
     source: "Coaching Note",
     image_url:
       "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1200&q=80",
+    gradient: "ember",
     created_at: new Date(now - 60_000).toISOString(),
   },
   {
+    ...BASE,
     id: "fallback-3",
     title: "Diet success starts with easier defaults",
     content: [
@@ -46,9 +62,11 @@ const fallbackPosts: PostRecord[] = [
     source: "Nutrition Guide",
     image_url:
       "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1200&q=80",
+    gradient: "forest",
     created_at: new Date(now - 120_000).toISOString(),
   },
   {
+    ...BASE,
     id: "fallback-4",
     title: "Read for implementation, not completion",
     content: [
@@ -61,9 +79,11 @@ const fallbackPosts: PostRecord[] = [
     source: "Reading System",
     image_url:
       "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=1200&q=80",
+    gradient: "ocean",
     created_at: new Date(now - 180_000).toISOString(),
   },
   {
+    ...BASE,
     id: "fallback-5",
     title: "High performers protect their mornings",
     content: [
@@ -76,9 +96,11 @@ const fallbackPosts: PostRecord[] = [
     source: "Focus Notes",
     image_url:
       "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
+    gradient: "sunset",
     created_at: new Date(now - 240_000).toISOString(),
   },
   {
+    ...BASE,
     id: "fallback-6",
     title: "Small habits deserve visible scoreboards",
     content: [
@@ -91,6 +113,7 @@ const fallbackPosts: PostRecord[] = [
     source: "Atomic Habits Notes",
     image_url:
       "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&w=1200&q=80",
+    gradient: "ocean",
     created_at: new Date(now - 300_000).toISOString(),
   },
 ];
