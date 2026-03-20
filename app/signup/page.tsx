@@ -21,6 +21,7 @@ function SignupForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [userId, setUserId] = useState("");
+  const [accessToken, setAccessToken] = useState("");
   const router = useRouter();
 
   async function handleAccountStep(e: React.FormEvent) {
@@ -48,6 +49,7 @@ function SignupForm() {
 
     if (data.user) {
       setUserId(data.user.id);
+      setAccessToken(data.session?.access_token ?? "");
       setStep("profile");
     }
     setLoading(false);
@@ -63,6 +65,7 @@ function SignupForm() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         userId,
+        accessToken,
         username: username.trim().toLowerCase(),
         displayName: displayName.trim(),
         inviteCode,
