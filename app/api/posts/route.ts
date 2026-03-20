@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export async function POST(request: NextRequest) {
   const supabase = createSupabaseServerClient();
@@ -19,9 +19,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid content format" }, { status: 400 });
   }
 
-  const service = createSupabaseServiceClient();
-
-  const { data, error } = await service
+  const { data, error } = await supabase
     .from("posts")
     .insert({
       title: title.trim(),
@@ -44,19 +42,17 @@ export async function POST(request: NextRequest) {
   }
 
   // Give author +2 vibe for creating content
-  await service
+  const { data: profile } = await supabase
     .from("profiles")
     .select("vibe_score")
     .eq("id", user.id)
-    .single()
-    .then(({ data: profile }) => {
-      if (profile) {
-        service
-          .from("profiles")
-          .update({ vibe_score: (profile.vibe_score ?? 0) + 2 })
-          .eq("id", user.id);
-      }
-    });
+    .single();
+  if (profile) {
+    await supabase
+      .from("profiles")
+      .update({ vibe_score: (profile.vibe_score ?? 0) + 2 })
+      .eq("id", user.id);
+  }
 
   return NextResponse.json({ post: data });
 }

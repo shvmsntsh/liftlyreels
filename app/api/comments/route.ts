@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export async function GET(request: NextRequest) {
   const supabase = createSupabaseServerClient();
@@ -12,9 +12,7 @@ export async function GET(request: NextRequest) {
   const postId = request.nextUrl.searchParams.get("postId");
   if (!postId) return NextResponse.json({ error: "Missing postId" }, { status: 400 });
 
-  const service = createSupabaseServiceClient();
-
-  const { data, error } = await service
+  const { data, error } = await supabase
     .from("comments")
     .select("id,user_id,post_id,content,created_at,profiles(id,username,display_name,avatar_url)")
     .eq("post_id", postId)
@@ -46,9 +44,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Comment too long (max 200 chars)" }, { status: 400 });
   }
 
-  const service = createSupabaseServiceClient();
-
-  const { data, error } = await service
+  const { data, error } = await supabase
     .from("comments")
     .insert({ user_id: user.id, post_id: postId, content: content.trim() })
     .select("id,user_id,post_id,content,created_at,profiles(id,username,display_name,avatar_url)")
@@ -72,9 +68,7 @@ export async function DELETE(request: NextRequest) {
   const commentId = request.nextUrl.searchParams.get("commentId");
   if (!commentId) return NextResponse.json({ error: "Missing commentId" }, { status: 400 });
 
-  const service = createSupabaseServiceClient();
-
-  await service
+  await supabase
     .from("comments")
     .delete()
     .eq("id", commentId)

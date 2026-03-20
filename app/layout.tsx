@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
+import { AudioProvider } from "@/components/AudioProvider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -26,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <head>
         {/* Polyfill crypto.randomUUID for Safari on HTTP (needed by Supabase Auth) */}
         <script
@@ -38,7 +39,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} bg-background text-foreground antialiased`}
       >
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <AudioProvider>{children}</AudioProvider>
+        </AuthProvider>
       </body>
     </html>
   );

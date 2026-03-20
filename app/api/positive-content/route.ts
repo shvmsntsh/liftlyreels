@@ -4,7 +4,7 @@
  * Sources: ZenQuotes, Advice Slip, NASA APOD, Open Library, Stoic quotes
  */
 import { NextResponse } from "next/server";
-import { createSupabaseServiceClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 const GRADIENT_CYCLE = ["ocean", "sunset", "forest", "aurora", "ember"];
 
@@ -191,7 +191,7 @@ export async function POST() {
     const response = await GET();
     const { reels } = await response.json();
 
-    const supabase = createSupabaseServiceClient();
+    const supabase = createSupabaseServerClient();
 
     let inserted = 0;
     for (const reel of reels) {

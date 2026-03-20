@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export async function GET() {
   const supabase = createSupabaseServerClient();
@@ -9,9 +9,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const service = createSupabaseServiceClient();
-
-  const { data, error } = await service
+  const { data, error } = await supabase
     .from("impact_journal")
     .select("id,post_id,action_taken,created_at,posts(id,title,category,gradient)")
     .eq("user_id", user.id)
@@ -39,9 +37,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
-  const service = createSupabaseServiceClient();
-
-  const { data, error } = await service
+  const { data, error } = await supabase
     .from("impact_journal")
     .insert({ user_id: user.id, post_id: postId, action_taken: actionTaken.trim() })
     .select("id")
@@ -52,19 +48,17 @@ export async function POST(request: NextRequest) {
   }
 
   // +3 vibe for acting on a reel
-  await service
+  const { data: profile } = await supabase
     .from("profiles")
     .select("vibe_score")
     .eq("id", user.id)
-    .single()
-    .then(({ data: profile }) => {
-      if (profile) {
-        service
-          .from("profiles")
-          .update({ vibe_score: (profile.vibe_score ?? 0) + 3 })
-          .eq("id", user.id);
-      }
-    });
+    .single();
+  if (profile) {
+    await supabase
+      .from("profiles")
+      .update({ vibe_score: (profile.vibe_score ?? 0) + 3 })
+      .eq("id", user.id);
+  }
 
   return NextResponse.json({ entry: data });
 }

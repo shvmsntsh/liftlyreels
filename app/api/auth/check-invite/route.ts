@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServiceClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 // Bootstrap codes that always work — used when invite_codes table isn't set up yet
 const BOOTSTRAP_CODES = new Set([
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = createSupabaseServiceClient();
+    const supabase = createSupabaseServerClient();
 
     const { data, error } = await supabase
       .from("invite_codes")

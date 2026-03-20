@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export async function POST(request: NextRequest) {
   const supabase = createSupabaseServerClient();
@@ -15,9 +15,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  const service = createSupabaseServiceClient();
-
-  const { data, error } = await service
+  const { data, error } = await supabase
     .from("bug_reports")
     .insert({
       user_id: user.id,
@@ -33,14 +31,14 @@ export async function POST(request: NextRequest) {
   }
 
   // Award +5 vibe for reporting a bug
-  await service
+  await supabase
     .from("profiles")
     .select("vibe_score")
     .eq("id", user.id)
     .single()
     .then(({ data: profile }) => {
       if (profile) {
-        service
+        supabase
           .from("profiles")
           .update({ vibe_score: (profile.vibe_score ?? 0) + 5 })
           .eq("id", user.id);
@@ -48,14 +46,14 @@ export async function POST(request: NextRequest) {
     });
 
   // Check if user should get Bug Crusher badge
-  const { count } = await service
+  const { count } = await supabase
     .from("bug_reports")
     .select("*", { count: "exact", head: true })
     .eq("user_id", user.id);
 
   if ((count ?? 0) >= 1) {
     // Upsert badge — ignore conflict if already earned
-    void service
+    void supabase
       .from("user_badges")
       .upsert({ user_id: user.id, badge_id: "bug_crusher" }, { onConflict: "user_id,badge_id" });
   }

@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 const BADGE_CHECKS: Record<
   string,
-  (userId: string, supabase: ReturnType<typeof createSupabaseServiceClient>) => Promise<boolean>
+  (userId: string, supabase: SupabaseClient) => Promise<boolean>
 > = {
   first_spark: async (userId, sb) => {
     const { count } = await sb
@@ -68,11 +69,10 @@ export async function POST() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const service = createSupabaseServiceClient();
   const newBadges: string[] = [];
 
   // Get already-earned badges
-  const { data: existing } = await service
+  const { data: existing } = await supabase
     .from("user_badges")
     .select("badge_id")
     .eq("user_id", user.id);
@@ -80,7 +80,7 @@ export async function POST() {
   const earnedSet = new Set((existing ?? []).map((b) => b.badge_id));
 
   // Check streak badges
-  const { data: profile } = await service
+  const { data: profile } = await supabase
     .from("profiles")
     .select("streak_current,streak_longest")
     .eq("id", user.id)
@@ -100,7 +100,7 @@ export async function POST() {
 
   for (const [badgeId, threshold] of streakBadges) {
     if (streak >= threshold && !earnedSet.has(badgeId)) {
-      await service.from("user_badges").insert({ user_id: user.id, badge_id: badgeId });
+      await supabase.from("user_badges").insert({ user_id: user.id, badge_id: badgeId });
       newBadges.push(badgeId);
       earnedSet.add(badgeId);
     }
@@ -109,9 +109,9 @@ export async function POST() {
   // Check other badges
   for (const [badgeId, checkFn] of Object.entries(BADGE_CHECKS)) {
     if (earnedSet.has(badgeId)) continue;
-    const earned = await checkFn(user.id, service);
+    const earned = await checkFn(user.id, supabase);
     if (earned) {
-      await service.from("user_badges").insert({ user_id: user.id, badge_id: badgeId });
+      await supabase.from("user_badges").insert({ user_id: user.id, badge_id: badgeId });
       newBadges.push(badgeId);
     }
   }
@@ -127,9 +127,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const service = createSupabaseServiceClient();
-
-  const { data } = await service
+  const { data } = await supabase
     .from("user_badges")
     .select("badge_id,earned_at,badges(id,name,description,emoji,rarity)")
     .eq("user_id", user.id)

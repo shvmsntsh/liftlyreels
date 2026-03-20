@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export async function POST(request: NextRequest) {
   const supabase = createSupabaseServerClient();
@@ -15,9 +15,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
-  const service = createSupabaseServiceClient();
-
-  const { data: existing } = await service
+  const { data: existing } = await supabase
     .from("follows")
     .select("follower_id")
     .eq("follower_id", user.id)
@@ -25,14 +23,14 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (existing) {
-    await service
+    await supabase
       .from("follows")
       .delete()
       .eq("follower_id", user.id)
       .eq("following_id", targetUserId);
     return NextResponse.json({ action: "unfollowed" });
   } else {
-    await service
+    await supabase
       .from("follows")
       .insert({ follower_id: user.id, following_id: targetUserId });
     return NextResponse.json({ action: "followed" });

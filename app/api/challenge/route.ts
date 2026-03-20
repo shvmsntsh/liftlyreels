@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export async function POST(request: NextRequest) {
   const supabase = createSupabaseServerClient();
@@ -15,10 +15,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing challengeId" }, { status: 400 });
   }
 
-  const service = createSupabaseServiceClient();
-
   // Check if already completed
-  const { data: existing } = await service
+  const { data: existing } = await supabase
     .from("challenge_completions")
     .select("user_id")
     .eq("user_id", user.id)
@@ -30,7 +28,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Insert completion
-  const { error } = await service.from("challenge_completions").insert({
+  const { error } = await supabase.from("challenge_completions").insert({
     user_id: user.id,
     challenge_id: challengeId,
     note: note?.trim() || null,
@@ -41,28 +39,28 @@ export async function POST(request: NextRequest) {
   }
 
   // Manually increment completions count
-  const { data: challenge } = await service
+  const { data: challenge } = await supabase
     .from("daily_challenges")
     .select("completions_count")
     .eq("id", challengeId)
     .single();
 
   if (challenge) {
-    await service
+    await supabase
       .from("daily_challenges")
       .update({ completions_count: (challenge.completions_count ?? 0) + 1 })
       .eq("id", challengeId);
   }
 
   // Reward +2 vibe score for completing a challenge
-  const { data: profile } = await service
+  const { data: profile } = await supabase
     .from("profiles")
     .select("vibe_score")
     .eq("id", user.id)
     .single();
 
   if (profile) {
-    await service
+    await supabase
       .from("profiles")
       .update({ vibe_score: (profile.vibe_score ?? 0) + 2 })
       .eq("id", user.id);

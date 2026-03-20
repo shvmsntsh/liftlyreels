@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export async function POST(request: NextRequest) {
   const supabase = createSupabaseServerClient();
@@ -15,10 +15,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
-  const service = createSupabaseServiceClient();
-
   // Toggle reaction
-  const { data: existing } = await service
+  const { data: existing } = await supabase
     .from("reactions")
     .select("id")
     .eq("user_id", user.id)
@@ -27,40 +25,18 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (existing) {
-    await service.from("reactions").delete().eq("id", existing.id);
-
-    // Update author vibe score
-    const { data: post } = await service
-      .from("posts")
-      .select("author_id")
-      .eq("id", postId)
-      .single();
-
-    if (post?.author_id) {
-      await service
-        .from("profiles")
-        .update({ vibe_score: service.rpc("vibe_score") })
-        .eq("id", post.author_id);
-    }
+    await supabase.from("reactions").delete().eq("id", existing.id);
 
     return NextResponse.json({ action: "removed" });
   } else {
-    await service.from("reactions").insert({
+    await supabase.from("reactions").insert({
       user_id: user.id,
       post_id: postId,
       reaction_type: reactionType,
     });
 
-    // Give author +1 vibe score
-    const { data: post } = await service
-      .from("posts")
-      .select("author_id")
-      .eq("id", postId)
-      .single();
-
-    if (post?.author_id && post.author_id !== user.id) {
-      await service.rpc("update_user_streak", { user_uuid: post.author_id });
-    }
+    // Update streak for current user when they react
+    await supabase.rpc("update_user_streak", { user_uuid: user.id });
 
     return NextResponse.json({ action: "added" });
   }
@@ -77,14 +53,12 @@ export async function GET(request: NextRequest) {
   const postId = request.nextUrl.searchParams.get("postId");
   if (!postId) return NextResponse.json({ error: "Missing postId" }, { status: 400 });
 
-  const service = createSupabaseServiceClient();
-
   const [{ data: all }, { data: mine }] = await Promise.all([
-    service
+    supabase
       .from("reactions")
       .select("reaction_type")
       .eq("post_id", postId),
-    service
+    supabase
       .from("reactions")
       .select("reaction_type")
       .eq("post_id", postId)

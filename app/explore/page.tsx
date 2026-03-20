@@ -4,6 +4,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { ReelCard } from "@/components/ReelCard";
 import { PostRecord } from "@/lib/types";
 import { getFallbackPosts } from "@/utils/fallback-posts";
+import { AudioToggle } from "@/components/AudioToggle";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -143,103 +144,45 @@ export default async function ExplorePage({
       ? allPosts
       : allPosts.filter((p) => p.category === activeCategory);
 
-  // Get top creators
-  let topCreators: Array<{ id: string; username: string; display_name: string | null; vibe_score: number; posts_count: number }> = [];
-  if (isSupabaseConfigured()) {
-    const { data: creators } = await supabase
-      .from("profiles")
-      .select("id,username,display_name,vibe_score")
-      .order("vibe_score", { ascending: false })
-      .limit(5);
-    topCreators = (creators ?? []).map((c) => ({ ...c, posts_count: 0 }));
-  }
-
   return (
-    <main className="relative min-h-screen bg-background pb-28">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_30%_at_50%_0%,rgba(139,92,246,0.1),transparent)]" />
-
-      {/* Header */}
-      <div className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/80 px-4 py-4 backdrop-blur-xl">
-        <div className="mx-auto max-w-md">
+    <main className="relative mx-auto h-screen max-w-md overflow-hidden">
+      {/* Floating header overlay */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 bg-gradient-to-b from-black/70 via-black/40 to-transparent pb-8 pt-4">
+        <div className="pointer-events-auto px-4 pb-2">
           <h1 className="text-lg font-bold text-white">Explore</h1>
-          <p className="text-xs text-slate-500">Trending this week</p>
+          <p className="text-xs text-slate-400">Trending this week</p>
         </div>
-      </div>
-
-      <div className="mx-auto max-w-md">
         {/* Category pills */}
-        <div className="flex gap-2 overflow-x-auto px-4 py-3 scrollbar-none">
+        <div className="pointer-events-auto flex gap-2 overflow-x-auto px-4 py-2 scrollbar-none">
           {CATEGORIES.map((cat) => (
             <Link
               key={cat}
               href={`/explore${cat !== "All" ? `?category=${cat}` : ""}`}
-              className={`shrink-0 rounded-full border px-4 py-1.5 text-xs font-semibold transition ${
+              className={`shrink-0 rounded-full border px-4 py-1.5 text-xs font-semibold backdrop-blur-md transition ${
                 activeCategory === cat
-                  ? "border-sky-400/50 bg-sky-400/15 text-sky-300"
-                  : "border-white/10 text-slate-400 hover:text-white"
+                  ? "border-sky-400/50 bg-sky-400/20 text-sky-300"
+                  : "border-white/15 bg-white/5 text-slate-300 hover:text-white"
               }`}
             >
               {cat}
             </Link>
           ))}
         </div>
-
-        {/* Top Creators */}
-        {topCreators.length > 0 && activeCategory === "All" && (
-          <div className="px-4 pb-2">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Top Creators
-            </p>
-            <div className="flex gap-3 overflow-x-auto scrollbar-none pb-1">
-              {topCreators.map((creator) => {
-                const initial = creator.username[0]?.toUpperCase() ?? "?";
-                const colors = [
-                  "bg-sky-500", "bg-violet-500", "bg-amber-500",
-                  "bg-emerald-500", "bg-rose-500",
-                ];
-                const color = colors[creator.username.charCodeAt(0) % colors.length];
-                return (
-                  <Link
-                    key={creator.id}
-                    href={`/profile/${creator.username}`}
-                    className="flex shrink-0 flex-col items-center gap-1.5 w-16"
-                  >
-                    <div
-                      className={`flex h-12 w-12 items-center justify-center rounded-full ${color} text-base font-bold text-white`}
-                    >
-                      {initial}
-                    </div>
-                    <span className="text-[10px] text-slate-400 truncate w-full text-center">
-                      {creator.display_name ?? creator.username}
-                    </span>
-                    <span className="text-[9px] text-amber-400">⚡ {creator.vibe_score}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Reel grid / list */}
-        <div className="px-4 pt-2">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
-            {activeCategory === "All" ? "Trending Reels" : `${activeCategory} Reels`}
-          </p>
-        </div>
       </div>
 
-      {/* Full-screen reels */}
-      <div className="snap-y-mandatory" style={{ height: "calc(100vh - 180px)", overflowY: "auto" }}>
+      {/* Full-screen snap scroll container */}
+      <div className="h-screen overflow-y-auto snap-y-mandatory scrollbar-none feed-scroll">
         {filtered.map((post) => (
           <ReelCard key={post.id} post={post} userId={userId} />
         ))}
         {filtered.length === 0 && (
-          <div className="flex min-h-[50vh] items-center justify-center">
+          <div className="snap-start flex h-screen items-center justify-center">
             <p className="text-slate-500 text-sm">No reels in this category yet.</p>
           </div>
         )}
       </div>
 
+      <AudioToggle />
       <BottomNav />
     </main>
   );

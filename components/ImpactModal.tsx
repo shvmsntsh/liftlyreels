@@ -15,18 +15,27 @@ type Props = {
 export function ImpactModal({ postTitle, postId, isOpen, onClose, onLogged }: Props) {
   const [action, setAction] = useState("");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleLog() {
     if (!action.trim() || saving) return;
     setSaving(true);
+    setError(null);
     try {
-      await fetch("/api/impact", {
+      const res = await fetch("/api/impact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ postId, actionTaken: action.trim() }),
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setError(body?.error ?? "Failed to log impact. Please try again.");
+        return;
+      }
       onLogged();
       setAction("");
+    } catch {
+      setError("Network error. Please check your connection.");
     } finally {
       setSaving(false);
     }
@@ -81,6 +90,12 @@ export function ImpactModal({ postTitle, postId, isOpen, onClose, onLogged }: Pr
               className="w-full resize-none rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none focus:border-amber-400/40"
             />
             <div className="mb-3 text-right text-[10px] text-slate-600">{action.length}/140</div>
+
+            {error && (
+              <p className="mb-3 rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-400">
+                {error}
+              </p>
+            )}
 
             <button
               onClick={handleLog}

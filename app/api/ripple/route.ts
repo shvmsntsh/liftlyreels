@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export async function GET() {
   const supabase = createSupabaseServerClient();
@@ -9,9 +9,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const service = createSupabaseServiceClient();
-
-  const { data: tree } = await service.rpc("get_ripple_tree", {
+  const { data: tree } = await supabase.rpc("get_ripple_tree", {
     root_user: user.id,
     max_depth: 4,
   });
@@ -27,7 +25,7 @@ export async function GET() {
 
   // Check ripple badge
   if (tree.length >= 6) {
-    void service
+    void supabase
       .from("user_badges")
       .upsert({ user_id: user.id, badge_id: "ripple_1" }, { onConflict: "user_id,badge_id" });
   }

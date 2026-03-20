@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bookmark, MessageCircle, Share2, Zap, Flame, NotebookPen } from "lucide-react";
 import clsx from "clsx";
@@ -8,6 +8,7 @@ import Link from "next/link";
 import { PostRecord, ReactionType, REEL_GRADIENTS } from "@/lib/types";
 import { UserAvatar } from "./UserAvatar";
 import { CommentsSheet } from "./CommentsSheet";
+import { useAudio } from "./AudioProvider";
 import { ImpactModal } from "./ImpactModal";
 
 type ActionButtonProps = {
@@ -60,6 +61,24 @@ type Props = {
 };
 
 export function ReelCard({ post, userId }: Props) {
+  const cardRef = useRef<HTMLElement>(null);
+  const { play } = useAudio();
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          play(post.category);
+        }
+      },
+      { threshold: 0.6 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [play, post.category]);
+
   const [reactions, setReactions] = useState({
     sparked: post.reactions_summary?.sparked ?? 0,
     fired_up: post.reactions_summary?.fired_up ?? 0,
@@ -119,8 +138,9 @@ export function ReelCard({ post, userId }: Props) {
   return (
     <>
       <article
+        ref={cardRef}
         id={post.id}
-        className="snap-start relative flex min-h-screen flex-col justify-end overflow-hidden"
+        className="snap-start relative flex h-screen flex-col justify-end overflow-hidden"
       >
         {/* Background */}
         {post.image_url ? (
