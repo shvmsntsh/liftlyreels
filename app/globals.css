@@ -11,6 +11,8 @@
   --line: rgba(255, 255, 255, 0.12);
   --accent: #38bdf8;
   --accent-soft: rgba(56, 189, 248, 0.16);
+  --nav-height: 80px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 * {
@@ -74,6 +76,34 @@ select {
   display: none;
 }
 
+/* Native iOS-style smooth scrolling */
+.feed-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: none;
+}
+
+/* Haptic-like button tap */
+.tap-highlight {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Glass card style */
+.glass {
+  background: rgba(2, 6, 23, 0.65);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Active press animation */
+.press-active {
+  transition: transform 80ms ease;
+}
+.press-active:active {
+  transform: scale(0.92);
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
@@ -85,5 +115,9 @@ select {
 
   .snap-start {
     scroll-snap-align: start;
+  }
+
+  .pb-nav {
+    padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 0.5rem);
   }
 }

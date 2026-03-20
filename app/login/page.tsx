@@ -61,10 +61,10 @@ export default function LoginPage() {
           <p className="mt-2 text-sm text-slate-400">Welcome back. Keep the streak going.</p>
         </div>
 
-        <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-6 backdrop-blur-xl shadow-2xl shadow-black/40">
+        <div className="rounded-[24px] border border-white/8 bg-slate-950/70 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-2xl">
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-400">
+              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-slate-500">
                 Email
               </label>
               <input
@@ -72,13 +72,13 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 transition"
+                className="w-full rounded-[14px] border border-white/8 bg-slate-900/80 px-4 py-3 text-[14px] text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
                 required
               />
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-400">
+              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-slate-500">
                 Password
               </label>
               <div className="relative">
@@ -87,13 +87,13 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 pr-10 text-sm text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 transition"
+                  className="w-full rounded-[14px] border border-white/8 bg-slate-900/80 px-4 py-3 pr-11 text-[14px] text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 tap-highlight"
                 >
                   {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -104,7 +104,7 @@ export default function LoginPage() {
               <motion.p
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-sm text-rose-400"
+                className="text-[13px] text-rose-400"
               >
                 {error}
               </motion.p>
@@ -113,7 +113,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading || !email || !password}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 py-3.5 text-sm font-bold text-white transition hover:bg-sky-400 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-sky-500 to-blue-600 py-4 text-[14px] font-bold text-white shadow-[0_4px_20px_rgba(56,189,248,0.35)] transition-all hover:brightness-110 disabled:opacity-50 disabled:shadow-none tap-highlight"
             >
               {loading ? "Signing in..." : <>Sign In <ArrowRight className="h-4 w-4" /></>}
             </button>

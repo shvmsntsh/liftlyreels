@@ -3,53 +3,65 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Zap, Flame, BookOpen, Dumbbell, Brain, ArrowRight, Sparkles } from "lucide-react";
+import { Zap, Flame, BookOpen, Dumbbell, Brain, ArrowRight, Sparkles, Trophy, Activity } from "lucide-react";
 import Link from "next/link";
 import clsx from "clsx";
 
 const features = [
   {
     icon: Zap,
-    color: "text-amber-300",
-    bg: "bg-amber-400/10 border-amber-400/20",
+    gradient: "from-amber-500/20 to-yellow-500/5",
+    border: "border-amber-400/20",
+    iconColor: "text-amber-300",
     title: "Spark Reactions",
-    desc: "⚡ Sparked, 🔥 Fired Up, 🔖 Saved — react meaningfully, not just with likes.",
+    desc: "React meaningfully — ⚡ Sparked, 🔥 Fired Up, 🔖 Saved. Not just likes.",
   },
   {
     icon: Flame,
-    color: "text-orange-300",
-    bg: "bg-orange-400/10 border-orange-400/20",
-    title: "Daily Streak",
-    desc: "Build an unbreakable habit. Your streak grows every day you show up.",
+    gradient: "from-orange-500/20 to-red-500/5",
+    border: "border-orange-400/20",
+    iconColor: "text-orange-300",
+    title: "Daily Streaks",
+    desc: "Build an unbreakable habit. Show up daily, earn your streak.",
   },
   {
     icon: Brain,
-    color: "text-violet-300",
-    bg: "bg-violet-400/10 border-violet-400/20",
+    gradient: "from-violet-500/20 to-purple-500/5",
+    border: "border-violet-400/20",
+    iconColor: "text-violet-300",
     title: "Impact Journal",
-    desc: "Log real actions you took after a reel. Track your actual growth.",
+    desc: "Log real actions you took. Track your actual growth, not just views.",
   },
   {
     icon: BookOpen,
-    color: "text-sky-300",
-    bg: "bg-sky-400/10 border-sky-400/20",
+    gradient: "from-sky-500/20 to-blue-500/5",
+    border: "border-sky-400/20",
+    iconColor: "text-sky-300",
     title: "Curated Reels",
     desc: "Books, Gym, Diet, Mindset — hand-picked insights in 30-second reads.",
   },
   {
     icon: Dumbbell,
-    color: "text-emerald-300",
-    bg: "bg-emerald-400/10 border-emerald-400/20",
-    title: "Community Reels",
-    desc: "Share your own insights. Earn Vibe Score as others react.",
+    gradient: "from-emerald-500/20 to-green-500/5",
+    border: "border-emerald-400/20",
+    iconColor: "text-emerald-300",
+    title: "Create & Share",
+    desc: "Post your own insights. Earn Vibe Score as your community grows.",
   },
   {
-    icon: Sparkles,
-    color: "text-rose-300",
-    bg: "bg-rose-400/10 border-rose-400/20",
+    icon: Trophy,
+    gradient: "from-rose-500/20 to-pink-500/5",
+    border: "border-rose-400/20",
+    iconColor: "text-rose-300",
     title: "Daily Challenge",
-    desc: "One community challenge every day. Join thousands taking action.",
+    desc: "One community challenge daily. Join thousands taking real action.",
   },
+];
+
+const stats = [
+  { value: "100%", label: "Positive content" },
+  { value: "0", label: "Ads" },
+  { value: "5", label: "Categories" },
 ];
 
 export default function LandingPage() {
@@ -84,65 +96,87 @@ export default function LandingPage() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-background">
-      {/* Ambient glow */}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(56,189,248,0.15),transparent)]" />
-        <div className="absolute bottom-0 left-0 right-0 h-[60vh] bg-[radial-gradient(ellipse_60%_40%_at_50%_100%,rgba(139,92,246,0.08),transparent)]" />
-        {Array.from({ length: 35 }).map((_, i) => (
+      {/* Background layers */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_90%_60%_at_50%_-15%,rgba(56,189,248,0.18),transparent)]" />
+        <div className="absolute bottom-0 left-0 right-0 h-[50vh] bg-[radial-gradient(ellipse_70%_50%_at_50%_100%,rgba(139,92,246,0.1),transparent)]" />
+        {/* Animated particles */}
+        {Array.from({ length: 28 }).map((_, i) => (
           <motion.div
             key={i}
-            className="absolute h-[2px] w-[2px] rounded-full bg-white"
+            className="absolute rounded-full bg-white"
             style={{
-              left: `${(i * 31 + 7) % 100}%`,
-              top: `${(i * 17 + 3) % 65}%`,
-              opacity: 0.2,
+              width: i % 3 === 0 ? 3 : 2,
+              height: i % 3 === 0 ? 3 : 2,
+              left: `${(i * 37 + 5) % 100}%`,
+              top: `${(i * 19 + 8) % 70}%`,
+              opacity: 0.15,
             }}
-            animate={{ opacity: [0.1, 0.5, 0.1] }}
+            animate={{ opacity: [0.08, 0.4, 0.08], y: [0, -8, 0] }}
             transition={{
-              duration: 2 + (i % 4),
+              duration: 3 + (i % 5),
               repeat: Infinity,
-              delay: (i % 5) * 0.6,
+              delay: (i % 7) * 0.5,
+              ease: "easeInOut",
             }}
           />
         ))}
       </div>
 
-      <div className="relative mx-auto max-w-md px-5 pb-20 pt-16">
-        {/* Hero */}
+      <div className="relative mx-auto max-w-md px-5 pb-16 pt-14">
+        {/* Hero section */}
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
           className="text-center"
         >
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-sky-400/20 bg-sky-400/5 px-4 py-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse" />
-            <span className="text-xs font-semibold uppercase tracking-widest text-sky-300">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-sky-400/20 bg-sky-400/8 px-4 py-1.5 shadow-[0_0_20px_rgba(56,189,248,0.1)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse shadow-[0_0_6px_rgba(56,189,248,0.8)]" />
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-sky-300">
               Invitation Only
             </span>
           </div>
 
-          <h1 className="mb-3 text-7xl font-black tracking-tighter text-white">
+          <h1 className="mb-3 text-[5.5rem] font-black tracking-[-0.04em] text-white leading-none">
             Liftly
           </h1>
-          <p className="text-xl font-medium text-slate-300 leading-relaxed">
-            Positive reels that actually change your life.
+          <p className="text-[1.2rem] font-semibold text-slate-200 leading-relaxed">
+            Positive reels that actually<br />change your life.
           </p>
-          <p className="mt-2 text-sm text-slate-500">
-            Built for people serious about growth. Not for the algorithm — for you.
+          <p className="mt-2.5 text-sm text-slate-500 max-w-xs mx-auto leading-relaxed">
+            Built for people serious about growth — not the algorithm, but <em className="text-slate-400 not-italic font-medium">you</em>.
           </p>
         </motion.div>
 
-        {/* Invite code form */}
+        {/* Stats row */}
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.15 }}
-          className="mt-10"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+          className="mt-8 flex items-center justify-center gap-8"
         >
-          <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-6 shadow-2xl shadow-black/50 backdrop-blur-xl">
-            <h2 className="mb-1 text-base font-bold text-white">Enter your invite code</h2>
-            <p className="mb-5 text-sm text-slate-400">
+          {stats.map(({ value, label }) => (
+            <div key={label} className="text-center">
+              <p className="text-2xl font-black text-white">{value}</p>
+              <p className="text-[11px] text-slate-500 font-medium">{label}</p>
+            </div>
+          ))}
+        </motion.div>
+
+        {/* Invite code card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.18 }}
+          className="mt-8"
+        >
+          <div className="rounded-[24px] border border-white/8 bg-slate-950/70 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-2xl">
+            <div className="flex items-center gap-2 mb-1">
+              <Sparkles className="h-4 w-4 text-sky-400" />
+              <h2 className="text-[15px] font-bold text-white">Enter your invite code</h2>
+            </div>
+            <p className="mb-5 text-[13px] text-slate-500">
               Get your code from someone already on Liftly.
             </p>
 
@@ -156,10 +190,10 @@ export default function LandingPage() {
                 }}
                 placeholder="e.g. SPARK-RISE-001"
                 className={clsx(
-                  "w-full rounded-xl border bg-slate-900/60 px-4 py-3.5 text-center font-mono text-sm font-bold text-white placeholder:font-sans placeholder:text-slate-600 outline-none transition",
+                  "w-full rounded-[14px] border bg-slate-900/80 px-4 py-3.5 text-center font-mono text-[13px] font-bold text-white placeholder:font-sans placeholder:font-normal placeholder:text-slate-600 outline-none transition-all duration-200",
                   status === "error"
-                    ? "border-rose-500/50 focus:border-rose-500"
-                    : "border-white/10 focus:border-sky-400/50"
+                    ? "border-rose-500/60 shadow-[0_0_0_3px_rgba(244,63,94,0.12)]"
+                    : "border-white/8 focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)]"
                 )}
                 autoCapitalize="characters"
                 spellCheck={false}
@@ -169,7 +203,7 @@ export default function LandingPage() {
                 <motion.p
                   initial={{ opacity: 0, y: -4 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="text-center text-sm text-rose-400"
+                  className="text-center text-[13px] text-rose-400"
                 >
                   {errorMsg}
                 </motion.p>
@@ -178,50 +212,62 @@ export default function LandingPage() {
               <button
                 type="submit"
                 disabled={!code.trim() || status === "checking"}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 py-3.5 text-sm font-bold text-white transition hover:bg-sky-400 disabled:opacity-50"
+                className="group flex w-full items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-sky-500 to-blue-600 py-4 text-[14px] font-bold text-white shadow-[0_4px_20px_rgba(56,189,248,0.35)] transition-all hover:shadow-[0_4px_24px_rgba(56,189,248,0.5)] hover:brightness-110 disabled:opacity-50 disabled:shadow-none tap-highlight"
               >
                 {status === "checking" ? (
-                  "Checking..."
+                  <span className="flex items-center gap-2">
+                    <Activity className="h-4 w-4 animate-pulse" /> Checking...
+                  </span>
                 ) : (
                   <>
-                    Join Liftly <ArrowRight className="h-4 w-4" />
+                    Join Liftly
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </>
                 )}
               </button>
             </form>
 
             <div className="mt-4 text-center">
-              <span className="text-sm text-slate-500">Already have an account? </span>
-              <Link href="/login" className="text-sm font-semibold text-sky-400 hover:text-sky-300">
+              <span className="text-[13px] text-slate-500">Already have an account? </span>
+              <Link href="/login" className="text-[13px] font-semibold text-sky-400 hover:text-sky-300 transition-colors">
                 Sign in
               </Link>
             </div>
           </div>
         </motion.div>
 
-        {/* Features */}
+        {/* Features grid */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.35 }}
-          className="mt-12"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.35 }}
+          className="mt-10"
         >
-          <p className="mb-5 text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
+          <p className="mb-4 text-center text-[10px] font-bold uppercase tracking-[0.25em] text-slate-600">
             What makes Liftly different
           </p>
-          <div className="grid grid-cols-2 gap-3">
-            {features.map(({ icon: Icon, color, bg, title, desc }) => (
-              <div key={title} className={clsx("rounded-2xl border p-4", bg)}>
-                <Icon className={clsx("mb-2 h-5 w-5", color)} />
-                <h3 className="mb-1 text-sm font-bold text-white">{title}</h3>
-                <p className="text-[11px] leading-[1.4] text-slate-400">{desc}</p>
+          <div className="grid grid-cols-2 gap-2.5">
+            {features.map(({ icon: Icon, gradient, border, iconColor, title, desc }) => (
+              <div
+                key={title}
+                className={clsx(
+                  "rounded-[18px] border bg-gradient-to-br p-4",
+                  gradient,
+                  border
+                )}
+              >
+                <div className="mb-2.5 flex h-8 w-8 items-center justify-center rounded-xl bg-white/8">
+                  <Icon className={clsx("h-4 w-4", iconColor)} strokeWidth={2} />
+                </div>
+                <h3 className="mb-1 text-[13px] font-bold text-white">{title}</h3>
+                <p className="text-[11px] leading-[1.45] text-slate-400">{desc}</p>
               </div>
             ))}
           </div>
         </motion.div>
 
-        <p className="mt-12 text-center text-xs text-slate-600">
-          No ads. No toxicity. Just growth.
+        <p className="mt-10 text-center text-[11px] text-slate-700">
+          No ads · No toxicity · Just growth
         </p>
       </div>
     </main>
