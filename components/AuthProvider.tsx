@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }: { data: { session: import("@supabase/supabase-js").Session | null } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id).finally(() => setLoading(false));
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (_event: import("@supabase/supabase-js").AuthChangeEvent, session: import("@supabase/supabase-js").Session | null) => {
         setUser(session?.user ?? null);
         if (session?.user) {
           fetchProfile(session.user.id);
