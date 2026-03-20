@@ -19,15 +19,19 @@ export default async function FeedPage() {
     getTodaysChallenge(userId),
   ]);
 
-  // Get streak from profile
+  // Get streak from profile (gracefully handles missing table)
   let streak = 0;
   if (userId) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("streak_current")
-      .eq("id", userId)
-      .single();
-    streak = profile?.streak_current ?? 0;
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("streak_current")
+        .eq("id", userId)
+        .single();
+      streak = profile?.streak_current ?? 0;
+    } catch {
+      streak = 0;
+    }
   }
 
   return (
