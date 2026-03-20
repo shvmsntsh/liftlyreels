@@ -22,17 +22,24 @@ export function BottomNav({ streak }: { streak?: number }) {
       className="fixed bottom-0 inset-x-0 z-30 mx-auto max-w-md tap-highlight"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      <div className="mx-3 mb-3 flex items-center justify-around rounded-[26px] border border-white/8 bg-slate-950/90 px-1 py-2 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_0_0.5px_rgba(255,255,255,0.06)] backdrop-blur-2xl">
+      <div
+        className="mx-3 mb-3 flex items-center justify-around rounded-[26px] px-1 py-2 backdrop-blur-2xl"
+        style={{
+          backgroundColor: "var(--surface-1)",
+          border: "1px solid var(--border)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.6), 0 0 0 0.5px rgba(255,255,255,0.06)",
+        }}
+      >
         {items.map(({ href, icon: Icon, label, accent }) => {
           const isActive =
             pathname === href ||
-            (href === "/profile/me" && pathname.startsWith("/profile")) ||
+            (href === "/profile/me" && pathname === "/profile/me") ||
             (href === "/challenge" && pathname === "/challenge");
 
           if (accent) {
             return (
               <Link key={href} href={href} className="flex flex-col items-center gap-1 px-2 py-1">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-sky-400 to-blue-600 shadow-[0_4px_14px_rgba(56,189,248,0.5)]">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-sky-400 to-blue-600 shadow-[0_2px_8px_rgba(56,189,248,0.25)]">
                   <Icon className="h-5 w-5 text-white" strokeWidth={2.5} />
                 </div>
               </Link>
@@ -48,26 +55,32 @@ export function BottomNav({ streak }: { streak?: number }) {
               {isActive && (
                 <motion.div
                   layoutId="nav-indicator"
-                  className="absolute -top-1 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-sky-400"
+                  className="absolute -top-1 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full"
+                  style={{ backgroundColor: "var(--accent)" }}
                   transition={{ type: "spring", stiffness: 500, damping: 40 }}
                 />
               )}
-              <Icon
-                className={clsx(
-                  "h-5 w-5 transition-colors duration-150",
-                  isActive ? "text-sky-300" : "text-slate-500"
+              <div className="relative">
+                <Icon
+                  className={clsx(
+                    "h-5 w-5 transition-colors duration-150",
+                    isActive ? "text-sky-300" : "text-slate-500"
+                  )}
+                  strokeWidth={isActive ? 2.5 : 1.8}
+                />
+                {label === "Challenge" && streak && streak > 0 && (
+                  <span className="absolute -top-1.5 -right-2.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-orange-500 px-1 text-[8px] font-bold leading-none text-white">
+                    {streak}
+                  </span>
                 )}
-                strokeWidth={isActive ? 2.5 : 1.8}
-              />
+              </div>
               <span
                 className={clsx(
                   "text-[9.5px] font-semibold tracking-wide transition-colors duration-150",
                   isActive ? "text-sky-300" : "text-slate-600"
                 )}
               >
-                {label === "Challenge" && streak && streak > 0
-                  ? `🔥 ${streak}`
-                  : label}
+                {label}
               </span>
             </Link>
           );

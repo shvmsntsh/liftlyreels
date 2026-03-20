@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Bookmark, MessageCircle, Share2, Zap, Flame, NotebookPen } from "lucide-react";
 import clsx from "clsx";
 import Link from "next/link";
@@ -275,25 +275,18 @@ export function ReelCard({ post, userId }: Props) {
               label={shareLabel}
               onClick={handleShare}
             />
-            <ActionButton
-              icon={<NotebookPen className={clsx("h-5 w-5", impactLogged ? "fill-current" : "")} />}
-              label="Impact"
-              active={impactLogged}
-              activeClass="border-emerald-300/50 bg-emerald-400/20 text-emerald-300"
-              glow="shadow-emerald-500/30"
-              onClick={() => setImpactOpen(true)}
-            />
+            {!post.id.startsWith("fallback-") && (
+              <ActionButton
+                icon={<NotebookPen className={clsx("h-5 w-5", impactLogged ? "fill-current" : "")} />}
+                label="Impact"
+                active={impactLogged}
+                activeClass="border-emerald-300/50 bg-emerald-400/20 text-emerald-300"
+                glow="shadow-emerald-500/30"
+                onClick={() => setImpactOpen(true)}
+              />
+            )}
           </div>
         </div>
-
-        {/* Progress indicator dots */}
-        <AnimatePresence>
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col gap-1 opacity-30">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="h-1 w-1 rounded-full bg-white" />
-            ))}
-          </div>
-        </AnimatePresence>
       </article>
 
       <CommentsSheet

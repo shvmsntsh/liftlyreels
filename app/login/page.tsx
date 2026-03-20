@@ -33,7 +33,14 @@ export default function LoginPage() {
     });
 
     if (authError) {
-      setError(authError.message);
+      const msg = authError.message;
+      if (msg.includes("Invalid login credentials")) {
+        setError("Wrong email or password. Please try again.");
+      } else if (msg.includes("Email not confirmed")) {
+        setError("Please check your email and confirm your account first.");
+      } else {
+        setError(msg);
+      }
       setLoading(false);
       return;
     }
@@ -41,7 +48,7 @@ export default function LoginPage() {
     // Update streak on login
     await fetch("/api/streak", { method: "POST" }).catch(() => null);
 
-    router.push("/feed");
+    router.replace("/feed");
     router.refresh();
   }
 
@@ -61,7 +68,10 @@ export default function LoginPage() {
           <p className="mt-2 text-sm text-slate-400">Welcome back. Keep the streak going.</p>
         </div>
 
-        <div className="rounded-[24px] border border-white/8 bg-slate-950/70 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-2xl">
+        <div
+          className="rounded-2xl p-6 backdrop-blur-2xl"
+          style={{ backgroundColor: "var(--surface-1)", border: "1px solid var(--border)" }}
+        >
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-slate-500">
@@ -72,7 +82,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full rounded-[14px] border border-white/8 bg-slate-900/80 px-4 py-3 text-[14px] text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
+                className="w-full rounded-[14px] border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-[14px] text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
                 required
               />
             </div>
@@ -87,7 +97,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-[14px] border border-white/8 bg-slate-900/80 px-4 py-3 pr-11 text-[14px] text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
+                  className="w-full rounded-[14px] border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 pr-11 text-[14px] text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
                   required
                 />
                 <button

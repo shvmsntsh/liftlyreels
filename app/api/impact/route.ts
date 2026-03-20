@@ -37,17 +37,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
-  const { data, error } = await supabase
-    .from("impact_journal")
-    .insert({ user_id: user.id, post_id: postId, action_taken: actionTaken.trim() })
-    .select("id")
-    .single();
+  // Validate UUID format — fallback posts use string IDs like "fallback-10"
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const isRealPost = UUID_RE.test(postId);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (isRealPost) {
+    const { error } = await supabase
+      .from("impact_journal")
+      .insert({ user_id: user.id, post_id: postId, action_taken: actionTaken.trim() })
+      .select("id")
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
   }
 
-  // +3 vibe for acting on a reel
+  // +3 vibe for acting on a reel (even for fallback posts)
   const { data: profile } = await supabase
     .from("profiles")
     .select("vibe_score")
@@ -60,5 +66,5 @@ export async function POST(request: NextRequest) {
       .eq("id", user.id);
   }
 
-  return NextResponse.json({ entry: data });
+  return NextResponse.json({ entry: { id: isRealPost ? postId : "local" }, success: true });
 }

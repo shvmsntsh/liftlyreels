@@ -78,7 +78,10 @@ export default function CreatePage() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_30%_at_50%_0%,rgba(56,189,248,0.1),transparent)]" />
 
       {/* Header */}
-      <div className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/80 px-4 py-4 backdrop-blur-xl">
+      <div
+        className="sticky top-0 z-20 px-4 py-4 backdrop-blur-xl"
+        style={{ backgroundColor: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}
+      >
         <div className="mx-auto flex max-w-md items-center justify-between">
           <h1 className="text-lg font-bold text-white">Create Reel</h1>
           <div className="flex items-center gap-2">
@@ -88,7 +91,7 @@ export default function CreatePage() {
                 "flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition",
                 preview
                   ? "border-sky-400/40 bg-sky-400/10 text-sky-300"
-                  : "border-white/15 text-slate-400 hover:text-white"
+                  : "border-[var(--border)] text-slate-400 hover:text-white"
               )}
             >
               <Eye className="h-3.5 w-3.5" />
@@ -163,7 +166,7 @@ export default function CreatePage() {
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="What's the core insight?"
                 maxLength={80}
-                className="w-full rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 transition"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 transition"
                 required
               />
               <div className="mt-1 text-right text-[10px] text-slate-600">{title.length}/80</div>
@@ -184,7 +187,7 @@ export default function CreatePage() {
                       "rounded-full border px-3 py-1 text-xs font-semibold transition",
                       category === cat
                         ? "border-sky-400/50 bg-sky-400/15 text-sky-300"
-                        : "border-white/10 text-slate-400 hover:text-white"
+                        : "border-[var(--border)] text-slate-400 hover:text-white"
                     )}
                   >
                     {cat}
@@ -232,7 +235,7 @@ export default function CreatePage() {
                       onChange={(e) => updateBullet(i, e.target.value)}
                       placeholder={`Insight ${i + 1}...`}
                       maxLength={120}
-                      className="flex-1 rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 transition"
+                      className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 transition"
                     />
                     {bullets.length > 2 && (
                       <button
@@ -267,7 +270,7 @@ export default function CreatePage() {
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
                 placeholder="discipline, morning routine, focus"
-                className="w-full rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 transition"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 transition"
               />
             </div>
 

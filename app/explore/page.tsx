@@ -4,7 +4,6 @@ import { BottomNav } from "@/components/BottomNav";
 import { ReelCard } from "@/components/ReelCard";
 import { PostRecord } from "@/lib/types";
 import { getFallbackPosts } from "@/utils/fallback-posts";
-import { AudioToggle } from "@/components/AudioToggle";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -182,7 +181,6 @@ export default async function ExplorePage({
         )}
       </div>
 
-      <AudioToggle />
       <BottomNav />
     </main>
   );

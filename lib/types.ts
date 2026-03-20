@@ -71,10 +71,23 @@ export type ImpactEntry = {
   post?: PostRecord | null;
 };
 
+export const CATEGORIES = [
+  "Mindset",
+  "Gym",
+  "Diet",
+  "Books",
+  "Wellness",
+  "Finance",
+  "Relationships",
+] as const;
+
+export type Category = (typeof CATEGORIES)[number];
+
 export const REEL_GRADIENTS: Record<string, { from: string; to: string; label: string }> = {
   ocean: { from: "#0c4a6e", to: "#0f172a", label: "Ocean" },
   sunset: { from: "#7c2d12", to: "#1c0a00", label: "Sunset" },
   forest: { from: "#064e3b", to: "#0d1f1a", label: "Forest" },
   aurora: { from: "#4c1d95", to: "#0f0a1e", label: "Aurora" },
   ember: { from: "#7f1d1d", to: "#0f0a0a", label: "Ember" },
+  royal: { from: "#1e1b4b", to: "#0c0a1e", label: "Royal" },
 };

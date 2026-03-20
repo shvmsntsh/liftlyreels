@@ -79,13 +79,14 @@ export function CommentsSheet({ postId, isOpen, onClose, commentsCount, onCountC
             onClick={onClose}
           />
           <motion.div
-            className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-md rounded-t-3xl border border-white/10 bg-slate-950/95 backdrop-blur-xl"
+            className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-md rounded-t-3xl backdrop-blur-xl"
+            style={{ backgroundColor: "var(--surface-1)", border: "1px solid var(--border)" }}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 400 }}
           >
-            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+            <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--border)" }}>
               <h3 className="text-base font-semibold text-white">
                 Comments {commentsCount > 0 && <span className="text-slate-400">({commentsCount})</span>}
               </h3>
@@ -94,7 +95,7 @@ export function CommentsSheet({ postId, isOpen, onClose, commentsCount, onCountC
               </button>
             </div>
 
-            <div className="max-h-72 overflow-y-auto px-5 py-3 space-y-4">
+            <div className="max-h-[60vh] overflow-y-auto px-5 py-3 space-y-4">
               {loading ? (
                 <div className="py-8 text-center text-slate-500 text-sm">Loading...</div>
               ) : comments.length === 0 ? (
@@ -124,8 +125,11 @@ export function CommentsSheet({ postId, isOpen, onClose, commentsCount, onCountC
               <div ref={bottomRef} />
             </div>
 
-            <div className="border-t border-white/10 px-4 py-3 pb-safe">
-              <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-900/60 px-3 py-2">
+            <div className="px-4 py-3 pb-safe" style={{ borderTop: "1px solid var(--border)" }}>
+              <div
+                className="flex items-center gap-2 rounded-2xl px-3 py-2"
+                style={{ backgroundColor: "var(--surface-2)", border: "1px solid var(--border)" }}
+              >
                 <input
                   type="text"
                   value={text}

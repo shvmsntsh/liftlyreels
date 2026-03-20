@@ -3,7 +3,6 @@ import { getPostsWithReactions, getTodaysChallenge } from "@/lib/api";
 import { ReelCard } from "@/components/ReelCard";
 import { BottomNav } from "@/components/BottomNav";
 import { DailyChallengeBar } from "@/components/DailyChallengeBar";
-import { AudioToggle } from "@/components/AudioToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -59,7 +58,6 @@ export default async function FeedPage() {
         )}
       </div>
 
-      <AudioToggle />
       <BottomNav streak={streak} />
     </main>
   );

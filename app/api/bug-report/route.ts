@@ -31,19 +31,17 @@ export async function POST(request: NextRequest) {
   }
 
   // Award +5 vibe for reporting a bug
-  await supabase
+  const { data: profile } = await supabase
     .from("profiles")
     .select("vibe_score")
     .eq("id", user.id)
-    .single()
-    .then(({ data: profile }) => {
-      if (profile) {
-        supabase
-          .from("profiles")
-          .update({ vibe_score: (profile.vibe_score ?? 0) + 5 })
-          .eq("id", user.id);
-      }
-    });
+    .single();
+  if (profile) {
+    await supabase
+      .from("profiles")
+      .update({ vibe_score: (profile.vibe_score ?? 0) + 5 })
+      .eq("id", user.id);
+  }
 
   // Check if user should get Bug Crusher badge
   const { count } = await supabase
@@ -53,7 +51,7 @@ export async function POST(request: NextRequest) {
 
   if ((count ?? 0) >= 1) {
     // Upsert badge — ignore conflict if already earned
-    void supabase
+    await supabase
       .from("user_badges")
       .upsert({ user_id: user.id, badge_id: "bug_crusher" }, { onConflict: "user_id,badge_id" });
   }

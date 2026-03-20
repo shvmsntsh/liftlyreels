@@ -3,7 +3,7 @@ import { isSupabaseConfigured } from "@/lib/supabase";
 import { BottomNav } from "@/components/BottomNav";
 import { DailyChallengeBar } from "@/components/DailyChallengeBar";
 import { DailyChallenge } from "@/lib/types";
-import { Flame, Trophy, Calendar } from "lucide-react";
+import { Flame, Trophy, Calendar, Crown, CheckCircle2, Circle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -117,11 +117,17 @@ export default async function ChallengePage() {
     <main className="relative min-h-screen bg-background pb-28">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_30%_at_50%_0%,rgba(234,88,12,0.1),transparent)]" />
 
-      <div className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/80 px-4 py-4 backdrop-blur-xl">
+      <div
+        className="sticky top-0 z-20 px-4 py-4 backdrop-blur-xl"
+        style={{
+          backgroundColor: "var(--surface-2)",
+          borderBottom: "1px solid var(--border)",
+        }}
+      >
         <div className="mx-auto flex max-w-md items-center justify-between">
           <div>
             <h1 className="text-lg font-bold text-white">Daily Challenges</h1>
-            <p className="text-xs text-slate-500">Take action, not just notes</p>
+            <p className="text-xs" style={{ color: "var(--muted)" }}>Take action, not just notes</p>
           </div>
           <div className="flex items-center gap-1.5 rounded-xl border border-orange-400/20 bg-orange-400/10 px-3 py-1.5">
             <Flame className="h-3.5 w-3.5 text-orange-400 fill-current" />
@@ -140,11 +146,15 @@ export default async function ChallengePage() {
           ].map(({ icon: Icon, label, value, color }) => (
             <div
               key={label}
-              className="rounded-2xl border border-white/10 bg-slate-950/50 p-3 text-center"
+              className="rounded-2xl p-3 text-center"
+              style={{
+                backgroundColor: "var(--surface-1)",
+                border: "1px solid var(--border)",
+              }}
             >
               <Icon className={`mx-auto mb-1 h-4 w-4 ${color}`} />
               <div className={`text-xl font-bold ${color}`}>{value}</div>
-              <div className="text-[10px] text-slate-500">{label}</div>
+              <div className="text-[10px]" style={{ color: "var(--muted)" }}>{label}</div>
             </div>
           ))}
         </div>
@@ -153,21 +163,38 @@ export default async function ChallengePage() {
         {today ? (
           <DailyChallengeBar challenge={today} fullPage />
         ) : (
-          <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-5 text-center text-slate-500 text-sm">
+          <div
+            className="rounded-2xl p-5 text-center text-sm"
+            style={{
+              backgroundColor: "var(--surface-1)",
+              border: "1px solid var(--border)",
+              color: "var(--muted)",
+            }}
+          >
             No challenge set for today yet. Check back soon!
           </div>
         )}
 
         {/* Leaderboard */}
         {topUsers.length > 0 && (
-          <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
-            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
-              🏆 Challenge Champions (7 days)
+          <div
+            className="rounded-2xl p-4"
+            style={{
+              backgroundColor: "var(--surface-1)",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
+              <Crown className="h-3.5 w-3.5 text-amber-400" />
+              Challenge Champions (7 days)
             </p>
             {topUsers.map((u, i) => (
               <div key={u.username} className="flex items-center gap-3 py-2">
                 <span className="w-5 text-sm font-bold text-slate-500">{i + 1}</span>
-                <div className="h-7 w-7 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-white">
+                <div
+                  className="h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                  style={{ backgroundColor: "var(--surface-3)" }}
+                >
                   {u.username[0]?.toUpperCase()}
                 </div>
                 <span className="flex-1 text-sm text-slate-200">
@@ -182,22 +209,30 @@ export default async function ChallengePage() {
         {/* Past challenges */}
         {past.length > 0 && (
           <div>
-            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">
+            <p className="mb-3 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--muted)" }}>
               Past Challenges
             </p>
             <div className="space-y-2">
               {past.map((c) => (
                 <div
                   key={c.id}
-                  className={`rounded-xl border px-4 py-3 ${
+                  className={`rounded-xl px-4 py-3 ${
                     c.user_completed
-                      ? "border-emerald-400/20 bg-emerald-950/30"
-                      : "border-white/10 bg-slate-950/40"
+                      ? "border border-emerald-400/20 bg-emerald-950/30"
+                      : ""
                   }`}
+                  style={
+                    c.user_completed
+                      ? undefined
+                      : {
+                          backgroundColor: "var(--surface-1)",
+                          border: "1px solid var(--border)",
+                        }
+                  }
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
-                      <p className="text-[11px] text-slate-500">{dateLabel(c.date)}</p>
+                      <p className="text-[11px]" style={{ color: "var(--muted)" }}>{dateLabel(c.date)}</p>
                       <p className="mt-0.5 text-sm text-slate-200 line-clamp-2">
                         {c.challenge_text}
                       </p>
@@ -207,8 +242,12 @@ export default async function ChallengePage() {
                         </p>
                       )}
                     </div>
-                    <div className="shrink-0 text-lg">
-                      {c.user_completed ? "✅" : "⬜"}
+                    <div className="shrink-0">
+                      {c.user_completed ? (
+                        <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                      ) : (
+                        <Circle className="h-5 w-5 text-slate-600" />
+                      )}
                     </div>
                   </div>
                   <div className="mt-1 text-[10px] text-slate-600">
