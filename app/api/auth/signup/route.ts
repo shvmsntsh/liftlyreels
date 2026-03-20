@@ -87,8 +87,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Username already taken" }, { status: 400 });
     }
 
+    // Check if profile already exists for this userId
+    const { data: existingProfile } = await adminClient
+      .from("profiles")
+      .select("id")
+      .eq("id", userId)
+      .single();
+
+    if (existingProfile) {
+      // Profile already exists — user is re-entering, just return success
+      return NextResponse.json({ success: true, userCode, newCodes, alreadyExists: true });
+    }
+
     // Create profile — use userClient so auth.uid() = id is satisfied
-    const { error: profileError } = await userClient.from("profiles").insert({
+    const profilePayload = {
       id: userId,
       username: username.toLowerCase().trim(),
       display_name: displayName?.trim() || username,
@@ -96,20 +108,18 @@ export async function POST(request: NextRequest) {
       invited_by: codeData?.created_by ?? null,
       streak_current: 1,
       streak_last_active: new Date().toISOString().split("T")[0],
-    });
+    };
+
+    const { error: profileError } = await userClient.from("profiles").insert(profilePayload);
 
     if (profileError && !isTableMissing(profileError)) {
-      // If RLS blocks (no service key + no access token), try admin insert
-      const { error: adminProfileError } = await adminClient.from("profiles").insert({
-        id: userId,
-        username: username.toLowerCase().trim(),
-        display_name: displayName?.trim() || username,
-        invite_code: userCode,
-        invited_by: codeData?.created_by ?? null,
-        streak_current: 1,
-        streak_last_active: new Date().toISOString().split("T")[0],
-      });
+      // If RLS blocks, try with admin client
+      const { error: adminProfileError } = await adminClient.from("profiles").insert(profilePayload);
       if (adminProfileError && !isTableMissing(adminProfileError)) {
+        // Duplicate key = profile already exists, treat as success
+        if (adminProfileError.code === "23505") {
+          return NextResponse.json({ success: true, userCode, newCodes, alreadyExists: true });
+        }
         return NextResponse.json({ error: adminProfileError.message }, { status: 500 });
       }
     }

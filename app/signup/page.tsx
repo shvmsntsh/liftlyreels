@@ -36,14 +36,37 @@ function SignupForm() {
       return;
     }
 
+    // Try sign-up
     const { data, error: authError } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: {
-        // Redirect after email confirmation back to our callback
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
     });
+
+    // If email already registered, try signing them in directly
+    const alreadyExists =
+      authError?.message?.toLowerCase().includes("already") ||
+      (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0);
+
+    if (alreadyExists) {
+      const { data: signInData, error: signInError } =
+        await supabase.auth.signInWithPassword({ email: email.trim(), password });
+
+      if (signInError) {
+        setError("This email is already registered. Check your password or sign in.");
+        setLoading(false);
+        return;
+      }
+
+      if (signInData.session?.access_token) {
+        // Existing user signed in — check if they have a profile
+        setUserId(signInData.user.id);
+        setAccessToken(signInData.session.access_token);
+        setStep("profile");
+        setLoading(false);
+        return;
+      }
+    }
 
     if (authError) {
       setError(authError.message);
@@ -51,17 +74,19 @@ function SignupForm() {
       return;
     }
 
-    if (data.user) {
+    if (data?.user) {
       setUserId(data.user.id);
 
       if (data.session?.access_token) {
-        // Email confirmation is disabled — we have a live session, go straight to profile
+        // Email confirmation disabled — live session, go to profile
         setAccessToken(data.session.access_token);
         setStep("profile");
       } else {
         // Email confirmation required — show verify screen
         setStep("verify");
       }
+    } else {
+      setError("Something went wrong. Please try again.");
     }
     setLoading(false);
   }
@@ -86,6 +111,16 @@ function SignupForm() {
     const data = await res.json();
 
     if (!res.ok || data.error) {
+      // If profile already exists, just go to feed
+      if (data.error?.includes("already") || data.error?.includes("taken") === false) {
+        // username taken — show error
+      }
+      if (data.error?.includes("already") && !data.error?.includes("Username")) {
+        await fetch("/api/streak", { method: "POST" }).catch(() => null);
+        setStep("done");
+        setTimeout(() => { router.push("/feed"); router.refresh(); }, 1200);
+        return;
+      }
       setError(data.error ?? "Failed to create profile");
       setLoading(false);
       return;
@@ -96,7 +131,7 @@ function SignupForm() {
     setTimeout(() => {
       router.push("/feed");
       router.refresh();
-    }, 1600);
+    }, 1400);
   }
 
   // ── Done ──
