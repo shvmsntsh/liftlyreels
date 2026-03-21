@@ -105,9 +105,9 @@ export async function POST(request: NextRequest) {
       );
     }
     // If using authenticated client and RLS blocks it, give a clear message
-    if (!isAdmin && (uploadError.message?.includes("security") || uploadError.message?.includes("policy"))) {
+    if (!isAdmin && (uploadError.message?.includes("security") || uploadError.message?.includes("policy") || uploadError.message?.includes("new row violates"))) {
       return NextResponse.json(
-        { error: "Storage policy not configured. Add a storage INSERT policy for the 'avatars' bucket, or set SUPABASE_SERVICE_ROLE_KEY in your environment variables." },
+        { error: "Avatar storage needs setup. Run the SQL script at supabase/fix-invite-and-storage.sql in your Supabase SQL Editor to add storage policies." },
         { status: 500 }
       );
     }
