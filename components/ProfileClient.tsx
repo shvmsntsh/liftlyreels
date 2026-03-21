@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Copy, Check, Flame, Zap, BookOpen, LogOut, Camera, Sparkles } from "lucide-react";
+import { Copy, Check, Flame, Zap, BookOpen, LogOut, Camera, Sparkles, Settings, Pencil, X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { ProfileRecord, PostRecord, REEL_GRADIENTS } from "@/lib/types";
 import { UserAvatar, DEFAULT_AVATARS } from "./UserAvatar";
 import { getSupabaseClient } from "@/lib/supabase";
@@ -56,6 +57,8 @@ type Props = {
 
 type Tab = "reels" | "impact" | "invite" | "updates";
 
+type EditingPost = { id: string; title: string; content: string[]; category: string; tags: string[]; gradient: string };
+
 export function ProfileClient({
   profile,
   posts,
@@ -71,6 +74,15 @@ export function ProfileClient({
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [currentAvatar, setCurrentAvatar] = useState(profile.avatar_url);
   const [savingAvatar, setSavingAvatar] = useState(false);
+  const [editingBio, setEditingBio] = useState(false);
+  const [bioValue, setBioValue] = useState(profile.bio ?? "");
+  const [bioSaving, setBioSaving] = useState(false);
+  const [bioSaved, setBioSaved] = useState(false);
+  const [editingPost, setEditingPost] = useState<EditingPost | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [localPosts, setLocalPosts] = useState<PostRecord[]>(posts);
   const router = useRouter();
 
   async function toggleFollow() {
@@ -100,6 +112,56 @@ export function ProfileClient({
     navigator.clipboard.writeText(code);
     setCopiedCode(code);
     setTimeout(() => setCopiedCode(null), 2000);
+  }
+
+  async function savePost() {
+    if (!editingPost) return;
+    setEditSaving(true);
+    try {
+      await fetch("/api/posts", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editingPost),
+      });
+      setLocalPosts((prev) =>
+        prev.map((p) => (p.id === editingPost.id ? { ...p, ...editingPost } : p))
+      );
+      setEditingPost(null);
+    } finally {
+      setEditSaving(false);
+    }
+  }
+
+  async function deletePost(id: string) {
+    setDeletingId(id);
+    try {
+      await fetch("/api/posts", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      setLocalPosts((prev) => prev.filter((p) => p.id !== id));
+      setDeleteConfirmId(null);
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  async function saveBio() {
+    setBioSaving(true);
+    try {
+      await fetch("/api/profile/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bio: bioValue }),
+      });
+      setBioSaved(true);
+      setEditingBio(false);
+      setTimeout(() => setBioSaved(false), 2000);
+      router.refresh();
+    } finally {
+      setBioSaving(false);
+    }
   }
 
   async function selectAvatar(avatarId: string) {
@@ -151,7 +213,15 @@ export function ProfileClient({
       <div className="relative mx-auto max-w-md px-4 pt-10">
         {/* Top actions */}
         {isOwnProfile && (
-          <div className="flex justify-end mb-4">
+          <div className="flex justify-end gap-2 mb-4">
+            <Link
+              href="/settings"
+              className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs transition"
+              style={{ borderColor: "var(--border)", color: "var(--muted)" }}
+            >
+              <Settings className="h-3.5 w-3.5" />
+              Settings
+            </Link>
             <button
               onClick={handleSignOut}
               className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs transition"
@@ -196,8 +266,52 @@ export function ProfileClient({
               </span>
             </div>
             <p className="text-sm text-muted">@{profile.username}</p>
-            {profile.bio && (
-              <p className="mt-1.5 text-sm text-slate-300 leading-5">{profile.bio}</p>
+            {/* Bio display + inline edit */}
+            {isOwnProfile ? (
+              <div className="mt-1.5">
+                {editingBio ? (
+                  <div className="flex flex-col gap-1.5">
+                    <textarea
+                      value={bioValue}
+                      onChange={(e) => setBioValue(e.target.value.slice(0, 200))}
+                      rows={2}
+                      maxLength={200}
+                      placeholder="Tell people what you're about..."
+                      className="w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2 text-sm text-foreground placeholder:text-muted outline-none focus:border-[var(--accent)]/40"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={saveBio}
+                        disabled={bioSaving}
+                        className="flex-1 rounded-lg bg-[var(--accent)] py-1.5 text-xs font-bold text-[var(--on-accent)] transition"
+                      >
+                        {bioSaving ? "Saving…" : "Save"}
+                      </button>
+                      <button
+                        onClick={() => { setEditingBio(false); setBioValue(profile.bio ?? ""); }}
+                        className="flex items-center justify-center rounded-lg border border-[var(--border)] px-3 py-1.5"
+                      >
+                        <X className="h-3.5 w-3.5 text-muted" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setEditingBio(true)}
+                    className="flex items-start gap-1.5 text-left"
+                  >
+                    {bioValue ? (
+                      <span className="text-sm text-muted leading-5">{bioValue}</span>
+                    ) : (
+                      <span className="text-sm text-muted/40 italic">Add a bio…</span>
+                    )}
+                    <Pencil className="mt-0.5 h-3 w-3 shrink-0 text-muted/50" />
+                  </button>
+                )}
+                {bioSaved && <p className="mt-1 text-xs text-emerald-400">Bio saved!</p>}
+              </div>
+            ) : (
+              profile.bio && <p className="mt-1.5 text-sm text-muted leading-5">{profile.bio}</p>
             )}
           </div>
         </div>
@@ -315,40 +429,164 @@ export function ProfileClient({
 
         {/* Reels tab */}
         {activeTab === "reels" && (
-          <div className="mt-4 grid grid-cols-2 gap-3 pb-6">
-            {posts.map((post) => {
-              const g = REEL_GRADIENTS[post.gradient ?? "ocean"] ?? REEL_GRADIENTS.ocean;
-              return (
+          <>
+            {/* Edit post modal */}
+            <AnimatePresence>
+              {editingPost && (
                 <motion.div
-                  key={post.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="relative overflow-hidden rounded-2xl"
-                  style={{
-                    aspectRatio: "3/4",
-                    background: post.image_url
-                      ? `url(${post.image_url}) center/cover`
-                      : `linear-gradient(135deg, ${g.from}, ${g.to})`,
-                  }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm"
+                  onClick={(e) => e.target === e.currentTarget && setEditingPost(null)}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/80" />
-                  <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <span className="text-[10px] uppercase tracking-wider text-sky-300">
-                      {post.category}
-                    </span>
-                    <p className="text-xs font-bold text-white line-clamp-2 leading-4">
-                      {post.title}
-                    </p>
-                  </div>
+                  <motion.div
+                    initial={{ y: 40 }}
+                    animate={{ y: 0 }}
+                    exit={{ y: 40 }}
+                    className="w-full max-w-md rounded-t-3xl border-t border-[var(--border)] bg-[var(--surface-1)] p-5 pb-10"
+                  >
+                    <h3 className="mb-4 text-sm font-bold text-foreground">Edit Reel</h3>
+                    <div className="space-y-3">
+                      <input
+                        value={editingPost.title}
+                        onChange={(e) => setEditingPost({ ...editingPost, title: e.target.value })}
+                        maxLength={80}
+                        placeholder="Title"
+                        className="w-full rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted outline-none focus:border-[var(--accent)]/40"
+                      />
+                      <textarea
+                        value={editingPost.content.join("\n")}
+                        onChange={(e) => setEditingPost({ ...editingPost, content: e.target.value.split("\n").filter(Boolean) })}
+                        rows={4}
+                        placeholder="One bullet per line"
+                        className="w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted outline-none focus:border-[var(--accent)]/40"
+                      />
+                      <input
+                        value={editingPost.tags.join(", ")}
+                        onChange={(e) => setEditingPost({ ...editingPost, tags: e.target.value.split(",").map(t => t.trim()).filter(Boolean) })}
+                        placeholder="Tags (comma-separated)"
+                        className="w-full rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted outline-none focus:border-[var(--accent)]/40"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={savePost}
+                          disabled={editSaving}
+                          className="flex-1 rounded-xl bg-[var(--accent)] py-2.5 text-sm font-bold text-[var(--on-accent)] transition hover:brightness-110 disabled:opacity-50"
+                        >
+                          {editSaving ? "Saving…" : "Save"}
+                        </button>
+                        <button
+                          onClick={() => setEditingPost(null)}
+                          className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm text-muted"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
                 </motion.div>
-              );
-            })}
-            {posts.length === 0 && (
-              <div className="col-span-2 py-10 text-center text-slate-500 text-sm">
-                No reels yet.
-              </div>
-            )}
-          </div>
+              )}
+            </AnimatePresence>
+
+            {/* Delete confirm modal */}
+            <AnimatePresence>
+              {deleteConfirmId && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+                  onClick={(e) => e.target === e.currentTarget && setDeleteConfirmId(null)}
+                >
+                  <motion.div
+                    initial={{ scale: 0.92 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0.92 }}
+                    className="w-full max-w-xs rounded-3xl border border-[var(--border)] bg-[var(--surface-1)] p-6 text-center"
+                  >
+                    <p className="text-2xl mb-2">🗑️</p>
+                    <p className="text-sm font-bold text-foreground mb-1">Delete this reel?</p>
+                    <p className="text-xs text-muted mb-5">This can&apos;t be undone.</p>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => setDeleteConfirmId(null)}
+                        className="flex-1 rounded-xl border border-[var(--border)] py-2.5 text-sm text-muted"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => deletePost(deleteConfirmId)}
+                        disabled={!!deletingId}
+                        className="flex-1 rounded-xl bg-red-500 py-2.5 text-sm font-bold text-white transition hover:bg-red-400 disabled:opacity-50"
+                      >
+                        {deletingId ? "Deleting…" : "Delete"}
+                      </button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="mt-4 grid grid-cols-2 gap-3 pb-6">
+              {localPosts.map((post) => {
+                const g = REEL_GRADIENTS[post.gradient ?? "ocean"] ?? REEL_GRADIENTS.ocean;
+                return (
+                  <motion.div
+                    key={post.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="group relative overflow-hidden rounded-2xl"
+                    style={{
+                      aspectRatio: "3/4",
+                      background: post.image_url
+                        ? `url(${post.image_url}) center/cover`
+                        : `linear-gradient(135deg, ${g.from}, ${g.to})`,
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/80" />
+                    <div className="absolute bottom-0 left-0 right-0 p-3">
+                      <span className="text-[10px] uppercase tracking-wider text-sky-300">
+                        {post.category}
+                      </span>
+                      <p className="text-xs font-bold text-white line-clamp-2 leading-4">
+                        {post.title}
+                      </p>
+                    </div>
+                    {/* Edit/delete actions for own posts */}
+                    {isOwnProfile && (
+                      <div className="absolute inset-x-0 top-0 flex justify-end gap-1.5 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => setEditingPost({
+                            id: post.id,
+                            title: post.title,
+                            content: post.content,
+                            category: post.category,
+                            tags: post.tags,
+                            gradient: post.gradient,
+                          })}
+                          className="flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirmId(post.id)}
+                          className="flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-rose-400 backdrop-blur-sm"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+              {localPosts.length === 0 && (
+                <div className="col-span-2 py-10 text-center text-slate-500 text-sm">
+                  No reels yet.
+                </div>
+              )}
+            </div>
+          </>
         )}
 
         {/* Impact tab */}

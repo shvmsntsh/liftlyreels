@@ -5,6 +5,7 @@ import { ReelCard } from "@/components/ReelCard";
 import { PostRecord, ProfileRecord } from "@/lib/types";
 import { getFallbackPosts } from "@/utils/fallback-posts";
 import Link from "next/link";
+import { Search } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -164,9 +165,17 @@ export default async function ExplorePage({
     <main className="relative mx-auto h-screen max-w-md overflow-hidden">
       {/* Floating header overlay */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 bg-gradient-to-b from-black/70 via-black/40 to-transparent pb-8 pt-4">
-        <div className="pointer-events-auto px-4 pb-2">
-          <h1 className="text-lg font-bold text-white">Explore</h1>
-          <p className="text-xs text-slate-400">Trending this week</p>
+        <div className="pointer-events-auto flex items-center justify-between px-4 pb-2">
+          <div>
+            <h1 className="text-lg font-bold text-white">Explore</h1>
+            <p className="text-xs text-slate-400">Trending this week</p>
+          </div>
+          <Link
+            href="/search"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/8 backdrop-blur-md"
+          >
+            <Search className="h-4 w-4 text-white" />
+          </Link>
         </div>
         {/* Category pills */}
         <div className="pointer-events-auto flex gap-2 overflow-x-auto px-4 py-2 scrollbar-none">
