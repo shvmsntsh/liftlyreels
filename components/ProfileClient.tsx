@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Copy, Check, Flame, Zap, BookOpen, LogOut, Camera, Sparkles, Settings, Pencil, X } from "lucide-react";
+import { Copy, Check, Flame, Zap, BookOpen, LogOut, Camera, Sparkles, Settings, Pencil, X, ImagePlus, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ProfileRecord, PostRecord, REEL_GRADIENTS } from "@/lib/types";
@@ -83,6 +83,9 @@ export function ProfileClient({
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [localPosts, setLocalPosts] = useState<PostRecord[]>(posts);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   async function toggleFollow() {
@@ -191,6 +194,51 @@ export function ProfileClient({
       setCurrentAvatar(profile.avatar_url);
     }
     setSavingAvatar(false);
+  }
+
+  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Client-side validation
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setUploadError("File too large. Maximum 5 MB.");
+      return;
+    }
+    if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) {
+      setUploadError("Use JPEG, PNG, WebP, or GIF.");
+      return;
+    }
+
+    setUploadingPhoto(true);
+    setUploadError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/profile/avatar/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setUploadError(data.error ?? "Upload failed");
+        return;
+      }
+
+      setCurrentAvatar(data.url);
+      setShowAvatarPicker(false);
+      router.refresh();
+    } catch {
+      setUploadError("Upload failed. Try again.");
+    } finally {
+      setUploadingPhoto(false);
+      // Reset input so the same file can be re-selected
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   }
 
   const vibeLevel =
@@ -327,13 +375,44 @@ export function ProfileClient({
             >
               <div className="mt-4 rounded-2xl border p-4"
                 style={{ borderColor: "var(--card-border)", background: "var(--surface-1)" }}>
-                <p className="text-xs font-semibold text-slate-400 mb-3">Choose your avatar</p>
+                <p className="text-xs font-semibold text-muted mb-3">Choose your avatar</p>
+
+                {/* Upload from gallery */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={handlePhotoUpload}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingPhoto || savingAvatar}
+                  className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--accent)]/30 bg-[var(--accent-soft)] py-3 text-sm font-semibold text-[var(--accent)] transition hover:bg-[var(--accent-soft)] hover:border-[var(--accent)]/50 disabled:opacity-50"
+                >
+                  {uploadingPhoto ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Uploading…
+                    </>
+                  ) : (
+                    <>
+                      <ImagePlus className="h-4 w-4" />
+                      Upload from gallery
+                    </>
+                  )}
+                </button>
+                {uploadError && (
+                  <p className="mb-2 text-xs text-red-400">{uploadError}</p>
+                )}
+
+                <p className="text-[10px] text-muted mb-2">Or pick a preset</p>
                 <div className="grid grid-cols-6 gap-2.5">
                   {DEFAULT_AVATARS.map((avatar) => (
                     <button
                       key={avatar.id}
                       onClick={() => selectAvatar(avatar.id)}
-                      disabled={savingAvatar}
+                      disabled={savingAvatar || uploadingPhoto}
                       className={clsx(
                         "flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br transition-all",
                         avatar.gradient,
