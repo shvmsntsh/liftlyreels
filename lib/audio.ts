@@ -22,11 +22,11 @@ export const CATEGORY_AUDIO: Record<string, { url: string; label: string }> = {
     label: "Nature Calm",
   },
   Finance: {
-    url: "https://cdn.pixabay.com/audio/2024/11/28/audio_3a5e5e2e83.mp3",
+    url: "https://cdn.pixabay.com/audio/2024/02/28/audio_d6f7b1de17.mp3",
     label: "Focus Flow",
   },
   Relationships: {
-    url: "https://cdn.pixabay.com/audio/2024/04/23/audio_d0e4275b4c.mp3",
+    url: "https://cdn.pixabay.com/audio/2023/05/30/audio_e3bc6e8d5c.mp3",
     label: "Warm Ambient",
   },
 };

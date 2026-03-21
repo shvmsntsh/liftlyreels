@@ -176,12 +176,12 @@ export default function LandingPage() {
             <button
               type="submit"
               disabled={!code.trim() || status === "checking"}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent)] py-3 text-[13px] font-bold text-[#050816] transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-30 disabled:hover:brightness-100"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent)] py-3 text-[13px] font-bold text-[var(--on-accent)] transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-30 disabled:hover:brightness-100"
             >
               {status === "checking" ? (
                 <span className="flex items-center gap-2">
                   <motion.span
-                    className="inline-block h-3.5 w-3.5 rounded-full border-2 border-[#050816] border-t-transparent"
+                    className="inline-block h-3.5 w-3.5 rounded-full border-2 border-[var(--on-accent)] border-t-transparent"
                     animate={{ rotate: 360 }}
                     transition={{
                       duration: 0.6,

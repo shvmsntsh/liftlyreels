@@ -21,6 +21,7 @@
   --success: #059669;
   --warning: #d97706;
   --danger: #dc2626;
+  --on-accent: #ffffff;
   --nav-height: 72px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --nav-bg: rgba(255, 255, 255, 0.92);
@@ -53,6 +54,7 @@
     --success: #34d399;
     --warning: #fb923c;
     --danger: #f87171;
+    --on-accent: #050816;
     --nav-bg: rgba(8, 15, 30, 0.95);
     --nav-border: rgba(255, 255, 255, 0.08);
     --nav-text: #94a3b8;

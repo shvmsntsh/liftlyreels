@@ -159,34 +159,34 @@ export default function EarlyAccessPage() {
     <main className="relative min-h-screen bg-background pb-28">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_30%_at_50%_0%,rgba(245,158,11,0.1),transparent)]" />
 
-      <div className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/80 px-4 py-4 backdrop-blur-xl">
+      <div className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--nav-bg)] px-4 py-4 backdrop-blur-xl">
         <div className="mx-auto max-w-md">
           <div className="flex items-center gap-2">
             <span className="text-lg">🏛️</span>
-            <h1 className="text-lg font-bold text-white">Early Access</h1>
+            <h1 className="text-lg font-bold text-foreground">Early Access</h1>
           </div>
-          <p className="text-xs text-amber-400">Founding member perks & what&apos;s coming</p>
+          <p className="text-xs text-amber-400">Founding member perks &amp; what&apos;s coming</p>
         </div>
       </div>
 
       <div className="mx-auto max-w-md space-y-8 px-4 pt-6">
         {/* Hero */}
-        <div className="rounded-3xl border border-amber-400/20 bg-gradient-to-b from-amber-950/40 to-slate-950/60 p-5">
+        <div className="rounded-3xl border border-amber-400/20 bg-gradient-to-b from-amber-950/40 to-[var(--background)] p-5">
           <div className="mb-3 flex items-center gap-2">
             <span className="text-2xl">🏛️</span>
             <div>
-              <p className="text-lg font-black text-white">You&apos;re a Founding Member</p>
+              <p className="text-lg font-black text-foreground">You&apos;re a Founding Member</p>
               <p className="text-xs text-amber-400">First 100 users on Liftly</p>
             </div>
           </div>
-          <p className="text-sm text-slate-300 leading-5">
+          <p className="text-sm text-muted leading-5">
             You&apos;re here at the very beginning. That means permanent perks, unlimited invites, and a forever badge. Thank you for being part of building this.
           </p>
         </div>
 
         {/* Perks */}
         <div>
-          <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">
+          <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted">
             Your Founding Perks
           </p>
           <div className="space-y-3">
@@ -196,30 +196,30 @@ export default function EarlyAccessPage() {
                   <Icon className={clsx("h-4 w-4", color)} />
                   <span className={clsx("text-xs font-bold", color)}>{badge}</span>
                 </div>
-                <h3 className="text-sm font-bold text-white">{title}</h3>
-                <p className="mt-1 text-xs text-slate-400 leading-4">{desc}</p>
+                <h3 className="text-sm font-bold text-foreground">{title}</h3>
+                <p className="mt-1 text-xs text-muted leading-4">{desc}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* Free vs Pro */}
-        <div className="rounded-2xl border border-white/10 bg-slate-950/50 overflow-hidden">
-          <div className="grid grid-cols-3 border-b border-white/10 bg-slate-900/40 px-3 py-2 text-xs font-bold uppercase tracking-wider">
-            <span className="text-slate-400">Feature</span>
-            <span className="text-center text-slate-400">Free</span>
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-1)] overflow-hidden">
+          <div className="grid grid-cols-3 border-b border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-xs font-bold uppercase tracking-wider">
+            <span className="text-muted">Feature</span>
+            <span className="text-center text-muted">Free</span>
             <span className="text-center text-sky-300">Pro</span>
           </div>
           {PREMIUM_FEATURES.map(({ icon, title, free }) => (
-            <div key={title} className="grid grid-cols-3 border-b border-white/5 px-3 py-2.5">
-              <span className="text-xs text-slate-300">
+            <div key={title} className="grid grid-cols-3 border-b border-[var(--card-border)] px-3 py-2.5">
+              <span className="text-xs text-foreground">
                 {icon} {title}
               </span>
               <div className="flex justify-center">
                 {free ? (
                   <Check className="h-4 w-4 text-emerald-400" />
                 ) : (
-                  <span className="text-slate-700">—</span>
+                  <span className="text-muted">—</span>
                 )}
               </div>
               <div className="flex justify-center">
@@ -236,19 +236,19 @@ export default function EarlyAccessPage() {
 
         {/* 12 Unique Ideas */}
         <div>
-          <p className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">
+          <p className="mb-1 text-xs font-bold uppercase tracking-wider text-muted">
             12 Never-Done-Before Features
           </p>
-          <p className="mb-4 text-xs text-slate-600">Built into Liftly — or coming soon</p>
+          <p className="mb-4 text-xs text-muted opacity-60">Built into Liftly — or coming soon</p>
           <div className="grid grid-cols-2 gap-3">
             {NOVEL_IDEAS.map(({ emoji, title, desc }) => (
               <div
                 key={title}
-                className="rounded-2xl border border-white/8 bg-slate-950/50 p-3"
+                className="rounded-2xl border border-[var(--border)] bg-[var(--surface-1)] p-3"
               >
                 <div className="mb-1.5 text-xl">{emoji}</div>
-                <h3 className="text-xs font-bold text-white">{title}</h3>
-                <p className="mt-0.5 text-[10px] leading-[1.4] text-slate-500">{desc}</p>
+                <h3 className="text-xs font-bold text-foreground">{title}</h3>
+                <p className="mt-0.5 text-[10px] leading-[1.4] text-muted">{desc}</p>
               </div>
             ))}
           </div>
@@ -256,8 +256,8 @@ export default function EarlyAccessPage() {
 
         {/* Partnership section */}
         <div className="rounded-2xl border border-violet-400/20 bg-violet-950/20 p-4">
-          <h3 className="mb-2 text-sm font-bold text-white">🤝 Partnerships</h3>
-          <p className="text-xs text-slate-400 leading-5 mb-3">
+          <h3 className="mb-2 text-sm font-bold text-foreground">🤝 Partnerships</h3>
+          <p className="text-xs text-muted leading-5 mb-3">
             We&apos;re building integrations with the best tools for growth:
           </p>
           <div className="space-y-2">
@@ -269,7 +269,7 @@ export default function EarlyAccessPage() {
               { name: "Spotify (mood-based playlists)", status: "Exploring", icon: "🎵" },
             ].map(({ name, status, icon }) => (
               <div key={name} className="flex items-center justify-between">
-                <span className="text-xs text-slate-300">
+                <span className="text-xs text-foreground">
                   {icon} {name}
                 </span>
                 <span
@@ -279,7 +279,7 @@ export default function EarlyAccessPage() {
                       ? "text-emerald-400"
                       : status === "In Development"
                       ? "text-amber-400"
-                      : "text-slate-500"
+                      : "text-muted"
                   )}
                 >
                   {status}
@@ -291,8 +291,8 @@ export default function EarlyAccessPage() {
 
         {/* Bug Report Form */}
         <div className="rounded-2xl border border-emerald-400/20 bg-emerald-950/20 p-4">
-          <h3 className="mb-1 text-sm font-bold text-white">🐛 Report a Bug</h3>
-          <p className="mb-3 text-xs text-slate-400">
+          <h3 className="mb-1 text-sm font-bold text-foreground">🐛 Report a Bug</h3>
+          <p className="mb-3 text-xs text-muted">
             Get +5 Vibe + Bug Crusher badge for valid reports.
           </p>
           {bugSubmitted ? (
@@ -307,7 +307,7 @@ export default function EarlyAccessPage() {
                 value={bugTitle}
                 onChange={(e) => setBugTitle(e.target.value)}
                 placeholder="Brief title..."
-                className="w-full rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-white placeholder:text-slate-600 outline-none focus:border-emerald-400/40"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2 text-sm text-foreground placeholder:text-muted outline-none focus:border-emerald-400/40"
                 required
               />
               <textarea
@@ -315,7 +315,7 @@ export default function EarlyAccessPage() {
                 onChange={(e) => setBugDesc(e.target.value)}
                 placeholder="Steps to reproduce, what you expected vs. what happened..."
                 rows={3}
-                className="w-full resize-none rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-white placeholder:text-slate-600 outline-none focus:border-emerald-400/40"
+                className="w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2 text-sm text-foreground placeholder:text-muted outline-none focus:border-emerald-400/40"
                 required
               />
               <div className="flex gap-2">
@@ -328,7 +328,7 @@ export default function EarlyAccessPage() {
                       "flex-1 rounded-lg border py-1.5 text-xs font-semibold transition capitalize",
                       bugSeverity === s
                         ? "border-emerald-400/50 bg-emerald-400/15 text-emerald-300"
-                        : "border-white/10 text-slate-500"
+                        : "border-[var(--border)] text-muted"
                     )}
                   >
                     {s}
@@ -348,8 +348,8 @@ export default function EarlyAccessPage() {
 
         {/* Share CTA */}
         <div className="rounded-2xl border border-sky-400/20 bg-sky-950/20 p-4 text-center">
-          <p className="text-sm font-bold text-white mb-1">Help grow the community</p>
-          <p className="text-xs text-slate-400 mb-3">
+          <p className="text-sm font-bold text-foreground mb-1">Help grow the community</p>
+          <p className="text-xs text-muted mb-3">
             Share your invite code with people who are serious about growth.
           </p>
           <Link
