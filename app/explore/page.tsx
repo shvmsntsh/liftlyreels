@@ -41,8 +41,9 @@ function normalizeRow(row: Record<string, unknown>): PostRecord {
   };
 }
 
-const POSTS_SELECT = `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at,
-  profiles!posts_author_id_fkey(id,username,display_name,avatar_url,vibe_score)`;
+const POSTS_SELECT_WITH_AUTHOR = `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at,
+  profiles(id,username,display_name,avatar_url,vibe_score)`;
+const POSTS_SELECT_PLAIN = `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at`;
 
 async function getTrendingPosts(userId: string): Promise<PostRecord[]> {
   if (!isSupabaseConfigured()) return getFallbackPosts();
@@ -68,10 +69,16 @@ async function getTrendingPosts(userId: string): Promise<PostRecord[]> {
   let rawPosts: Record<string, unknown>[] | null = null;
 
   if (topIds.length > 0) {
-    const { data: posts } = await supabase
+    let { data: posts, error } = await supabase
       .from("posts")
-      .select(POSTS_SELECT)
+      .select(POSTS_SELECT_WITH_AUTHOR)
       .in("id", topIds);
+
+    // Fallback: retry without join if FK mismatch
+    if (error) {
+      const retry = await supabase.from("posts").select(POSTS_SELECT_PLAIN).in("id", topIds);
+      posts = retry.data as typeof posts;
+    }
 
     if (posts?.length) {
       rawPosts = posts
@@ -81,11 +88,16 @@ async function getTrendingPosts(userId: string): Promise<PostRecord[]> {
 
   // Fall back to most recent posts if no trending
   if (!rawPosts) {
-    const { data: recent } = await supabase
+    let { data: recent, error } = await supabase
       .from("posts")
-      .select(POSTS_SELECT)
+      .select(POSTS_SELECT_WITH_AUTHOR)
       .order("created_at", { ascending: false })
       .limit(20);
+
+    if (error) {
+      const retry = await supabase.from("posts").select(POSTS_SELECT_PLAIN).order("created_at", { ascending: false }).limit(20);
+      recent = retry.data as typeof recent;
+    }
 
     if (recent?.length) {
       rawPosts = recent as unknown as Record<string, unknown>[];

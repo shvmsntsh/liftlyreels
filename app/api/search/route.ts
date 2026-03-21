@@ -16,15 +16,26 @@ export async function GET(request: NextRequest) {
 
   try {
     if (type === "posts" || type === "all") {
-      const { data: posts } = await supabase
+      let { data: posts, error } = await supabase
         .from("posts")
         .select(
           `id,title,category,gradient,tags,is_user_created,created_at,
-          profiles!posts_author_id_fkey(id,username,display_name,avatar_url)`
+          profiles(id,username,display_name,avatar_url)`
         )
         .or(`title.ilike.${pattern},tags.cs.{"${q}"}`)
         .order("created_at", { ascending: false })
         .limit(20);
+
+      // Fallback if join fails
+      if (error) {
+        const retry = await supabase
+          .from("posts")
+          .select(`id,title,category,gradient,tags,is_user_created,created_at,author_id`)
+          .or(`title.ilike.${pattern},tags.cs.{"${q}"}`)
+          .order("created_at", { ascending: false })
+          .limit(20);
+        posts = retry.data as typeof posts;
+      }
 
       results.posts = posts ?? [];
     }

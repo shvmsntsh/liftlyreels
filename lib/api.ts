@@ -41,14 +41,27 @@ export async function getPosts(limit = 30): Promise<PostRecord[]> {
   try {
     const supabase = createSupabaseServerClient();
 
-    const { data, error } = await supabase
+    // Try with profiles join first
+    let { data, error } = await supabase
       .from("posts")
       .select(
         `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at,
-        profiles!posts_author_id_fkey(id,username,display_name,avatar_url,vibe_score)`
+        profiles(id,username,display_name,avatar_url,vibe_score)`
       )
       .order("created_at", { ascending: false })
       .limit(limit);
+
+    // If join fails (FK mismatch), retry without it
+    if (error) {
+      console.error("getPosts join error, retrying without join:", error.message);
+      const retry = await supabase
+        .from("posts")
+        .select(`id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at`)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      data = retry.data as typeof data;
+      error = retry.error;
+    }
 
     if (error || !data?.length) {
       return fallbackPosts.slice(0, limit);
@@ -83,14 +96,27 @@ export async function getPostsWithReactions(
   try {
     const supabase = createSupabaseServerClient();
 
-    const { data: posts, error } = await supabase
+    // Try with profiles join first
+    let { data: posts, error } = await supabase
       .from("posts")
       .select(
         `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at,
-        profiles!posts_author_id_fkey(id,username,display_name,avatar_url,vibe_score)`
+        profiles(id,username,display_name,avatar_url,vibe_score)`
       )
       .order("created_at", { ascending: false })
       .limit(limit);
+
+    // If join fails, retry without it
+    if (error) {
+      console.error("getPostsWithReactions join error, retrying:", error.message);
+      const retry = await supabase
+        .from("posts")
+        .select(`id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at`)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      posts = retry.data as typeof posts;
+      error = retry.error;
+    }
 
     if (error || !posts?.length) {
       return fallbackPosts.slice(0, limit);

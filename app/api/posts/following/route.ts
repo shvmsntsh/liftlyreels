@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
-const POSTS_SELECT = `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at,
-  profiles!posts_author_id_fkey(id,username,display_name,avatar_url,vibe_score)`;
+const POSTS_SELECT_WITH_AUTHOR = `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at,
+  profiles(id,username,display_name,avatar_url,vibe_score)`;
+const POSTS_SELECT_PLAIN = `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at`;
 
 export async function GET() {
   const supabase = createSupabaseServerClient();
@@ -27,12 +28,25 @@ export async function GET() {
   }
 
   // Get posts from followed users
-  const { data: posts } = await supabase
+  let { data: postsRaw, error: postsError } = await supabase
     .from("posts")
-    .select(POSTS_SELECT)
+    .select(POSTS_SELECT_WITH_AUTHOR)
     .in("author_id", followingIds)
     .order("created_at", { ascending: false })
     .limit(30);
+
+  // Fallback if join fails
+  if (postsError) {
+    const retry = await supabase
+      .from("posts")
+      .select(POSTS_SELECT_PLAIN)
+      .in("author_id", followingIds)
+      .order("created_at", { ascending: false })
+      .limit(30);
+    postsRaw = retry.data as typeof postsRaw;
+  }
+
+  const posts = postsRaw;
 
   if (!posts?.length) {
     return NextResponse.json({ posts: [] });

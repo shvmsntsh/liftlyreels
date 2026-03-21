@@ -34,7 +34,7 @@ export default async function ProfilePage({
   const isOwnProfile = currentUser?.id === profile.id;
 
   const [
-    { data: posts },
+    { data: posts, error: postsError },
     { data: followersData },
     { data: followingData },
     { data: isFollowingData },
@@ -43,11 +43,10 @@ export default async function ProfilePage({
   ] = await Promise.all([
     supabase
       .from("posts")
-      .select(`id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at,
-        profiles!posts_author_id_fkey(id,username,display_name,avatar_url,vibe_score)`)
+      .select(`id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at`)
       .eq("author_id", profile.id)
       .order("created_at", { ascending: false })
-      .limit(20),
+      .limit(50),
     supabase
       .from("follows")
       .select("follower_id")
@@ -83,6 +82,19 @@ export default async function ProfilePage({
       : Promise.resolve({ data: [] }),
   ]);
 
+  if (postsError) {
+    console.error("Profile posts query error:", postsError.message);
+  }
+
+  // Author data for all posts on this page — we already have the profile
+  const authorData: ProfileRecord = {
+    id: profile.id,
+    username: profile.username,
+    display_name: profile.display_name,
+    avatar_url: profile.avatar_url,
+    vibe_score: profile.vibe_score,
+  } as ProfileRecord;
+
   const fullProfile: ProfileRecord = {
     ...(profile as ProfileRecord),
     followers_count: followersData?.length ?? 0,
@@ -92,15 +104,6 @@ export default async function ProfilePage({
   };
 
   const typedPosts: PostRecord[] = (posts ?? []).map((row) => {
-    const r = row as Record<string, unknown>;
-    const profileArr = r.profiles;
-    const author =
-      Array.isArray(profileArr) && profileArr.length > 0
-        ? (profileArr[0] as ProfileRecord)
-        : profileArr && typeof profileArr === "object"
-        ? (profileArr as ProfileRecord)
-        : null;
-
     return {
       id: String(row.id),
       title: String(row.title),
@@ -109,7 +112,7 @@ export default async function ProfilePage({
       source: String(row.source),
       image_url: typeof row.image_url === "string" ? row.image_url : null,
       author_id: String(row.author_id),
-      author,
+      author: authorData,
       is_user_created: Boolean(row.is_user_created),
       tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
       views_count: Number(row.views_count ?? 0),
