@@ -83,14 +83,14 @@ export async function POST(request: NextRequest) {
 
     if (!rpcError && rpcResult) {
       const result = typeof rpcResult === "string" ? JSON.parse(rpcResult) : rpcResult;
+      console.log("[signup] RPC result for code", upperCode, ":", JSON.stringify(result));
       if (result.valid) {
         rpcValidated = true;
         inviteCodeCreator = result.created_by ?? null;
       } else if (result.used) {
         return NextResponse.json({ error: "Invite code already used" }, { status: 400 });
-      } else {
-        return NextResponse.json({ error: "Invalid invite code" }, { status: 400 });
       }
+      // If RPC says invalid, DON'T return yet — fall through to direct queries as backup
     } else if (rpcError) {
       console.log("[signup] RPC check_invite_code not available, using direct queries:", rpcError.message);
     }

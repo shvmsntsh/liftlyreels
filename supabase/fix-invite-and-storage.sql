@@ -55,38 +55,38 @@ security definer
 set search_path = public
 as $$
 declare
-  v_code text;
+  v_input_code text;
   v_used_by uuid;
   v_created_by uuid;
   v_profile_id uuid;
 begin
-  v_code := upper(trim(code_input));
+  v_input_code := upper(trim(code_input));
 
   -- Check invite_codes table
-  select ic.code, ic.used_by, ic.created_by
-  into v_code, v_used_by, v_created_by
+  select ic.used_by, ic.created_by
+  into v_used_by, v_created_by
   from public.invite_codes ic
-  where ic.code = v_code;
+  where ic.code = v_input_code;
 
   if found then
     if v_used_by is not null then
       return json_build_object('valid', false, 'used', true);
     end if;
-    return json_build_object('valid', true, 'code', v_code, 'created_by', v_created_by);
+    return json_build_object('valid', true, 'code', v_input_code, 'created_by', v_created_by);
   end if;
 
   -- Check profiles table for personal invite codes
   select p.id into v_profile_id
   from public.profiles p
-  where p.invite_code = v_code;
+  where p.invite_code = v_input_code;
 
   if found then
     -- Also insert into invite_codes for future lookups
     insert into public.invite_codes (code, created_by)
-    values (v_code, v_profile_id)
+    values (v_input_code, v_profile_id)
     on conflict (code) do nothing;
 
-    return json_build_object('valid', true, 'code', v_code, 'created_by', v_profile_id);
+    return json_build_object('valid', true, 'code', v_input_code, 'created_by', v_profile_id);
   end if;
 
   return json_build_object('valid', false);
