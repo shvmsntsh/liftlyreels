@@ -43,7 +43,8 @@ export default async function ProfilePage({
   ] = await Promise.all([
     supabase
       .from("posts")
-      .select("id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at")
+      .select(`id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at,
+        profiles!posts_author_id_fkey(id,username,display_name,avatar_url,vibe_score)`)
       .eq("author_id", profile.id)
       .order("created_at", { ascending: false })
       .limit(20),
@@ -90,23 +91,35 @@ export default async function ProfilePage({
     is_following: Boolean(isFollowingData),
   };
 
-  const typedPosts: PostRecord[] = (posts ?? []).map((row) => ({
-    id: String(row.id),
-    title: String(row.title),
-    content: Array.isArray(row.content) ? (row.content as string[]) : [],
-    category: String(row.category),
-    source: String(row.source),
-    image_url: typeof row.image_url === "string" ? row.image_url : null,
-    author_id: String(row.author_id),
-    is_user_created: Boolean(row.is_user_created),
-    tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
-    views_count: Number(row.views_count ?? 0),
-    gradient: typeof row.gradient === "string" ? row.gradient : "ocean",
-    created_at: String(row.created_at),
-    reactions_summary: { sparked: 0, fired_up: 0, bookmarked: 0 },
-    user_reactions: [],
-    comments_count: 0,
-  }));
+  const typedPosts: PostRecord[] = (posts ?? []).map((row) => {
+    const r = row as Record<string, unknown>;
+    const profileArr = r.profiles;
+    const author =
+      Array.isArray(profileArr) && profileArr.length > 0
+        ? (profileArr[0] as ProfileRecord)
+        : profileArr && typeof profileArr === "object"
+        ? (profileArr as ProfileRecord)
+        : null;
+
+    return {
+      id: String(row.id),
+      title: String(row.title),
+      content: Array.isArray(row.content) ? (row.content as string[]) : [],
+      category: String(row.category),
+      source: String(row.source),
+      image_url: typeof row.image_url === "string" ? row.image_url : null,
+      author_id: String(row.author_id),
+      author,
+      is_user_created: Boolean(row.is_user_created),
+      tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
+      views_count: Number(row.views_count ?? 0),
+      gradient: typeof row.gradient === "string" ? row.gradient : "ocean",
+      created_at: String(row.created_at),
+      reactions_summary: { sparked: 0, fired_up: 0, bookmarked: 0 },
+      user_reactions: [],
+      comments_count: 0,
+    };
+  });
 
   return (
     <main className="relative min-h-screen bg-background pb-28">
