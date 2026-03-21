@@ -27,10 +27,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="color-scheme" content="dark" />
-        <meta name="theme-color" content="#050816" />
+        <meta name="color-scheme" content="light dark" />
+        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#050816" media="(prefers-color-scheme: dark)" />
         {/* Polyfill crypto.randomUUID for Safari on HTTP (needed by Supabase Auth) */}
         <script
           dangerouslySetInnerHTML={{

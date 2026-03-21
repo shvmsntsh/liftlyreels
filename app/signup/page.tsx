@@ -236,7 +236,7 @@ function SignupForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full rounded-[14px] border border-white/8 bg-slate-900 px-4 py-3.5 text-[14px] text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
+                className="w-full rounded-[14px] border border-[var(--border)] bg-[var(--input-bg)] px-4 py-3.5 text-[14px] text-foreground placeholder:text-muted outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
                 required
               />
             </div>
@@ -335,7 +335,7 @@ function SignupForm() {
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="How you want to appear"
                 maxLength={40}
-                className="w-full rounded-[14px] border border-white/8 bg-slate-900 px-4 py-3.5 text-[14px] text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
+                className="w-full rounded-[14px] border border-[var(--border)] bg-[var(--input-bg)] px-4 py-3.5 text-[14px] text-foreground placeholder:text-muted outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
                 required
               />
             </div>

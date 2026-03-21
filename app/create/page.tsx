@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Plus, Minus, Eye, Send } from "lucide-react";
 import { BottomNav } from "@/components/BottomNav";
@@ -19,7 +18,6 @@ export default function CreatePage() {
   const [preview, setPreview] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const router = useRouter();
 
   function addBullet() {
     if (bullets.length < 6) setBullets([...bullets, ""]);
@@ -68,7 +66,8 @@ export default function CreatePage() {
       return;
     }
 
-    router.push("/feed");
+    // Full reload to ensure fresh server data with creator info
+    window.location.href = "/feed";
   }
 
   const gradientStyle = REEL_GRADIENTS[gradient];
@@ -83,7 +82,7 @@ export default function CreatePage() {
         style={{ backgroundColor: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}
       >
         <div className="mx-auto flex max-w-md items-center justify-between">
-          <h1 className="text-lg font-bold text-white">Create Reel</h1>
+          <h1 className="text-lg font-bold text-foreground">Create Reel</h1>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setPreview(!preview)}
@@ -166,7 +165,7 @@ export default function CreatePage() {
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="What's the core insight?"
                 maxLength={80}
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 transition"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-sm text-foreground placeholder:text-muted outline-none focus:border-sky-400/50 transition"
                 required
               />
               <div className="mt-1 text-right text-[10px] text-slate-600">{title.length}/80</div>
@@ -235,7 +234,7 @@ export default function CreatePage() {
                       onChange={(e) => updateBullet(i, e.target.value)}
                       placeholder={`Insight ${i + 1}...`}
                       maxLength={120}
-                      className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 transition"
+                      className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted outline-none focus:border-sky-400/50 transition"
                     />
                     {bullets.length > 2 && (
                       <button
@@ -270,7 +269,7 @@ export default function CreatePage() {
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
                 placeholder="discipline, morning routine, focus"
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 transition"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-sm text-foreground placeholder:text-muted outline-none focus:border-sky-400/50 transition"
               />
             </div>
 

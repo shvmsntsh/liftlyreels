@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Compass, Plus, Zap, User } from "lucide-react";
-import clsx from "clsx";
 
 const items = [
   { href: "/feed", icon: Home, label: "Feed" },
@@ -18,73 +17,68 @@ export function BottomNav({ streak }: { streak?: number }) {
 
   return (
     <nav
-      className="fixed bottom-0 inset-x-0 z-30 mx-auto max-w-md"
+      className="fixed bottom-0 inset-x-0 z-[100]"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       <div
-        className="mx-2 mb-2 flex items-center justify-around rounded-[22px] px-1 py-1.5"
+        className="flex items-stretch justify-around"
         style={{
-          backgroundColor: "rgba(8, 15, 30, 0.92)",
-          border: "1px solid rgba(255,255,255,0.1)",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.7), 0 0 0 0.5px rgba(255,255,255,0.06)",
-          backdropFilter: "blur(24px) saturate(180%)",
-          WebkitBackdropFilter: "blur(24px) saturate(180%)",
+          background: "var(--nav-bg)",
+          borderTop: "1px solid var(--nav-border)",
         }}
       >
         {items.map(({ href, icon: Icon, label, accent }) => {
           const isActive =
             pathname === href ||
             (href === "/profile/me" && pathname?.startsWith("/profile")) ||
-            (href === "/challenge" && pathname === "/challenge") ||
             (href === "/feed" && pathname === "/feed") ||
-            (href === "/explore" && pathname === "/explore");
-
-          if (accent) {
-            return (
-              <Link
-                key={href}
-                href={href}
-                className="flex flex-col items-center gap-0.5 px-3 py-1.5 tap-highlight"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-sky-400 to-blue-600 shadow-[0_4px_16px_rgba(56,189,248,0.35)]">
-                  <Icon className="h-6 w-6 text-white" strokeWidth={2.5} />
-                </div>
-              </Link>
-            );
-          }
+            (href === "/explore" && pathname === "/explore") ||
+            (href === "/challenge" && pathname === "/challenge");
 
           return (
             <Link
               key={href}
               href={href}
-              className="relative flex flex-col items-center gap-0.5 px-4 py-2 tap-highlight min-w-[52px]"
+              className="relative flex flex-1 flex-col items-center justify-center gap-0.5 py-2.5 tap-highlight"
+              style={{ minHeight: "56px" }}
             >
-              <div className="relative">
-                <Icon
-                  className={clsx(
-                    "h-[22px] w-[22px] transition-colors duration-150",
-                    isActive ? "text-sky-300" : "text-slate-400"
-                  )}
-                  strokeWidth={isActive ? 2.5 : 2}
-                />
-                {label === "Challenge" && streak && streak > 0 && (
-                  <span className="absolute -top-1.5 -right-2.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-orange-500 px-1 text-[9px] font-bold leading-none text-white">
-                    {streak}
-                  </span>
-                )}
-              </div>
-              <span
-                className={clsx(
-                  "text-[10px] font-semibold tracking-wide transition-colors duration-150",
-                  isActive ? "text-sky-300" : "text-slate-500"
-                )}
-              >
-                {label}
-              </span>
-              {isActive && (
+              {accent ? (
                 <div
-                  className="absolute -top-0.5 left-1/2 h-[3px] w-6 -translate-x-1/2 rounded-full bg-sky-400"
-                />
+                  className="flex h-11 w-11 items-center justify-center rounded-full"
+                  style={{
+                    background: "linear-gradient(135deg, #38bdf8, #2563eb)",
+                    boxShadow: "0 4px 14px rgba(56,189,248,0.35)",
+                  }}
+                >
+                  <Icon className="h-6 w-6 text-white" strokeWidth={2.5} />
+                </div>
+              ) : (
+                <>
+                  {isActive && (
+                    <div
+                      className="absolute top-0 left-1/2 -translate-x-1/2 h-[3px] w-8 rounded-b-full"
+                      style={{ background: "var(--nav-text-active)" }}
+                    />
+                  )}
+                  <div className="relative">
+                    <Icon
+                      className="h-6 w-6"
+                      style={{ color: isActive ? "var(--nav-text-active)" : "var(--nav-text)" }}
+                      strokeWidth={isActive ? 2.5 : 1.8}
+                    />
+                    {label === "Challenge" && streak != null && streak > 0 && (
+                      <span className="absolute -top-1.5 -right-3 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-orange-500 px-1 text-[9px] font-bold leading-none text-white">
+                        {streak}
+                      </span>
+                    )}
+                  </div>
+                  <span
+                    className="text-[11px] font-semibold"
+                    style={{ color: isActive ? "var(--nav-text-active)" : "var(--nav-text)" }}
+                  >
+                    {label}
+                  </span>
+                </>
               )}
             </Link>
           );
