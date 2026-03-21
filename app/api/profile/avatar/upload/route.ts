@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { checkRateLimit } from "@/lib/rate-limit";
+import sharp from "sharp";
 
-const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+const MAX_SIZE = 5 * 1024 * 1024; // 5 MB input limit
+const AVATAR_SIZE = 200; // 200x200 px — plenty for profile pics, even retina
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 
 export async function POST(request: NextRequest) {
@@ -42,45 +44,72 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const ext = file.name.split(".").pop() ?? "jpg";
-  const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+  // ── Compress: resize to 200x200, crop to square, convert to WebP ──
+  const rawBuffer = Buffer.from(await file.arrayBuffer());
 
-  // Upload to Supabase Storage
+  let compressed: Buffer;
+  try {
+    compressed = await sharp(rawBuffer)
+      .resize(AVATAR_SIZE, AVATAR_SIZE, {
+        fit: "cover", // crop to square, keeping center
+        position: "centre",
+      })
+      .webp({ quality: 78, effort: 6 }) // ~10-20 KB per avatar
+      .toBuffer();
+  } catch {
+    return NextResponse.json({ error: "Could not process image." }, { status: 400 });
+  }
+
+  // ── Delete previous custom avatar to save storage ──
+  const { data: currentProfile } = await supabase
+    .from("profiles")
+    .select("avatar_url")
+    .eq("id", user.id)
+    .single();
+
+  if (currentProfile?.avatar_url && !currentProfile.avatar_url.startsWith("emoji:")) {
+    // Extract storage path from the public URL
+    const match = currentProfile.avatar_url.match(/avatars\/(.+)$/);
+    if (match) {
+      await supabase.storage.from("avatars").remove([match[1]]);
+    }
+  }
+
+  // ── Upload compressed avatar ──
+  const path = `${user.id}/avatar.webp`;
+
   const { error: uploadError } = await supabase.storage
     .from("avatars")
-    .upload(path, file, {
-      contentType: file.type,
-      upsert: true,
+    .upload(path, compressed, {
+      contentType: "image/webp",
+      upsert: true, // overwrite previous
     });
 
   if (uploadError) {
-    // If the bucket doesn't exist, try creating it (requires service role)
     if (uploadError.message?.includes("not found") || uploadError.message?.includes("Bucket")) {
       return NextResponse.json(
-        {
-          error:
-            "Avatar storage not configured. Create an 'avatars' bucket in Supabase Storage with public access.",
-        },
+        { error: "Avatar storage not configured. Create an 'avatars' bucket in Supabase Storage with public access." },
         { status: 500 }
       );
     }
     return NextResponse.json({ error: uploadError.message }, { status: 500 });
   }
 
-  // Get public URL
+  // Cache-bust: append timestamp to the public URL so browsers refetch
   const {
     data: { publicUrl },
   } = supabase.storage.from("avatars").getPublicUrl(path);
+  const url = `${publicUrl}?v=${Date.now()}`;
 
   // Save to profile
   const { error: profileError } = await supabase
     .from("profiles")
-    .update({ avatar_url: publicUrl })
+    .update({ avatar_url: url })
     .eq("id", user.id);
 
   if (profileError) {
     return NextResponse.json({ error: profileError.message }, { status: 500 });
   }
 
-  return NextResponse.json({ url: publicUrl });
+  return NextResponse.json({ url });
 }

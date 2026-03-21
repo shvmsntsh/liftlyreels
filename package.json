@@ -25,6 +25,7 @@
     "pg": "^8.20.0",
     "react": "^18",
     "react-dom": "^18",
+    "sharp": "^0.34.5",
     "vercel": "^50.34.2"
   },
   "devDependencies": {
