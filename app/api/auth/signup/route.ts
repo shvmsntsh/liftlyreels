@@ -69,10 +69,27 @@ export async function POST(request: NextRequest) {
   const tablesExist = !isTableMissing(codeError);
 
   if (tablesExist) {
+    // If not found in invite_codes, check if it's a personal code from profiles table
+    let resolvedCodeData = codeData;
     if (!codeData && !isBootstrap) {
-      return NextResponse.json({ error: "Invalid invite code" }, { status: 400 });
+      const { data: profileWithCode } = await adminClient
+        .from("profiles")
+        .select("id,invite_code")
+        .eq("invite_code", upperCode)
+        .single();
+
+      if (profileWithCode) {
+        // Insert this personal code into invite_codes for proper tracking
+        await adminClient
+          .from("invite_codes")
+          .insert({ code: upperCode, created_by: profileWithCode.id })
+          .single();
+        resolvedCodeData = { code: upperCode, used_by: null, created_by: profileWithCode.id };
+      } else {
+        return NextResponse.json({ error: "Invalid invite code" }, { status: 400 });
+      }
     }
-    if (codeData?.used_by) {
+    if (resolvedCodeData?.used_by) {
       return NextResponse.json({ error: "Invite code already used" }, { status: 400 });
     }
 
@@ -105,7 +122,7 @@ export async function POST(request: NextRequest) {
       username: username.toLowerCase().trim(),
       display_name: displayName?.trim() || username,
       invite_code: userCode,
-      invited_by: codeData?.created_by ?? null,
+      invited_by: resolvedCodeData?.created_by ?? null,
       streak_current: 1,
       streak_last_active: new Date().toISOString().split("T")[0],
     };
@@ -130,10 +147,11 @@ export async function POST(request: NextRequest) {
       .update({ used_by: userId, used_at: new Date().toISOString() })
       .eq("code", upperCode);
 
-    // Give new user 3 invite codes
-    await adminClient.from("invite_codes").insert(
-      newCodes.map((code) => ({ code, created_by: userId }))
-    );
+    // Give new user their personal code + 3 extra invite codes
+    await adminClient.from("invite_codes").insert([
+      { code: userCode, created_by: userId },
+      ...newCodes.map((code) => ({ code, created_by: userId })),
+    ]);
   }
 
   return NextResponse.json({ success: true, userCode, newCodes });

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Compass, Plus, Zap, User } from "lucide-react";
 import clsx from "clsx";
-import { motion } from "framer-motion";
 
 const items = [
   { href: "/feed", icon: Home, label: "Feed" },
@@ -19,28 +18,36 @@ export function BottomNav({ streak }: { streak?: number }) {
 
   return (
     <nav
-      className="fixed bottom-0 inset-x-0 z-30 mx-auto max-w-md tap-highlight"
+      className="fixed bottom-0 inset-x-0 z-30 mx-auto max-w-md"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       <div
-        className="mx-3 mb-3 flex items-center justify-around rounded-[26px] px-1 py-2 backdrop-blur-2xl"
+        className="mx-2 mb-2 flex items-center justify-around rounded-[22px] px-1 py-1.5"
         style={{
-          backgroundColor: "var(--surface-1)",
-          border: "1px solid var(--border)",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.6), 0 0 0 0.5px rgba(255,255,255,0.06)",
+          backgroundColor: "rgba(8, 15, 30, 0.92)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.7), 0 0 0 0.5px rgba(255,255,255,0.06)",
+          backdropFilter: "blur(24px) saturate(180%)",
+          WebkitBackdropFilter: "blur(24px) saturate(180%)",
         }}
       >
         {items.map(({ href, icon: Icon, label, accent }) => {
           const isActive =
             pathname === href ||
-            (href === "/profile/me" && pathname === "/profile/me") ||
-            (href === "/challenge" && pathname === "/challenge");
+            (href === "/profile/me" && pathname?.startsWith("/profile")) ||
+            (href === "/challenge" && pathname === "/challenge") ||
+            (href === "/feed" && pathname === "/feed") ||
+            (href === "/explore" && pathname === "/explore");
 
           if (accent) {
             return (
-              <Link key={href} href={href} className="flex flex-col items-center gap-1 px-2 py-1">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-sky-400 to-blue-600 shadow-[0_2px_8px_rgba(56,189,248,0.25)]">
-                  <Icon className="h-5 w-5 text-white" strokeWidth={2.5} />
+              <Link
+                key={href}
+                href={href}
+                className="flex flex-col items-center gap-0.5 px-3 py-1.5 tap-highlight"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-sky-400 to-blue-600 shadow-[0_4px_16px_rgba(56,189,248,0.35)]">
+                  <Icon className="h-6 w-6 text-white" strokeWidth={2.5} />
                 </div>
               </Link>
             );
@@ -50,38 +57,35 @@ export function BottomNav({ streak }: { streak?: number }) {
             <Link
               key={href}
               href={href}
-              className="relative flex flex-col items-center gap-1 px-4 py-1"
+              className="relative flex flex-col items-center gap-0.5 px-4 py-2 tap-highlight min-w-[52px]"
             >
-              {isActive && (
-                <motion.div
-                  layoutId="nav-indicator"
-                  className="absolute -top-1 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full"
-                  style={{ backgroundColor: "var(--accent)" }}
-                  transition={{ type: "spring", stiffness: 500, damping: 40 }}
-                />
-              )}
               <div className="relative">
                 <Icon
                   className={clsx(
-                    "h-5 w-5 transition-colors duration-150",
-                    isActive ? "text-sky-300" : "text-slate-500"
+                    "h-[22px] w-[22px] transition-colors duration-150",
+                    isActive ? "text-sky-300" : "text-slate-400"
                   )}
-                  strokeWidth={isActive ? 2.5 : 1.8}
+                  strokeWidth={isActive ? 2.5 : 2}
                 />
                 {label === "Challenge" && streak && streak > 0 && (
-                  <span className="absolute -top-1.5 -right-2.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-orange-500 px-1 text-[8px] font-bold leading-none text-white">
+                  <span className="absolute -top-1.5 -right-2.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-orange-500 px-1 text-[9px] font-bold leading-none text-white">
                     {streak}
                   </span>
                 )}
               </div>
               <span
                 className={clsx(
-                  "text-[9.5px] font-semibold tracking-wide transition-colors duration-150",
-                  isActive ? "text-sky-300" : "text-slate-600"
+                  "text-[10px] font-semibold tracking-wide transition-colors duration-150",
+                  isActive ? "text-sky-300" : "text-slate-500"
                 )}
               >
                 {label}
               </span>
+              {isActive && (
+                <div
+                  className="absolute -top-0.5 left-1/2 h-[3px] w-6 -translate-x-1/2 rounded-full bg-sky-400"
+                />
+              )}
             </Link>
           );
         })}

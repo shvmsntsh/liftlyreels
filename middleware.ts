@@ -49,6 +49,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Prevent aggressive caching (especially iOS homescreen apps)
+  supabaseResponse.headers.set("Cache-Control", "no-cache, no-store, must-revalidate");
+  supabaseResponse.headers.set("Pragma", "no-cache");
+  supabaseResponse.headers.set("Expires", "0");
+
   return supabaseResponse;
 }
 

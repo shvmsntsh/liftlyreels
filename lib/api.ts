@@ -27,6 +27,7 @@ function normalizePost(row: Record<string, unknown>): PostRecord {
       ? (row.user_reactions as PostRecord["user_reactions"])
       : [],
     comments_count: Number(row.comments_count ?? 0),
+    author_is_following: Boolean(row.author_is_following),
   };
 }
 
@@ -97,7 +98,16 @@ export async function getPostsWithReactions(
 
     const postIds = posts.map((p) => p.id);
 
-    const [{ data: allReactions }, { data: userReactions }, { data: commentCounts }] =
+    // Collect unique author IDs for follow state lookup
+    const authorIds = Array.from(
+      new Set(
+        posts
+          .map((p) => (p as Record<string, unknown>).author_id as string | null)
+          .filter((id): id is string => Boolean(id) && id !== userId)
+      )
+    );
+
+    const [{ data: allReactions }, { data: userReactions }, { data: commentCounts }, { data: userFollows }] =
       await Promise.all([
         supabase
           .from("reactions")
@@ -112,6 +122,13 @@ export async function getPostsWithReactions(
           .from("comments")
           .select("post_id")
           .in("post_id", postIds),
+        userId && authorIds.length > 0
+          ? supabase
+              .from("follows")
+              .select("following_id")
+              .eq("follower_id", userId)
+              .in("following_id", authorIds)
+          : Promise.resolve({ data: [] }),
       ]);
 
     const reactionsMap: Record<string, { sparked: number; fired_up: number; bookmarked: number }> =
@@ -137,6 +154,10 @@ export async function getPostsWithReactions(
       commentsCountMap[c.post_id] = (commentsCountMap[c.post_id] ?? 0) + 1;
     }
 
+    const followingSet = new Set(
+      (userFollows ?? []).map((f) => (f as Record<string, unknown>).following_id as string)
+    );
+
     return posts.map((row) => {
       const r = row as Record<string, unknown>;
       const profileArr = r.profiles;
@@ -147,6 +168,7 @@ export async function getPostsWithReactions(
           ? (profileArr as ProfileRecord)
           : null;
 
+      const authorId = r.author_id as string | null;
       return normalizePost({
         ...r,
         author,
@@ -157,6 +179,7 @@ export async function getPostsWithReactions(
         },
         user_reactions: userReactionsMap[r.id as string] ?? [],
         comments_count: commentsCountMap[r.id as string] ?? 0,
+        author_is_following: authorId ? followingSet.has(authorId) : false,
       });
     });
   } catch {

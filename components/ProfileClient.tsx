@@ -1,13 +1,49 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Copy, Check, Flame, Zap, BookOpen, LogOut } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Copy, Check, Flame, Zap, BookOpen, LogOut, Camera, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ProfileRecord, PostRecord, REEL_GRADIENTS } from "@/lib/types";
-import { UserAvatar } from "./UserAvatar";
+import { UserAvatar, DEFAULT_AVATARS } from "./UserAvatar";
 import { getSupabaseClient } from "@/lib/supabase";
 import clsx from "clsx";
+
+// Changelog entries — update this with each deploy
+const CHANGELOG = [
+  {
+    version: "v1.4",
+    date: "Mar 21, 2026",
+    entries: [
+      "Follow creators directly from reels",
+      "Profile picture picker with 12 default avatars",
+      "Cleaner reel content — single elegant subtitle",
+      "Fixed invite codes not working across users",
+      "Fixed audio not playing on reels",
+      "Improved bottom navigation — bigger tap targets",
+      "Added What's New section to profile",
+    ],
+  },
+  {
+    version: "v1.3",
+    date: "Mar 19, 2026",
+    entries: [
+      "Dark-only design overhaul",
+      "Audio system for category-based reel music",
+      "Landing page redesign",
+      "Fixed API route issues",
+    ],
+  },
+  {
+    version: "v1.2",
+    date: "Mar 18, 2026",
+    entries: [
+      "Session sync fixes for auth",
+      "Signup flow improvements",
+      "Mobile UI polish and Safari fixes",
+    ],
+  },
+];
 
 type Props = {
   profile: ProfileRecord;
@@ -18,7 +54,7 @@ type Props = {
   inviteCodes: Array<{ code: string; used_by: string | null; created_at: string }>;
 };
 
-type Tab = "reels" | "impact" | "invite";
+type Tab = "reels" | "impact" | "invite" | "updates";
 
 export function ProfileClient({
   profile,
@@ -32,6 +68,9 @@ export function ProfileClient({
   const [followerCount, setFollowerCount] = useState(profile.followers_count ?? 0);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("reels");
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [currentAvatar, setCurrentAvatar] = useState(profile.avatar_url);
+  const [savingAvatar, setSavingAvatar] = useState(false);
   const router = useRouter();
 
   async function toggleFollow() {
@@ -63,6 +102,35 @@ export function ProfileClient({
     setTimeout(() => setCopiedCode(null), 2000);
   }
 
+  async function selectAvatar(avatarId: string) {
+    setSavingAvatar(true);
+    setCurrentAvatar(avatarId);
+    try {
+      // Try client-side first, then API fallback
+      const supabase = getSupabaseClient();
+      let success = false;
+      if (supabase) {
+        const { error } = await supabase
+          .from("profiles")
+          .update({ avatar_url: avatarId })
+          .eq("id", profile.id);
+        success = !error;
+      }
+      if (!success) {
+        await fetch("/api/profile/avatar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ avatarUrl: avatarId }),
+        });
+      }
+      setShowAvatarPicker(false);
+      router.refresh();
+    } catch {
+      setCurrentAvatar(profile.avatar_url);
+    }
+    setSavingAvatar(false);
+  }
+
   const vibeLevel =
     profile.vibe_score >= 500
       ? { label: "Legend", color: "text-amber-300", bg: "bg-amber-400/10 border-amber-400/20" }
@@ -71,6 +139,9 @@ export function ProfileClient({
       : profile.vibe_score >= 50
       ? { label: "Rising", color: "text-sky-300", bg: "bg-sky-400/10 border-sky-400/20" }
       : { label: "Newcomer", color: "text-slate-300", bg: "bg-slate-400/10 border-slate-400/20" };
+
+  const ownTabs: Tab[] = ["reels", "impact", "invite", "updates"];
+  const otherTabs: Tab[] = ["reels"];
 
   return (
     <div>
@@ -93,11 +164,21 @@ export function ProfileClient({
 
         {/* Avatar + name */}
         <div className="flex items-start gap-4">
-          <UserAvatar
-            username={profile.username}
-            avatarUrl={profile.avatar_url}
-            size="lg"
-          />
+          <div className="relative">
+            <UserAvatar
+              username={profile.username}
+              avatarUrl={currentAvatar}
+              size="lg"
+            />
+            {isOwnProfile && (
+              <button
+                onClick={() => setShowAvatarPicker(!showAvatarPicker)}
+                className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-sky-500 border-2 border-[var(--background)] text-white shadow-lg"
+              >
+                <Camera className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-xl font-bold text-white">
@@ -119,6 +200,40 @@ export function ProfileClient({
             )}
           </div>
         </div>
+
+        {/* Avatar picker */}
+        <AnimatePresence>
+          {showAvatarPicker && isOwnProfile && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+                <p className="text-xs font-semibold text-slate-400 mb-3">Choose your avatar</p>
+                <div className="grid grid-cols-6 gap-2.5">
+                  {DEFAULT_AVATARS.map((avatar) => (
+                    <button
+                      key={avatar.id}
+                      onClick={() => selectAvatar(avatar.id)}
+                      disabled={savingAvatar}
+                      className={clsx(
+                        "flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br transition-all",
+                        avatar.gradient,
+                        currentAvatar === avatar.id
+                          ? "ring-2 ring-sky-400 ring-offset-2 ring-offset-[var(--background)] scale-110"
+                          : "hover:scale-105 opacity-80 hover:opacity-100"
+                      )}
+                    >
+                      <span className="text-xl">{avatar.emoji}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Stats row */}
         <div className="mt-5 grid grid-cols-4 gap-2">
@@ -148,14 +263,14 @@ export function ProfileClient({
           </div>
           <div className="text-xl">
             {profile.streak_current >= 30
-              ? "🏆"
+              ? "\u{1F3C6}"
               : profile.streak_current >= 14
-              ? "💎"
+              ? "\u{1F48E}"
               : profile.streak_current >= 7
-              ? "🔥"
+              ? "\u{1F525}"
               : profile.streak_current >= 3
-              ? "⚡"
-              : "🌱"}
+              ? "\u{26A1}"
+              : "\u{1F331}"}
           </div>
         </div>
 
@@ -176,10 +291,7 @@ export function ProfileClient({
 
         {/* Tabs */}
         <div className="mt-6 flex border-b border-white/10">
-          {(isOwnProfile
-            ? (["reels", "impact", "invite"] as Tab[])
-            : (["reels"] as Tab[])
-          ).map((tab) => (
+          {(isOwnProfile ? ownTabs : otherTabs).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -192,7 +304,8 @@ export function ProfileClient({
             >
               {tab === "reels" && <><BookOpen className="inline h-3.5 w-3.5 mr-1" />Reels</>}
               {tab === "impact" && <><Zap className="inline h-3.5 w-3.5 mr-1" />Impact</>}
-              {tab === "invite" && <>🎟 Invite</>}
+              {tab === "invite" && <><span className="mr-1">{"\u{1F39F}"}</span>Invite</>}
+              {tab === "updates" && <><Sparkles className="inline h-3.5 w-3.5 mr-1" />New</>}
             </button>
           ))}
         </div>
@@ -257,7 +370,7 @@ export function ProfileClient({
             ))}
             {impactEntries.length === 0 && (
               <div className="py-8 text-center text-slate-500 text-sm">
-                No impact logged yet. Tap 📓 on any reel to log your first action.
+                No impact logged yet. Tap {"\u{1F4D3}"} on any reel to log your first action.
               </div>
             )}
           </div>
@@ -269,7 +382,7 @@ export function ProfileClient({
             <div className="rounded-xl border border-sky-400/15 bg-sky-950/20 p-3 mb-4">
               <p className="text-xs font-semibold text-sky-300 mb-1">Your invite code</p>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-sm text-white">{profile.invite_code ?? "—"}</span>
+                <span className="font-mono text-sm text-white">{profile.invite_code ?? "\u{2014}"}</span>
                 {profile.invite_code && (
                   <button
                     onClick={() => copyCode(profile.invite_code!)}
@@ -314,6 +427,30 @@ export function ProfileClient({
                 No invite codes available right now.
               </div>
             )}
+          </div>
+        )}
+
+        {/* Updates / Changelog tab */}
+        {activeTab === "updates" && (
+          <div className="mt-4 space-y-4 pb-6">
+            {CHANGELOG.map((release) => (
+              <div key={release.version} className="rounded-xl border border-white/10 bg-slate-950/40 p-4">
+                <div className="flex items-center gap-2 mb-2.5">
+                  <span className="rounded-full bg-sky-500/15 border border-sky-400/20 px-2 py-0.5 text-[11px] font-bold text-sky-300">
+                    {release.version}
+                  </span>
+                  <span className="text-[11px] text-slate-500">{release.date}</span>
+                </div>
+                <ul className="space-y-1.5">
+                  {release.entries.map((entry, i) => (
+                    <li key={i} className="flex gap-2 text-[13px] text-slate-300 leading-5">
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400/60" />
+                      <span>{entry}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         )}
       </div>

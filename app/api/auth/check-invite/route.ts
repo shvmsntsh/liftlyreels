@@ -40,6 +40,23 @@ export async function GET(request: NextRequest) {
     }
 
     if (error || !data) {
+      // Check if this is a personal invite code from someone's profile
+      // (backwards compat for users who signed up before codes were added to invite_codes table)
+      const { data: profileWithCode } = await supabase
+        .from("profiles")
+        .select("id,invite_code")
+        .eq("invite_code", code)
+        .single();
+
+      if (profileWithCode) {
+        // Found as a personal code — insert it into invite_codes for future lookups
+        await supabase
+          .from("invite_codes")
+          .insert({ code, created_by: profileWithCode.id })
+          .single();
+        return NextResponse.json({ valid: true, code });
+      }
+
       // Also check bootstrap codes as fallback
       if (BOOTSTRAP_CODES.has(code)) {
         return NextResponse.json({ valid: true, code });

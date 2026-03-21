@@ -15,6 +15,7 @@ export type PostRecord = {
   reactions_summary?: ReactionSummary;
   user_reactions?: ReactionType[];
   comments_count?: number;
+  author_is_following?: boolean;
 };
 
 export type ProfileRecord = {

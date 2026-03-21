@@ -32,13 +32,54 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<string | null>(null);
-  const [userEnabled, setUserEnabled] = useState(false);
+  const [userEnabled, setUserEnabled] = useState(true); // Default ON
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const pendingCategoryRef = useRef<string | null>(null);
   const pathname = usePathname();
 
+  // Load stored preference (default to "on" for new users)
   useEffect(() => {
     const stored = localStorage.getItem("liftly-audio");
-    if (stored === "on") setUserEnabled(true);
+    if (stored === "off") {
+      setUserEnabled(false);
+    } else {
+      setUserEnabled(true);
+      // Set to "on" for new users who haven't toggled yet
+      if (!stored) localStorage.setItem("liftly-audio", "on");
+    }
   }, []);
+
+  // Listen for first user interaction to unlock audio playback
+  useEffect(() => {
+    if (hasInteracted) return;
+
+    function onInteract() {
+      setHasInteracted(true);
+      // If there's a pending category to play, start it now
+      if (pendingCategoryRef.current && userEnabled) {
+        const info = getAudioForCategory(pendingCategoryRef.current);
+        if (info?.url && AUDIO_PAGES.includes(pathname)) {
+          if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.src = "";
+            audioRef.current = null;
+          }
+          const audio = new Audio(info.url);
+          audio.loop = true;
+          audio.volume = 0.25;
+          audioRef.current = audio;
+          audio.play().catch(() => {});
+          setIsPlaying(true);
+        }
+      }
+    }
+
+    const events = ["touchstart", "click", "keydown", "scroll"];
+    events.forEach((e) => document.addEventListener(e, onInteract, { once: true, passive: true }));
+    return () => {
+      events.forEach((e) => document.removeEventListener(e, onInteract));
+    };
+  }, [hasInteracted, userEnabled, pathname]);
 
   // Auto-pause when leaving audio-eligible pages
   useEffect(() => {
@@ -52,13 +93,12 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
   const play = useCallback(
     (category: string) => {
-      // Only allow audio on feed/explore
       if (!AUDIO_PAGES.includes(pathname)) return;
 
-      if (!userEnabled) {
-        setCurrentCategory(category);
-        return;
-      }
+      setCurrentCategory(category);
+      pendingCategoryRef.current = category;
+
+      if (!userEnabled) return;
 
       const info = getAudioForCategory(category);
       if (!info?.url) return;
@@ -76,11 +116,18 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
       const audio = new Audio(info.url);
       audio.loop = true;
-      audio.volume = 0.3;
+      audio.volume = 0.25;
       audioRef.current = audio;
-      audio.play().catch(() => {});
-      setCurrentCategory(category);
-      setIsPlaying(true);
+
+      const playPromise = audio.play();
+      if (playPromise) {
+        playPromise
+          .then(() => setIsPlaying(true))
+          .catch(() => {
+            // Autoplay blocked — will retry on user interaction via hasInteracted handler
+            setIsPlaying(false);
+          });
+      }
     },
     [userEnabled, currentCategory, pathname]
   );
@@ -96,7 +143,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
   const toggle = useCallback(() => {
     if (userEnabled) {
-      // turning off
+      // Turning off
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = "";
@@ -106,18 +153,24 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       setUserEnabled(false);
       localStorage.setItem("liftly-audio", "off");
     } else {
-      // turning on
+      // Turning on
       setUserEnabled(true);
+      setHasInteracted(true); // User just clicked, so we have interaction
       localStorage.setItem("liftly-audio", "on");
-      if (currentCategory && AUDIO_PAGES.includes(pathname)) {
-        const info = getAudioForCategory(currentCategory);
+      const cat = currentCategory || pendingCategoryRef.current;
+      if (cat && AUDIO_PAGES.includes(pathname)) {
+        const info = getAudioForCategory(cat);
         if (info?.url) {
+          if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.src = "";
+            audioRef.current = null;
+          }
           const audio = new Audio(info.url);
           audio.loop = true;
-          audio.volume = 0.3;
+          audio.volume = 0.25;
           audioRef.current = audio;
-          audio.play().catch(() => {});
-          setIsPlaying(true);
+          audio.play().then(() => setIsPlaying(true)).catch(() => {});
         }
       }
     }
@@ -150,18 +203,18 @@ function AudioToggleButton() {
     <button
       onClick={toggle}
       className={clsx(
-        "fixed right-4 z-40 flex items-center gap-1.5 rounded-full border px-3 py-2 text-[10px] font-semibold transition-all tap-highlight",
+        "fixed right-4 z-40 flex items-center gap-1.5 rounded-full border px-3.5 py-2.5 text-[11px] font-semibold transition-all tap-highlight",
         "top-[max(3rem,env(safe-area-inset-top,3rem))]",
         isPlaying
           ? "border-sky-400/30 bg-sky-500/15 text-sky-300 backdrop-blur-xl shadow-[0_0_12px_rgba(56,189,248,0.15)]"
-          : "border-white/10 bg-black/40 text-white/50 backdrop-blur-xl"
+          : "border-white/15 bg-black/50 text-white/60 backdrop-blur-xl"
       )}
       aria-label={isPlaying ? "Mute audio" : "Play audio"}
     >
       {isPlaying ? (
-        <Volume2 className="h-3.5 w-3.5" />
+        <Volume2 className="h-4 w-4" />
       ) : (
-        <VolumeX className="h-3.5 w-3.5" />
+        <VolumeX className="h-4 w-4" />
       )}
       <span>{isPlaying ? currentCategory : "Sound"}</span>
     </button>

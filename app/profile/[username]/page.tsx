@@ -77,6 +77,7 @@ export default async function ProfilePage({
           .select("code,used_by,created_at")
           .eq("created_by", profile.id)
           .is("used_by", null)
+          .neq("code", profile.invite_code ?? "")
           .limit(5)
       : Promise.resolve({ data: [] }),
   ]);

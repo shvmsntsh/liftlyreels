@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Bookmark, MessageCircle, Share2, Zap, Flame, NotebookPen } from "lucide-react";
+import { Bookmark, MessageCircle, Share2, Zap, Flame, NotebookPen, UserPlus, UserCheck } from "lucide-react";
 import clsx from "clsx";
 import Link from "next/link";
 import { PostRecord, ReactionType, REEL_GRADIENTS } from "@/lib/types";
@@ -92,6 +92,7 @@ export function ReelCard({ post, userId }: Props) {
   const [impactOpen, setImpactOpen] = useState(false);
   const [impactLogged, setImpactLogged] = useState(false);
   const [shareLabel, setShareLabel] = useState("Share");
+  const [isFollowing, setIsFollowing] = useState(post.author_is_following ?? false);
 
   const gradient = REEL_GRADIENTS[post.gradient ?? "ocean"] ?? REEL_GRADIENTS.ocean;
 
@@ -117,6 +118,17 @@ export function ReelCard({ post, userId }: Props) {
     [post.id, userId, myReactions]
   );
 
+  async function handleFollow() {
+    if (!userId || !post.author?.id || post.author.id === userId) return;
+    const prev = isFollowing;
+    setIsFollowing(!prev);
+    await fetch("/api/follows", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ targetUserId: post.author.id }),
+    }).catch(() => setIsFollowing(prev));
+  }
+
   async function handleShare() {
     const url =
       typeof window === "undefined"
@@ -134,6 +146,9 @@ export function ReelCard({ post, userId }: Props) {
     }
     setTimeout(() => setShareLabel("Share"), 2000);
   }
+
+  // Condense content to a single elegant line
+  const subtitle = post.content[0] ?? "";
 
   return (
     <>
@@ -158,12 +173,12 @@ export function ReelCard({ post, userId }: Props) {
         )}
 
         {/* Gradient vignette overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-black/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/10" />
         {/* Top glow */}
         <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/40 to-transparent" />
 
         {/* Bottom content */}
-        <div className="relative z-10 flex items-end gap-3 px-4 pb-28 pt-8">
+        <div className="relative z-10 flex items-end gap-3 px-5 pb-28 pt-8">
           {/* Main content */}
           <div className="flex-1 min-w-0">
             {/* Category badge */}
@@ -179,62 +194,68 @@ export function ReelCard({ post, userId }: Props) {
             </div>
 
             {/* Title */}
-            <h2 className="text-[1.6rem] font-black leading-[1.15] tracking-tight text-white drop-shadow-lg">
+            <h2 className="text-[1.7rem] font-black leading-[1.12] tracking-tight text-white drop-shadow-lg text-balance">
               {post.title}
             </h2>
 
-            {/* Content bullets */}
-            <ul className="mt-3 space-y-2">
-              {post.content.slice(0, 4).map((item, i) => (
-                <motion.li
-                  key={i}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.07, duration: 0.3 }}
-                  className="flex gap-2.5 text-[13.5px] leading-[1.5] text-white/90"
-                >
-                  <span className="mt-[5px] h-[5px] w-[5px] shrink-0 rounded-full bg-sky-300/80" />
-                  <span className="drop-shadow-sm">{item}</span>
-                </motion.li>
-              ))}
-            </ul>
+            {/* Single elegant subtitle */}
+            {subtitle && (
+              <motion.p
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1, duration: 0.4 }}
+                className="mt-2.5 text-[14.5px] leading-[1.5] text-white/75 font-medium tracking-wide"
+                style={{ textWrap: "pretty" }}
+              >
+                {subtitle}
+              </motion.p>
+            )}
 
-            {/* Author + source row */}
-            <div className="mt-4 flex items-center justify-between">
+            {/* Author + follow row */}
+            <div className="mt-4 flex items-center gap-3">
               {post.author ? (
-                <Link
-                  href={`/profile/${post.author.username}`}
-                  className="flex items-center gap-2"
-                >
-                  <UserAvatar
-                    username={post.author.username}
-                    avatarUrl={post.author.avatar_url}
-                    size="sm"
-                  />
-                  <div>
-                    <p className="text-xs font-bold text-white">
-                      {post.author.display_name ?? post.author.username}
-                    </p>
-                    <p className="text-[10px] text-white/50">
-                      ⚡ {post.author.vibe_score ?? 0} vibe
-                    </p>
-                  </div>
-                </Link>
+                <>
+                  <Link
+                    href={`/profile/${post.author.username}`}
+                    className="flex items-center gap-2.5 min-w-0"
+                  >
+                    <UserAvatar
+                      username={post.author.username}
+                      avatarUrl={post.author.avatar_url}
+                      size="md"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-bold text-white truncate">
+                        {post.author.display_name ?? post.author.username}
+                      </p>
+                      <p className="text-[11px] text-white/50">
+                        @{post.author.username}
+                      </p>
+                    </div>
+                  </Link>
+                  {/* Follow button on reel */}
+                  {userId && post.author.id !== userId && (
+                    <button
+                      onClick={handleFollow}
+                      className={clsx(
+                        "ml-auto flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-bold transition-all shrink-0",
+                        isFollowing
+                          ? "border border-white/20 text-white/70"
+                          : "bg-sky-500 text-white shadow-[0_2px_8px_rgba(56,189,248,0.3)]"
+                      )}
+                    >
+                      {isFollowing ? (
+                        <><UserCheck className="h-3 w-3" /> Following</>
+                      ) : (
+                        <><UserPlus className="h-3 w-3" /> Follow</>
+                      )}
+                    </button>
+                  )}
+                </>
               ) : (
                 <p className="text-[11px] font-medium text-white/40 uppercase tracking-wider">
                   {post.source}
                 </p>
-              )}
-
-              {/* Tags */}
-              {post.tags && post.tags.length > 0 && (
-                <div className="flex gap-1">
-                  {post.tags.slice(0, 2).map((tag) => (
-                    <span key={tag} className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] text-white/50">
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
               )}
             </div>
           </div>
