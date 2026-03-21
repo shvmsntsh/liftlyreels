@@ -10,10 +10,11 @@ import { getSupabaseClient } from "@/lib/supabase";
 
 function SignupForm() {
   const searchParams = useSearchParams();
-  const inviteCode = searchParams.get("code") ?? "";
+  const urlCode = searchParams.get("code") ?? "";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [inviteCode, setInviteCode] = useState(urlCode);
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [showPass, setShowPass] = useState(false);
@@ -214,16 +215,27 @@ function SignupForm() {
       </div>
 
       <div className="rounded-[24px] border border-white/8 bg-slate-950/70 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-2xl">
-        {inviteCode && (
-          <div className="mb-4 flex items-center gap-2 rounded-2xl border border-sky-400/15 bg-sky-400/5 px-3 py-2.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-sky-400 shrink-0" />
-            <span className="text-[12px] text-sky-300">Invite code: <strong>{inviteCode}</strong></span>
-          </div>
-        )}
-
         {/* ── Step 1: Account ── */}
         {step === "account" && (
           <form onSubmit={handleAccountStep} className="space-y-4" autoComplete="on">
+            <div>
+              <label htmlFor="su-invite" className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-slate-500">
+                Invite Code
+              </label>
+              <input
+                id="su-invite"
+                type="text"
+                name="invite-code"
+                autoComplete="off"
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ""))}
+                placeholder="e.g. SPARK-RISE-001"
+                maxLength={30}
+                className="w-full rounded-[14px] border border-[var(--border)] bg-[var(--input-bg)] px-4 py-3.5 text-[14px] text-foreground font-mono tracking-wider placeholder:text-muted placeholder:font-sans placeholder:tracking-normal outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
+                required
+              />
+              <p className="mt-1 text-[11px] text-slate-600">Got a code from a friend? Enter it here.</p>
+            </div>
             <div>
               <label htmlFor="su-email" className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-slate-500">
                 Email
@@ -290,7 +302,7 @@ function SignupForm() {
 
             <button
               type="submit"
-              disabled={loading || !email || password.length < 8}
+              disabled={loading || !email || password.length < 8 || !inviteCode.trim()}
               className="flex w-full items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-sky-500 to-blue-600 py-4 text-[14px] font-bold text-white shadow-[0_4px_20px_rgba(56,189,248,0.3)] transition-all hover:brightness-110 disabled:opacity-50 disabled:shadow-none tap-highlight"
             >
               {loading ? "Creating account..." : <>Continue <ArrowRight className="h-4 w-4" /></>}

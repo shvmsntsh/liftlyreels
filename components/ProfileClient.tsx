@@ -117,6 +117,21 @@ export function ProfileClient({
     setTimeout(() => setCopiedCode(null), 2000);
   }
 
+  function shareInviteLink(code: string) {
+    const url = `${window.location.origin}/signup?code=${encodeURIComponent(code)}`;
+    if (navigator.share) {
+      navigator.share({ title: "Join me on Liftly!", text: `Use my invite code to join Liftly: ${code}`, url }).catch(() => {
+        navigator.clipboard.writeText(url);
+        setCopiedCode(`link:${code}`);
+        setTimeout(() => setCopiedCode(null), 2000);
+      });
+    } else {
+      navigator.clipboard.writeText(url);
+      setCopiedCode(`link:${code}`);
+      setTimeout(() => setCopiedCode(null), 2000);
+    }
+  }
+
   async function savePost() {
     if (!editingPost) return;
     setEditSaving(true);
@@ -700,10 +715,10 @@ export function ProfileClient({
         {/* Invite codes tab */}
         {activeTab === "invite" && (
           <div className="mt-4 space-y-3 pb-6">
-            <div className="rounded-xl border border-sky-400/15 bg-sky-950/20 p-3 mb-4">
-              <p className="text-xs font-semibold text-sky-300 mb-1">Your invite code</p>
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-sm text-foreground">{profile.invite_code ?? "\u{2014}"}</span>
+            <div className="rounded-xl border border-sky-400/15 bg-sky-950/20 p-4 mb-4">
+              <p className="text-xs font-semibold text-sky-300 mb-2">Your invite code</p>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="font-mono text-lg font-bold text-foreground tracking-wider">{profile.invite_code ?? "\u{2014}"}</span>
                 {profile.invite_code && (
                   <button
                     onClick={() => copyCode(profile.invite_code!)}
@@ -717,36 +732,60 @@ export function ProfileClient({
                   </button>
                 )}
               </div>
-              <p className="mt-1 text-[11px] text-slate-500">
-                Share this with people you want to invite.
+              {profile.invite_code && (
+                <button
+                  onClick={() => shareInviteLink(profile.invite_code!)}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 py-2.5 text-xs font-bold text-white transition hover:bg-sky-400"
+                >
+                  {copiedCode === `link:${profile.invite_code}` ? (
+                    <><Check className="h-3.5 w-3.5" /> Link copied!</>
+                  ) : (
+                    <><Copy className="h-3.5 w-3.5" /> Share invite link</>
+                  )}
+                </button>
+              )}
+              <p className="mt-2 text-[11px] text-slate-500">
+                Share the code or link — they&apos;ll enter it when signing up.
               </p>
             </div>
 
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Extra invite codes ({inviteCodes.length} available)
-            </p>
-            {inviteCodes.map((ic) => (
-              <div
-                key={ic.code}
-                className="flex items-center justify-between rounded-xl border px-3 py-2.5"
-                style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}
-              >
-                <span className="font-mono text-sm text-foreground">{ic.code}</span>
-                <button
-                  onClick={() => copyCode(ic.code)}
-                  className="text-slate-400 hover:text-white"
-                >
-                  {copiedCode === ic.code ? (
-                    <Check className="h-4 w-4 text-emerald-400" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-            ))}
+            {inviteCodes.length > 0 && (
+              <>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Extra invite codes ({inviteCodes.length} available)
+                </p>
+                {inviteCodes.map((ic) => (
+                  <div
+                    key={ic.code}
+                    className="flex items-center justify-between rounded-xl border px-3 py-2.5"
+                    style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}
+                  >
+                    <span className="font-mono text-sm text-foreground">{ic.code}</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => shareInviteLink(ic.code)}
+                        className="text-sky-400 hover:text-sky-300 text-[11px] font-semibold"
+                      >
+                        {copiedCode === `link:${ic.code}` ? "Copied!" : "Share"}
+                      </button>
+                      <button
+                        onClick={() => copyCode(ic.code)}
+                        className="text-slate-400 hover:text-white"
+                      >
+                        {copiedCode === ic.code ? (
+                          <Check className="h-4 w-4 text-emerald-400" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
             {inviteCodes.length === 0 && (
-              <div className="py-6 text-center text-slate-500 text-sm">
-                No invite codes available right now.
+              <div className="py-4 text-center text-slate-500 text-sm">
+                Your invite codes will appear here once generated.
               </div>
             )}
           </div>

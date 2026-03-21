@@ -67,7 +67,11 @@ export async function POST(request: NextRequest) {
   const upperCode = inviteCode.toUpperCase().trim();
   const isBootstrap = BOOTSTRAP_CODES.has(upperCode);
 
-  const { data: codeData, error: codeError } = await adminClient
+  // Use the authenticated userClient for reads (adminClient may lack auth context
+  // when SUPABASE_SERVICE_ROLE_KEY is not set, causing RLS to block queries)
+  const readClient = userClient;
+
+  const { data: codeData, error: codeError } = await readClient
     .from("invite_codes")
     .select("code,used_by,created_by")
     .eq("code", upperCode)
@@ -79,7 +83,7 @@ export async function POST(request: NextRequest) {
     // If not found in invite_codes, check if it's a personal code from profiles table
     let resolvedCodeData = codeData;
     if (!codeData && !isBootstrap) {
-      const { data: profileWithCode } = await adminClient
+      const { data: profileWithCode } = await readClient
         .from("profiles")
         .select("id,invite_code")
         .eq("invite_code", upperCode)
@@ -87,7 +91,7 @@ export async function POST(request: NextRequest) {
 
       if (profileWithCode) {
         // Insert this personal code into invite_codes for proper tracking
-        await adminClient
+        await readClient
           .from("invite_codes")
           .insert({ code: upperCode, created_by: profileWithCode.id })
           .single();
@@ -101,7 +105,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check username availability
-    const { data: existing } = await adminClient
+    const { data: existing } = await readClient
       .from("profiles")
       .select("username")
       .eq("username", username.toLowerCase().trim())
@@ -112,7 +116,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if profile already exists for this userId
-    const { data: existingProfile } = await adminClient
+    const { data: existingProfile } = await readClient
       .from("profiles")
       .select("id")
       .eq("id", userId)
@@ -148,17 +152,34 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Mark invite code as used
-    await adminClient
+    // Mark invite code as used — try userClient first, fall back to adminClient
+    const { error: markError } = await userClient
       .from("invite_codes")
       .update({ used_by: userId, used_at: new Date().toISOString() })
       .eq("code", upperCode);
 
+    if (markError) {
+      // Retry with admin client if userClient RLS blocked the update
+      await adminClient
+        .from("invite_codes")
+        .update({ used_by: userId, used_at: new Date().toISOString() })
+        .eq("code", upperCode);
+    }
+
     // Give new user their personal code + 3 extra invite codes
-    await adminClient.from("invite_codes").insert([
+    const newCodeRows = [
       { code: userCode, created_by: userId },
       ...newCodes.map((code) => ({ code, created_by: userId })),
-    ]);
+    ];
+
+    const { error: insertError } = await userClient
+      .from("invite_codes")
+      .insert(newCodeRows);
+
+    if (insertError) {
+      // Retry with admin client
+      await adminClient.from("invite_codes").insert(newCodeRows);
+    }
   }
 
   return NextResponse.json({ success: true, userCode, newCodes });
