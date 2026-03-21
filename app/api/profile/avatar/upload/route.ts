@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase-server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import sharp from "sharp";
 
@@ -60,6 +60,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Could not process image." }, { status: 400 });
   }
 
+  // Use service role client for storage ops (bypasses RLS)
+  const admin = createSupabaseServiceClient();
+
   // ── Delete previous custom avatar to save storage ──
   const { data: currentProfile } = await supabase
     .from("profiles")
@@ -68,21 +71,20 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (currentProfile?.avatar_url && !currentProfile.avatar_url.startsWith("emoji:")) {
-    // Extract storage path from the public URL
-    const match = currentProfile.avatar_url.match(/avatars\/(.+)$/);
+    const match = currentProfile.avatar_url.match(/avatars\/(.+?)(\?|$)/);
     if (match) {
-      await supabase.storage.from("avatars").remove([match[1]]);
+      await admin.storage.from("avatars").remove([match[1]]);
     }
   }
 
   // ── Upload compressed avatar ──
   const path = `${user.id}/avatar.webp`;
 
-  const { error: uploadError } = await supabase.storage
+  const { error: uploadError } = await admin.storage
     .from("avatars")
     .upload(path, compressed, {
       contentType: "image/webp",
-      upsert: true, // overwrite previous
+      upsert: true,
     });
 
   if (uploadError) {
@@ -95,14 +97,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: uploadError.message }, { status: 500 });
   }
 
-  // Cache-bust: append timestamp to the public URL so browsers refetch
+  // Cache-bust: append timestamp so browsers refetch
   const {
     data: { publicUrl },
-  } = supabase.storage.from("avatars").getPublicUrl(path);
+  } = admin.storage.from("avatars").getPublicUrl(path);
   const url = `${publicUrl}?v=${Date.now()}`;
 
   // Save to profile
-  const { error: profileError } = await supabase
+  const { error: profileError } = await admin
     .from("profiles")
     .update({ avatar_url: url })
     .eq("id", user.id);
