@@ -615,13 +615,14 @@ export function ProfileClient({
                     key={post.id}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="group relative overflow-hidden rounded-2xl"
+                    className="group relative overflow-hidden rounded-2xl cursor-pointer"
                     style={{
                       aspectRatio: "3/4",
                       background: post.image_url
                         ? `url(${post.image_url}) center/cover`
                         : `linear-gradient(135deg, ${g.from}, ${g.to})`,
                     }}
+                    onClick={() => router.push(`/feed?post=${post.id}`)}
                   >
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/80" />
                     <div className="absolute bottom-0 left-0 right-0 p-3">
@@ -636,20 +637,20 @@ export function ProfileClient({
                     {isOwnProfile && (
                       <div className="absolute inset-x-0 top-0 flex justify-end gap-1.5 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
-                          onClick={() => setEditingPost({
+                          onClick={(e) => { e.stopPropagation(); setEditingPost({
                             id: post.id,
                             title: post.title,
                             content: post.content,
                             category: post.category,
                             tags: post.tags,
                             gradient: post.gradient,
-                          })}
+                          }); }}
                           className="flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
                         <button
-                          onClick={() => setDeleteConfirmId(post.id)}
+                          onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(post.id); }}
                           className="flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-rose-400 backdrop-blur-sm"
                         >
                           <X className="h-3.5 w-3.5" />

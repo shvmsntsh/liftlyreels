@@ -51,12 +51,18 @@ function SearchPageInner() {
   const [tab, setTab] = useState<Tab>("all");
   const [posts, setPosts] = useState<SearchPost[]>([]);
   const [users, setUsers] = useState<SearchUser[]>([]);
+  const [suggestedUsers, setSuggestedUsers] = useState<SearchUser[]>([]);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     inputRef.current?.focus();
+    // Load suggested users for empty state
+    fetch("/api/search/discover")
+      .then((r) => r.json())
+      .then((d) => setSuggestedUsers(d.users ?? []))
+      .catch(() => {});
   }, []);
 
   // Auto-search if arriving with a tag
@@ -174,20 +180,52 @@ function SearchPageInner() {
           </div>
         )}
 
-        {/* Empty state */}
+        {/* Empty state — show suggested users */}
         {!loading && !hasQuery && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="py-16 text-center"
           >
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--surface-2)]">
-              <Search className="h-6 w-6 text-muted" />
+            <div className="py-6 text-center">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--surface-2)]">
+                <Search className="h-5 w-5 text-muted" />
+              </div>
+              <p className="text-sm font-medium text-foreground">Search Liftly</p>
+              <p className="mt-1 text-xs text-muted">
+                Find reels by title, #tag, or discover people
+              </p>
             </div>
-            <p className="text-sm font-medium text-foreground">Search Liftly</p>
-            <p className="mt-1 text-xs text-muted">
-              Find reels by title, #tag, or discover people
-            </p>
+
+            {suggestedUsers.length > 0 && (
+              <div className="mt-2">
+                <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">
+                  Discover People
+                </p>
+                <div className="space-y-2">
+                  {suggestedUsers.map((u) => (
+                    <Link
+                      key={u.id}
+                      href={`/profile/${u.username}`}
+                      className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-1)] p-3 transition hover:bg-[var(--surface-2)]"
+                    >
+                      <UserAvatar username={u.username} avatarUrl={u.avatar_url} size="md" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-foreground truncate">
+                          {u.display_name ?? u.username}
+                        </p>
+                        <p className="text-xs text-muted">@{u.username}</p>
+                        {u.bio && (
+                          <p className="mt-0.5 text-xs text-muted truncate">{u.bio}</p>
+                        )}
+                      </div>
+                      <span className="shrink-0 rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[10px] font-bold text-[var(--accent)]">
+                        {u.vibe_score} Vibe
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
 

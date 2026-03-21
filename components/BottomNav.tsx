@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Compass, Plus, Zap, User } from "lucide-react";
+import { Home, Search, Plus, Zap, User } from "lucide-react";
 
 const items = [
   { href: "/feed", icon: Home, label: "Feed" },
-  { href: "/explore", icon: Compass, label: "Explore" },
+  { href: "/search", icon: Search, label: "Search" },
   { href: "/create", icon: Plus, label: "Create", accent: true },
   { href: "/challenge", icon: Zap, label: "Challenge" },
   { href: "/profile/me", icon: User, label: "Me" },
@@ -32,7 +32,7 @@ export function BottomNav({ streak }: { streak?: number }) {
             pathname === href ||
             (href === "/profile/me" && pathname?.startsWith("/profile")) ||
             (href === "/feed" && pathname === "/feed") ||
-            (href === "/explore" && pathname === "/explore") ||
+            (href === "/search" && (pathname === "/search" || pathname === "/explore")) ||
             (href === "/challenge" && pathname === "/challenge");
 
           return (

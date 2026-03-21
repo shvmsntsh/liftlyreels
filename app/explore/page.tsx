@@ -172,9 +172,10 @@ export default async function ExplorePage({
           </div>
           <Link
             href="/search"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/8 backdrop-blur-md"
+            className="flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 py-1.5 backdrop-blur-md"
           >
-            <Search className="h-4 w-4 text-white" />
+            <Search className="h-3.5 w-3.5 text-white/70" />
+            <span className="text-xs text-white/50">Search</span>
           </Link>
         </div>
         {/* Category pills */}

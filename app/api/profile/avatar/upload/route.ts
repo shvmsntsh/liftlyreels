@@ -7,6 +7,16 @@ const MAX_SIZE = 5 * 1024 * 1024; // 5 MB input limit
 const AVATAR_SIZE = 200; // 200x200 px — plenty for profile pics, even retina
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 
+function getStorageClient() {
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (serviceKey && serviceKey.length > 20) {
+    // Valid service role key exists — use it to bypass storage RLS
+    return { client: createSupabaseServiceClient(), isAdmin: true };
+  }
+  // Fall back to authenticated user client
+  return { client: createSupabaseServerClient(), isAdmin: false };
+}
+
 export async function POST(request: NextRequest) {
   const supabase = createSupabaseServerClient();
   const {
@@ -60,8 +70,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Could not process image." }, { status: 400 });
   }
 
-  // Use service role client for storage ops (bypasses RLS)
-  const admin = createSupabaseServiceClient();
+  // Pick the best client for storage ops
+  const { client: storageClient, isAdmin } = getStorageClient();
 
   // ── Delete previous custom avatar to save storage ──
   const { data: currentProfile } = await supabase
@@ -73,14 +83,14 @@ export async function POST(request: NextRequest) {
   if (currentProfile?.avatar_url && !currentProfile.avatar_url.startsWith("emoji:")) {
     const match = currentProfile.avatar_url.match(/avatars\/(.+?)(\?|$)/);
     if (match) {
-      await admin.storage.from("avatars").remove([match[1]]);
+      await storageClient.storage.from("avatars").remove([match[1]]);
     }
   }
 
   // ── Upload compressed avatar ──
   const path = `${user.id}/avatar.webp`;
 
-  const { error: uploadError } = await admin.storage
+  const { error: uploadError } = await storageClient.storage
     .from("avatars")
     .upload(path, compressed, {
       contentType: "image/webp",
@@ -94,17 +104,24 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+    // If using authenticated client and RLS blocks it, give a clear message
+    if (!isAdmin && (uploadError.message?.includes("security") || uploadError.message?.includes("policy"))) {
+      return NextResponse.json(
+        { error: "Storage policy not configured. Add a storage INSERT policy for the 'avatars' bucket, or set SUPABASE_SERVICE_ROLE_KEY in your environment variables." },
+        { status: 500 }
+      );
+    }
     return NextResponse.json({ error: uploadError.message }, { status: 500 });
   }
 
   // Cache-bust: append timestamp so browsers refetch
   const {
     data: { publicUrl },
-  } = admin.storage.from("avatars").getPublicUrl(path);
+  } = storageClient.storage.from("avatars").getPublicUrl(path);
   const url = `${publicUrl}?v=${Date.now()}`;
 
-  // Save to profile
-  const { error: profileError } = await admin
+  // Save to profile — use authenticated client (user updating own profile)
+  const { error: profileError } = await supabase
     .from("profiles")
     .update({ avatar_url: url })
     .eq("id", user.id);

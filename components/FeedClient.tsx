@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { Search } from "lucide-react";
+import Link from "next/link";
 import { ReelCard } from "./ReelCard";
 import { DailyChallengeBar } from "./DailyChallengeBar";
 import { PostRecord, DailyChallenge } from "@/lib/types";
@@ -43,8 +45,8 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
 
   return (
     <div className="h-screen overflow-y-auto snap-y-mandatory scrollbar-none feed-scroll">
-      {/* Tab bar pinned at the top of the scroll container */}
-      <div className="snap-start sticky top-0 z-30 flex items-center justify-center gap-1 pt-4 pb-2 bg-transparent pointer-events-none">
+      {/* Header with tabs and search */}
+      <div className="snap-start sticky top-0 z-30 flex items-center justify-center gap-2 pt-4 pb-2 px-4 bg-transparent pointer-events-none">
         <div className="pointer-events-auto flex gap-1 rounded-full border border-white/10 bg-black/40 px-1 py-1 backdrop-blur-md">
           {(["foryou", "following"] as Tab[]).map((t) => (
             <button
@@ -61,6 +63,12 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
             </button>
           ))}
         </div>
+        <Link
+          href="/search"
+          className="pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/40 backdrop-blur-md"
+        >
+          <Search className="h-3.5 w-3.5 text-white/70" />
+        </Link>
       </div>
 
       {/* Daily challenge (for you tab only) */}
