@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   const supabase = createSupabaseServerClient();
@@ -7,6 +8,12 @@ export async function POST(request: NextRequest) {
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // 5 posts per hour per user
+  const rl = checkRateLimit(`posts:${user.id}`, 5, 60 * 60_000);
+  if (!rl.ok) {
+    return NextResponse.json({ error: "Post limit reached. Try again later." }, { status: 429, headers: { "Retry-After": String(rl.retryAfter) } });
   }
 
   const { title, content, category, tags, gradient } = await request.json();

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { checkRateLimit, getRequestKey } from "@/lib/rate-limit";
 
 function generateInviteCode(): string {
   const words = [
@@ -28,6 +29,12 @@ const BOOTSTRAP_CODES = new Set([
 ]);
 
 export async function POST(request: NextRequest) {
+  // 5 signup attempts per hour per IP
+  const rl = checkRateLimit(getRequestKey(request, "signup"), 5, 60 * 60_000);
+  if (!rl.ok) {
+    return NextResponse.json({ error: "Too many signup attempts. Try again later." }, { status: 429 });
+  }
+
   const { userId, accessToken, username, displayName, inviteCode } = await request.json();
 
   if (!userId || !username || !inviteCode) {

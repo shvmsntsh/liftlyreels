@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Bookmark, MessageCircle, Share2, Zap, Flame, NotebookPen, UserPlus, UserCheck } from "lucide-react";
+import { Bookmark, MessageCircle, Share2, Zap, Flame, NotebookPen, UserPlus, UserCheck, Hash } from "lucide-react";
 import clsx from "clsx";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PostRecord, ReactionType, REEL_GRADIENTS } from "@/lib/types";
 import { UserAvatar } from "./UserAvatar";
 import { CommentsSheet } from "./CommentsSheet";
@@ -63,6 +64,8 @@ type Props = {
 export function ReelCard({ post, userId }: Props) {
   const cardRef = useRef<HTMLElement>(null);
   const { play } = useAudio();
+  const router = useRouter();
+  const viewedRef = useRef(false);
 
   useEffect(() => {
     const el = cardRef.current;
@@ -71,13 +74,22 @@ export function ReelCard({ post, userId }: Props) {
       ([entry]) => {
         if (entry.isIntersecting) {
           play(post.category);
+          // Record view once per mount, debounced
+          if (!viewedRef.current && userId && !post.id.startsWith("fallback-")) {
+            viewedRef.current = true;
+            fetch("/api/views", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ postId: post.id }),
+            }).catch(() => {});
+          }
         }
       },
       { threshold: 0.6 }
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [play, post.category]);
+  }, [play, post.category, post.id, userId]);
 
   const [reactions, setReactions] = useState({
     sparked: post.reactions_summary?.sparked ?? 0,
@@ -209,6 +221,21 @@ export function ReelCard({ post, userId }: Props) {
               >
                 {subtitle}
               </motion.p>
+            )}
+
+            {/* Clickable tags */}
+            {post.tags && post.tags.length > 0 && (
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
+                {post.tags.slice(0, 4).map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => router.push(`/search?tag=${encodeURIComponent(tag)}`)}
+                    className="flex items-center gap-0.5 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-medium text-white/60 backdrop-blur-sm transition hover:bg-white/10 hover:text-white/80 tap-highlight"
+                  >
+                    <Hash className="h-2.5 w-2.5" />{tag}
+                  </button>
+                ))}
+              </div>
             )}
 
             {/* Author + follow row */}

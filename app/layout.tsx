@@ -19,6 +19,12 @@ export const metadata: Metadata = {
   title: "Liftly — Positive Reels for Positive Minds",
   description:
     "Invitation-only microlearning reels for books, gym, diet, and mindset. Build streaks, track your impact, grow with a community.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Liftly",
+  },
 };
 
 export default function RootLayout({
@@ -32,6 +38,13 @@ export default function RootLayout({
         <meta name="color-scheme" content="light dark" />
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
         <meta name="theme-color" content="#050816" media="(prefers-color-scheme: dark)" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        {/* Register service worker */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});})}`,
+          }}
+        />
         {/* Polyfill crypto.randomUUID for Safari on HTTP (needed by Supabase Auth) */}
         <script
           dangerouslySetInnerHTML={{

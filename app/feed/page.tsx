@@ -1,8 +1,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { getPostsWithReactions, getTodaysChallenge } from "@/lib/api";
-import { ReelCard } from "@/components/ReelCard";
 import { BottomNav } from "@/components/BottomNav";
-import { DailyChallengeBar } from "@/components/DailyChallengeBar";
+import { FeedClient } from "@/components/FeedClient";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +18,7 @@ export default async function FeedPage() {
     getTodaysChallenge(userId),
   ]);
 
-  // Get streak from profile (gracefully handles missing table)
+  // Get streak from profile
   let streak = 0;
   if (userId) {
     try {
@@ -36,28 +35,7 @@ export default async function FeedPage() {
 
   return (
     <main className="relative mx-auto h-screen max-w-md overflow-hidden">
-      <div className="h-screen overflow-y-auto snap-y-mandatory scrollbar-none feed-scroll">
-        {/* Daily challenge banner — first item */}
-        {challenge && (
-          <div className="snap-start relative flex h-screen items-center justify-center overflow-hidden px-4 py-8">
-            <DailyChallengeBar challenge={challenge} fullPage />
-          </div>
-        )}
-
-        {posts.map((post) => (
-          <ReelCard key={post.id} post={post} userId={userId} />
-        ))}
-
-        {posts.length === 0 && (
-          <div className="snap-start flex h-screen items-center justify-center">
-            <div className="text-center text-slate-500">
-              <p className="text-lg font-semibold text-white">No reels yet</p>
-              <p className="mt-2 text-sm">Be the first to create one!</p>
-            </div>
-          </div>
-        )}
-      </div>
-
+      <FeedClient initialPosts={posts} userId={userId} challenge={challenge} />
       <BottomNav streak={streak} />
     </main>
   );
