@@ -8,6 +8,7 @@ const BASE = {
   is_user_created: false,
   tags: [],
   views_count: 0,
+  audio_track: null,
   reactions_summary: { sparked: 0, fired_up: 0, bookmarked: 0 },
   user_reactions: [],
   comments_count: 0,

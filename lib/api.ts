@@ -3,7 +3,7 @@ import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { PostRecord, ProfileRecord, DailyChallenge } from "@/lib/types";
 import { getFallbackPosts } from "@/utils/fallback-posts";
 
-const POST_FIELDS = `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at`;
+const POST_FIELDS = `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,audio_track,created_at`;
 
 function normalizePost(row: Record<string, unknown>): PostRecord {
   const content = Array.isArray(row.content)
@@ -23,6 +23,7 @@ function normalizePost(row: Record<string, unknown>): PostRecord {
     tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
     views_count: Number(row.views_count ?? 0),
     gradient: typeof row.gradient === "string" ? row.gradient : "ocean",
+    audio_track: typeof row.audio_track === "string" ? row.audio_track : null,
     created_at: String(row.created_at ?? new Date().toISOString()),
     reactions_summary: row.reactions_summary as PostRecord["reactions_summary"],
     user_reactions: Array.isArray(row.user_reactions)

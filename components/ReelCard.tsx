@@ -73,7 +73,7 @@ export function ReelCard({ post, userId }: Props) {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          play(post.category);
+          play(post.category, post.audio_track);
           // Record view once per mount, debounced
           if (!viewedRef.current && userId && !post.id.startsWith("fallback-")) {
             viewedRef.current = true;

@@ -43,7 +43,7 @@ export default async function ProfilePage({
   ] = await Promise.all([
     supabase
       .from("posts")
-      .select(`id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at`)
+      .select(`id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,audio_track,created_at`)
       .eq("author_id", profile.id)
       .order("created_at", { ascending: false })
       .limit(50),
@@ -117,6 +117,7 @@ export default async function ProfilePage({
       tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
       views_count: Number(row.views_count ?? 0),
       gradient: typeof row.gradient === "string" ? row.gradient : "ocean",
+      audio_track: typeof row.audio_track === "string" ? row.audio_track : null,
       created_at: String(row.created_at),
       reactions_summary: { sparked: 0, fired_up: 0, bookmarked: 0 },
       user_reactions: [],

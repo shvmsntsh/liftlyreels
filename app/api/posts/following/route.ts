@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
-const POST_FIELDS = `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at`;
+const POST_FIELDS = `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,audio_track,created_at`;
 
 export async function GET() {
   const supabase = createSupabaseServerClient();
@@ -84,6 +84,7 @@ export async function GET() {
       tags: Array.isArray(r.tags) ? r.tags : [],
       views_count: Number(r.views_count ?? 0),
       gradient: typeof r.gradient === "string" ? r.gradient : "ocean",
+      audio_track: typeof r.audio_track === "string" ? r.audio_track : null,
       created_at: String(r.created_at ?? ""),
       reactions_summary: { sparked: 0, fired_up: 0, bookmarked: 0 },
       user_reactions: urMap[String(r.id)] ?? [],

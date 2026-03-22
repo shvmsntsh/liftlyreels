@@ -197,6 +197,7 @@ export async function fetchCuratedBookReels(limit = 12): Promise<ExternalBookRee
         tags: [],
         views_count: 0,
         gradient: "ocean",
+        audio_track: null,
         created_at: new Date().toISOString(),
       });
     } catch {

@@ -11,6 +11,7 @@ export type PostRecord = {
   tags: string[];
   views_count: number;
   gradient: string;
+  audio_track: string | null;
   created_at: string;
   reactions_summary?: ReactionSummary;
   user_reactions?: ReactionType[];
@@ -91,4 +92,10 @@ export const REEL_GRADIENTS: Record<string, { from: string; to: string; label: s
   aurora: { from: "#4c1d95", to: "#0f0a1e", label: "Aurora" },
   ember: { from: "#7f1d1d", to: "#0f0a0a", label: "Ember" },
   royal: { from: "#1e1b4b", to: "#0c0a1e", label: "Royal" },
+  midnight: { from: "#0f172a", to: "#020617", label: "Midnight" },
+  rose: { from: "#4c0519", to: "#0c0005", label: "Rose" },
+  mint: { from: "#064e3b", to: "#022c22", label: "Mint" },
+  solar: { from: "#78350f", to: "#1c0a00", label: "Solar" },
+  cosmic: { from: "#312e81", to: "#0c0a2e", label: "Cosmic" },
+  storm: { from: "#1e3a5f", to: "#0a0f1a", label: "Storm" },
 };

@@ -10,7 +10,7 @@ import { Search } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 const CATEGORIES = ["All", "Mindset", "Gym", "Diet", "Books", "Wellness", "Finance"];
-const POST_FIELDS = `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at`;
+const POST_FIELDS = `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,audio_track,created_at`;
 
 function normalizeRow(row: Record<string, unknown>): PostRecord {
   return {
@@ -26,6 +26,7 @@ function normalizeRow(row: Record<string, unknown>): PostRecord {
     tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
     views_count: Number(row.views_count ?? 0),
     gradient: typeof row.gradient === "string" ? row.gradient : "ocean",
+    audio_track: typeof row.audio_track === "string" ? row.audio_track : null,
     created_at: String(row.created_at ?? ""),
     reactions_summary: { sparked: 0, fired_up: 0, bookmarked: 0 },
     user_reactions: (row.user_reactions ?? []) as PostRecord["user_reactions"],

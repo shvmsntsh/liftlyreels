@@ -9,13 +9,14 @@ import {
   useState,
 } from "react";
 import { usePathname } from "next/navigation";
-import { AmbientEngine, CATEGORY_LABELS } from "@/lib/audio-engine";
+import { AudioEngine } from "@/lib/audio-engine";
 import { Volume2, VolumeX } from "lucide-react";
 
 type AudioContextType = {
   isPlaying: boolean;
   currentCategory: string | null;
-  play: (category: string) => void;
+  trackLabel: string;
+  play: (category: string, trackId?: string | null) => void;
   pause: () => void;
   toggle: () => void;
 };
@@ -23,6 +24,7 @@ type AudioContextType = {
 const Ctx = createContext<AudioContextType>({
   isPlaying: false,
   currentCategory: null,
+  trackLabel: "",
   play: () => {},
   pause: () => {},
   toggle: () => {},
@@ -35,21 +37,21 @@ export function useAudio() {
 const AUDIO_PAGES = ["/feed", "/explore"];
 
 export function AudioProvider({ children }: { children: React.ReactNode }) {
-  const engineRef = useRef<AmbientEngine | null>(null);
+  const engineRef = useRef<AudioEngine | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<string | null>(null);
+  const [trackLabel, setTrackLabel] = useState("");
   const userEnabledRef = useRef(true);
   const [userEnabled, setUserEnabled] = useState(true);
   const unlockedRef = useRef(false);
-  const wantedCategoryRef = useRef<string | null>(null);
+  const wantedRef = useRef<{ category: string; trackId?: string | null } | null>(null);
   const pathname = usePathname();
   const pathnameRef = useRef(pathname);
   pathnameRef.current = pathname;
 
-  // Lazy-init the engine
-  function getEngine(): AmbientEngine {
+  function getEngine(): AudioEngine {
     if (!engineRef.current) {
-      engineRef.current = new AmbientEngine();
+      engineRef.current = new AudioEngine();
     }
     return engineRef.current;
   }
@@ -67,7 +69,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Unlock audio on first user gesture (required by iOS Safari)
+  // Unlock audio on first user gesture (iOS)
   useEffect(() => {
     if (unlockedRef.current) return;
 
@@ -75,17 +77,17 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       const engine = getEngine();
       engine.unlock().then(() => {
         unlockedRef.current = true;
-        // If there's a pending category and user wants sound, start playing
-        const cat = wantedCategoryRef.current;
+        const w = wantedRef.current;
         if (
-          cat &&
+          w &&
           userEnabledRef.current &&
           AUDIO_PAGES.includes(pathnameRef.current)
         ) {
-          engine.play(cat).then((ok) => {
+          engine.play(w.category, w.trackId).then((ok) => {
             if (ok) {
               setIsPlaying(true);
-              setCurrentCategory(cat);
+              setCurrentCategory(w.category);
+              setTrackLabel(engine.trackLabel);
             }
           });
         }
@@ -110,7 +112,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }
   }, [pathname]);
 
-  // Cleanup on unmount
+  // Cleanup
   useEffect(() => {
     return () => {
       engineRef.current?.destroy();
@@ -118,24 +120,26 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const play = useCallback((category: string) => {
-    if (!AUDIO_PAGES.includes(pathnameRef.current)) return;
+  const play = useCallback(
+    (category: string, trackId?: string | null) => {
+      if (!AUDIO_PAGES.includes(pathnameRef.current)) return;
 
-    wantedCategoryRef.current = category;
-    setCurrentCategory(category);
+      wantedRef.current = { category, trackId };
+      setCurrentCategory(category);
 
-    if (!userEnabledRef.current) return;
+      if (!userEnabledRef.current) return;
 
-    const engine = getEngine();
-
-    // Already playing this category
-    if (engine.isPlaying && engine.currentCategory === category) return;
-
-    engine.play(category).then((ok) => {
-      setIsPlaying(ok);
-      if (ok) setCurrentCategory(category);
-    });
-  }, []);
+      const engine = getEngine();
+      engine.play(category, trackId).then((ok) => {
+        setIsPlaying(ok);
+        if (ok) {
+          setCurrentCategory(category);
+          setTrackLabel(engine.trackLabel);
+        }
+      });
+    },
+    []
+  );
 
   const pause = useCallback(() => {
     engineRef.current?.pause();
@@ -146,52 +150,59 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     const engine = getEngine();
 
     if (userEnabledRef.current) {
-      // Turn OFF
       engine.pause();
       setIsPlaying(false);
       setUserEnabled(false);
       userEnabledRef.current = false;
       localStorage.setItem("liftly-audio", "off");
     } else {
-      // Turn ON — user just tapped, so audio is unlocked
       setUserEnabled(true);
       userEnabledRef.current = true;
       unlockedRef.current = true;
       localStorage.setItem("liftly-audio", "on");
 
-      const cat =
-        wantedCategoryRef.current ||
-        currentCategory ||
-        null;
-
-      if (cat && AUDIO_PAGES.includes(pathnameRef.current)) {
-        // unlock + play in response to user gesture
+      const w = wantedRef.current;
+      if (w && AUDIO_PAGES.includes(pathnameRef.current)) {
         engine.unlock().then(() => {
-          engine.play(cat).then((ok) => {
+          engine.play(w.category, w.trackId).then((ok) => {
             setIsPlaying(ok);
-            if (ok) setCurrentCategory(cat);
+            if (ok) {
+              setCurrentCategory(w.category);
+              setTrackLabel(engine.trackLabel);
+            }
           });
         });
       }
     }
-  }, [currentCategory]);
+  }, []);
 
   const showToggle = AUDIO_PAGES.includes(pathname);
 
   return (
-    <Ctx.Provider value={{ isPlaying, currentCategory, play, pause, toggle }}>
+    <Ctx.Provider
+      value={{ isPlaying, currentCategory, trackLabel, play, pause, toggle }}
+    >
       {children}
-      {showToggle && <AudioToggleButton />}
+      {showToggle && (
+        <AudioToggleButton
+          isPlaying={isPlaying}
+          label={trackLabel}
+          toggle={toggle}
+        />
+      )}
     </Ctx.Provider>
   );
 }
 
-function AudioToggleButton() {
-  const { isPlaying, toggle, currentCategory } = useAudio();
-  const label = isPlaying
-    ? CATEGORY_LABELS[currentCategory ?? ""] ?? currentCategory
-    : "Sound";
-
+function AudioToggleButton({
+  isPlaying,
+  label,
+  toggle,
+}: {
+  isPlaying: boolean;
+  label: string;
+  toggle: () => void;
+}) {
   return (
     <button
       onClick={toggle}
@@ -205,9 +216,7 @@ function AudioToggleButton() {
         border: `1px solid ${
           isPlaying ? "rgba(56,189,248,0.3)" : "rgba(255,255,255,0.1)"
         }`,
-        boxShadow: isPlaying
-          ? "0 0 12px rgba(56,189,248,0.2)"
-          : "none",
+        boxShadow: isPlaying ? "0 0 12px rgba(56,189,248,0.2)" : "none",
       }}
       aria-label={isPlaying ? "Mute audio" : "Play audio"}
     >
@@ -216,7 +225,7 @@ function AudioToggleButton() {
       ) : (
         <VolumeX className="h-4 w-4" />
       )}
-      <span>{label}</span>
+      <span>{isPlaying ? label || "Sound" : "Sound"}</span>
     </button>
   );
 }

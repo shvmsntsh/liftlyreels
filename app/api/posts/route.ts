@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Post limit reached. Try again later." }, { status: 429, headers: { "Retry-After": String(rl.retryAfter) } });
   }
 
-  const { title, content, category, tags, gradient } = await request.json();
+  const { title, content, category, tags, gradient, audio_track, image_url } = await request.json();
 
   if (!title?.trim() || !content?.length || !category) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -26,18 +26,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid content format" }, { status: 400 });
   }
 
+  const insertRow: Record<string, unknown> = {
+    title: title.trim(),
+    content,
+    category,
+    source: "Community",
+    author_id: user.id,
+    is_user_created: true,
+    tags: tags ?? [],
+    gradient: gradient ?? "ocean",
+  };
+  if (audio_track) insertRow.audio_track = audio_track;
+  if (image_url) insertRow.image_url = image_url;
+
   const { data, error } = await supabase
     .from("posts")
-    .insert({
-      title: title.trim(),
-      content,
-      category,
-      source: "Community",
-      author_id: user.id,
-      is_user_created: true,
-      tags: tags ?? [],
-      gradient: gradient ?? "ocean",
-    })
+    .insert(insertRow)
     .select("id,title,category,created_at")
     .single();
 
@@ -72,7 +76,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id, title, content, category, tags, gradient } = await request.json();
+  const { id, title, content, category, tags, gradient, audio_track, image_url } = await request.json();
 
   if (!id) {
     return NextResponse.json({ error: "Missing post id" }, { status: 400 });
@@ -95,6 +99,8 @@ export async function PUT(request: NextRequest) {
   if (category) updates.category = category;
   if (Array.isArray(tags)) updates.tags = tags;
   if (gradient) updates.gradient = gradient;
+  if (audio_track !== undefined) updates.audio_track = audio_track;
+  if (image_url !== undefined) updates.image_url = image_url;
 
   const { data, error } = await supabase
     .from("posts")
