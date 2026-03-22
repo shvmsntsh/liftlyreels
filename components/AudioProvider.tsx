@@ -1,8 +1,15 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { usePathname } from "next/navigation";
-import { getAudioForCategory } from "@/lib/audio";
+import { AmbientEngine, CATEGORY_LABELS } from "@/lib/audio-engine";
 import { Volume2, VolumeX } from "lucide-react";
 
 type AudioContextType = {
@@ -28,125 +35,151 @@ export function useAudio() {
 const AUDIO_PAGES = ["/feed", "/explore"];
 
 export function AudioProvider({ children }: { children: React.ReactNode }) {
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const engineRef = useRef<AmbientEngine | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<string | null>(null);
+  const userEnabledRef = useRef(true);
   const [userEnabled, setUserEnabled] = useState(true);
-  const [unlocked, setUnlocked] = useState(false);
+  const unlockedRef = useRef(false);
   const wantedCategoryRef = useRef<string | null>(null);
   const pathname = usePathname();
+  const pathnameRef = useRef(pathname);
+  pathnameRef.current = pathname;
+
+  // Lazy-init the engine
+  function getEngine(): AmbientEngine {
+    if (!engineRef.current) {
+      engineRef.current = new AmbientEngine();
+    }
+    return engineRef.current;
+  }
 
   // Load stored preference
   useEffect(() => {
     const stored = localStorage.getItem("liftly-audio");
     if (stored === "off") {
       setUserEnabled(false);
+      userEnabledRef.current = false;
     } else {
       setUserEnabled(true);
+      userEnabledRef.current = true;
       if (!stored) localStorage.setItem("liftly-audio", "on");
     }
   }, []);
 
   // Unlock audio on first user gesture (required by iOS Safari)
   useEffect(() => {
-    if (unlocked) return;
+    if (unlockedRef.current) return;
+
     function unlock() {
-      const el = audioRef.current;
-      if (el) {
-        // Play a silent frame to unlock the audio element on iOS
-        el.muted = true;
-        el.play().then(() => {
-          el.pause();
-          el.muted = false;
-          el.currentTime = 0;
-          setUnlocked(true);
-          // If there's a pending category, start playing now
-          const cat = wantedCategoryRef.current;
-          if (cat && userEnabled && AUDIO_PAGES.includes(pathname)) {
-            const info = getAudioForCategory(cat);
-            if (info?.url) {
-              el.src = info.url;
-              el.play().then(() => setIsPlaying(true)).catch(() => {});
+      const engine = getEngine();
+      engine.unlock().then(() => {
+        unlockedRef.current = true;
+        // If there's a pending category and user wants sound, start playing
+        const cat = wantedCategoryRef.current;
+        if (
+          cat &&
+          userEnabledRef.current &&
+          AUDIO_PAGES.includes(pathnameRef.current)
+        ) {
+          engine.play(cat).then((ok) => {
+            if (ok) {
+              setIsPlaying(true);
+              setCurrentCategory(cat);
             }
-          }
-        }).catch(() => {});
-      }
+          });
+        }
+      });
     }
+
     const events = ["touchstart", "touchend", "click", "keydown"];
-    events.forEach((e) => document.addEventListener(e, unlock, { once: true, passive: true }));
+    events.forEach((e) =>
+      document.addEventListener(e, unlock, { once: true, passive: true })
+    );
     return () => events.forEach((e) => document.removeEventListener(e, unlock));
-  }, [unlocked, userEnabled, pathname]);
+  }, []);
 
   // Pause when leaving audio pages
   useEffect(() => {
     if (!AUDIO_PAGES.includes(pathname)) {
-      const el = audioRef.current;
-      if (el && !el.paused) {
-        el.pause();
+      const engine = engineRef.current;
+      if (engine?.isPlaying) {
+        engine.pause();
         setIsPlaying(false);
       }
     }
   }, [pathname]);
 
-  const play = useCallback(
-    (category: string) => {
-      if (!AUDIO_PAGES.includes(pathname)) return;
-      setCurrentCategory(category);
-      wantedCategoryRef.current = category;
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      engineRef.current?.destroy();
+      engineRef.current = null;
+    };
+  }, []);
 
-      if (!userEnabled) return;
+  const play = useCallback((category: string) => {
+    if (!AUDIO_PAGES.includes(pathnameRef.current)) return;
 
-      const el = audioRef.current;
-      if (!el) return;
+    wantedCategoryRef.current = category;
+    setCurrentCategory(category);
 
-      // Already playing this category
-      if (currentCategory === category && !el.paused) return;
+    if (!userEnabledRef.current) return;
 
-      const info = getAudioForCategory(category);
-      if (!info?.url) return;
+    const engine = getEngine();
 
-      el.src = info.url;
-      el.play()
-        .then(() => setIsPlaying(true))
-        .catch(() => setIsPlaying(false));
-    },
-    [userEnabled, currentCategory, pathname]
-  );
+    // Already playing this category
+    if (engine.isPlaying && engine.currentCategory === category) return;
+
+    engine.play(category).then((ok) => {
+      setIsPlaying(ok);
+      if (ok) setCurrentCategory(category);
+    });
+  }, []);
 
   const pause = useCallback(() => {
-    const el = audioRef.current;
-    if (el) el.pause();
+    engineRef.current?.pause();
     setIsPlaying(false);
   }, []);
 
   const toggle = useCallback(() => {
-    const el = audioRef.current;
-    if (userEnabled) {
-      if (el) el.pause();
+    const engine = getEngine();
+
+    if (userEnabledRef.current) {
+      // Turn OFF
+      engine.pause();
       setIsPlaying(false);
       setUserEnabled(false);
+      userEnabledRef.current = false;
       localStorage.setItem("liftly-audio", "off");
     } else {
+      // Turn ON — user just tapped, so audio is unlocked
       setUserEnabled(true);
-      setUnlocked(true); // User just tapped — audio is unlocked
+      userEnabledRef.current = true;
+      unlockedRef.current = true;
       localStorage.setItem("liftly-audio", "on");
-      const cat = currentCategory || wantedCategoryRef.current;
-      if (cat && el && AUDIO_PAGES.includes(pathname)) {
-        const info = getAudioForCategory(cat);
-        if (info?.url) {
-          el.src = info.url;
-          el.play().then(() => setIsPlaying(true)).catch(() => {});
-        }
+
+      const cat =
+        wantedCategoryRef.current ||
+        currentCategory ||
+        null;
+
+      if (cat && AUDIO_PAGES.includes(pathnameRef.current)) {
+        // unlock + play in response to user gesture
+        engine.unlock().then(() => {
+          engine.play(cat).then((ok) => {
+            setIsPlaying(ok);
+            if (ok) setCurrentCategory(cat);
+          });
+        });
       }
     }
-  }, [userEnabled, currentCategory, pathname]);
+  }, [currentCategory]);
 
   const showToggle = AUDIO_PAGES.includes(pathname);
 
   return (
     <Ctx.Provider value={{ isPlaying, currentCategory, play, pause, toggle }}>
-      {/* Single persistent audio element — iOS requires a DOM element, not new Audio() */}
-      <audio ref={audioRef} loop playsInline preload="none" style={{ display: "none" }} />
       {children}
       {showToggle && <AudioToggleButton />}
     </Ctx.Provider>
@@ -155,21 +188,35 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
 function AudioToggleButton() {
   const { isPlaying, toggle, currentCategory } = useAudio();
+  const label = isPlaying
+    ? CATEGORY_LABELS[currentCategory ?? ""] ?? currentCategory
+    : "Sound";
 
   return (
     <button
       onClick={toggle}
-      className="fixed right-4 z-[90] flex items-center gap-1.5 rounded-full px-3.5 py-2.5 text-[11px] font-semibold transition-all tap-highlight"
+      className="fixed right-4 z-[90] flex items-center gap-1.5 rounded-full px-3.5 py-2.5 text-[11px] font-semibold transition-all tap-highlight backdrop-blur-xl"
       style={{
         top: "max(3rem, env(safe-area-inset-top, 3rem))",
-        background: isPlaying ? "var(--accent-soft)" : "rgba(0,0,0,0.4)",
-        color: isPlaying ? "var(--accent)" : "rgba(255,255,255,0.6)",
-        border: `1px solid ${isPlaying ? "var(--accent-soft)" : "rgba(255,255,255,0.1)"}`,
+        background: isPlaying
+          ? "rgba(56,189,248,0.15)"
+          : "rgba(0,0,0,0.4)",
+        color: isPlaying ? "rgb(125,211,252)" : "rgba(255,255,255,0.6)",
+        border: `1px solid ${
+          isPlaying ? "rgba(56,189,248,0.3)" : "rgba(255,255,255,0.1)"
+        }`,
+        boxShadow: isPlaying
+          ? "0 0 12px rgba(56,189,248,0.2)"
+          : "none",
       }}
       aria-label={isPlaying ? "Mute audio" : "Play audio"}
     >
-      {isPlaying ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-      <span>{isPlaying ? currentCategory : "Sound"}</span>
+      {isPlaying ? (
+        <Volume2 className="h-4 w-4" />
+      ) : (
+        <VolumeX className="h-4 w-4" />
+      )}
+      <span>{label}</span>
     </button>
   );
 }
