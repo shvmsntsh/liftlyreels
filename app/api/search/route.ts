@@ -4,7 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q")?.trim() ?? "";
-  const type = searchParams.get("type") ?? "all"; // posts | users | all
+  const type = searchParams.get("type") ?? "all";
 
   if (!q || q.length < 2) {
     return NextResponse.json({ posts: [], users: [] });
@@ -16,28 +16,31 @@ export async function GET(request: NextRequest) {
 
   try {
     if (type === "posts" || type === "all") {
-      let { data: posts, error } = await supabase
+      const { data: posts } = await supabase
         .from("posts")
-        .select(
-          `id,title,category,gradient,tags,is_user_created,created_at,
-          profiles(id,username,display_name,avatar_url)`
-        )
+        .select(`id,title,category,gradient,tags,is_user_created,created_at,author_id`)
         .or(`title.ilike.${pattern},tags.cs.{"${q}"}`)
         .order("created_at", { ascending: false })
         .limit(20);
 
-      // Fallback if join fails
-      if (error) {
-        const retry = await supabase
-          .from("posts")
-          .select(`id,title,category,gradient,tags,is_user_created,created_at,author_id`)
-          .or(`title.ilike.${pattern},tags.cs.{"${q}"}`)
-          .order("created_at", { ascending: false })
-          .limit(20);
-        posts = retry.data as typeof posts;
-      }
+      if (posts?.length) {
+        // Fetch author profiles separately
+        const authorIds = Array.from(new Set(posts.map((p) => p.author_id as string).filter(Boolean)));
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id,username,display_name,avatar_url")
+          .in("id", authorIds);
 
-      results.posts = posts ?? [];
+        const profileMap: Record<string, unknown> = {};
+        for (const p of profiles ?? []) {
+          profileMap[p.id] = p;
+        }
+
+        results.posts = posts.map((row) => ({
+          ...row,
+          author: row.author_id ? profileMap[row.author_id as string] ?? null : null,
+        }));
+      }
     }
 
     if (type === "users" || type === "all") {

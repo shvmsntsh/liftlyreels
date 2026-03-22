@@ -3,6 +3,8 @@ import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { PostRecord, ProfileRecord, DailyChallenge } from "@/lib/types";
 import { getFallbackPosts } from "@/utils/fallback-posts";
 
+const POST_FIELDS = `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at`;
+
 function normalizePost(row: Record<string, unknown>): PostRecord {
   const content = Array.isArray(row.content)
     ? row.content.filter((item): item is string => typeof item === "string")
@@ -31,6 +33,25 @@ function normalizePost(row: Record<string, unknown>): PostRecord {
   };
 }
 
+/** Fetch profiles for a set of author IDs and return a lookup map */
+async function fetchAuthorProfiles(
+  supabase: ReturnType<typeof createSupabaseServerClient>,
+  authorIds: string[]
+): Promise<Record<string, ProfileRecord>> {
+  if (!authorIds.length) return {};
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("id,username,display_name,avatar_url,vibe_score")
+    .in("id", authorIds);
+
+  const map: Record<string, ProfileRecord> = {};
+  for (const p of data ?? []) {
+    map[p.id] = p as ProfileRecord;
+  }
+  return map;
+}
+
 export async function getPosts(limit = 30): Promise<PostRecord[]> {
   const fallbackPosts = getFallbackPosts();
 
@@ -41,44 +62,34 @@ export async function getPosts(limit = 30): Promise<PostRecord[]> {
   try {
     const supabase = createSupabaseServerClient();
 
-    // Try with profiles join first
-    let { data, error } = await supabase
+    const { data, error } = await supabase
       .from("posts")
-      .select(
-        `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at,
-        profiles(id,username,display_name,avatar_url,vibe_score)`
-      )
+      .select(POST_FIELDS)
       .order("created_at", { ascending: false })
       .limit(limit);
 
-    // If join fails (FK mismatch), retry without it
     if (error) {
-      console.error("getPosts join error, retrying without join:", error.message);
-      const retry = await supabase
-        .from("posts")
-        .select(`id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at`)
-        .order("created_at", { ascending: false })
-        .limit(limit);
-      data = retry.data as typeof data;
-      error = retry.error;
-    }
-
-    if (error || !data?.length) {
+      console.error("getPosts error:", error.message);
       return fallbackPosts.slice(0, limit);
     }
 
+    if (!data?.length) {
+      return fallbackPosts.slice(0, limit);
+    }
+
+    // Fetch author profiles separately (avoids FK join issues)
+    const authorIds = Array.from(new Set(
+      data.map((p) => p.author_id as string | null).filter((id): id is string => Boolean(id))
+    ));
+    const profileMap = await fetchAuthorProfiles(supabase, authorIds);
+
     return data.map((row) => {
       const r = row as Record<string, unknown>;
-      const profileArr = r.profiles;
-      const author =
-        Array.isArray(profileArr) && profileArr.length > 0
-          ? (profileArr[0] as ProfileRecord)
-          : profileArr && typeof profileArr === "object"
-          ? (profileArr as ProfileRecord)
-          : null;
-      return normalizePost({ ...r, author });
+      const authorId = r.author_id as string | null;
+      return normalizePost({ ...r, author: authorId ? profileMap[authorId] ?? null : null });
     });
-  } catch {
+  } catch (err) {
+    console.error("getPosts unexpected error:", err);
     return fallbackPosts.slice(0, limit);
   }
 }
@@ -96,64 +107,58 @@ export async function getPostsWithReactions(
   try {
     const supabase = createSupabaseServerClient();
 
-    // Try with profiles join first
-    let { data: posts, error } = await supabase
+    // Fetch posts without profiles join (join fails due to FK mismatch)
+    const { data: posts, error } = await supabase
       .from("posts")
-      .select(
-        `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at,
-        profiles(id,username,display_name,avatar_url,vibe_score)`
-      )
+      .select(POST_FIELDS)
       .order("created_at", { ascending: false })
       .limit(limit);
 
-    // If join fails, retry without it
     if (error) {
-      console.error("getPostsWithReactions join error, retrying:", error.message);
-      const retry = await supabase
-        .from("posts")
-        .select(`id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at`)
-        .order("created_at", { ascending: false })
-        .limit(limit);
-      posts = retry.data as typeof posts;
-      error = retry.error;
+      console.error("getPostsWithReactions error:", error.message);
+      return fallbackPosts.slice(0, limit);
     }
 
-    if (error || !posts?.length) {
+    if (!posts?.length) {
       return fallbackPosts.slice(0, limit);
     }
 
     const postIds = posts.map((p) => p.id);
 
-    // Collect unique author IDs for follow state lookup
-    const authorIds = Array.from(
-      new Set(
-        posts
-          .map((p) => (p as Record<string, unknown>).author_id as string | null)
-          .filter((id): id is string => Boolean(id) && id !== userId)
-      )
-    );
+    // Collect unique author IDs
+    const authorIds = Array.from(new Set(
+      posts
+        .map((p) => (p as Record<string, unknown>).author_id as string | null)
+        .filter((id): id is string => Boolean(id))
+    ));
 
-    const [{ data: allReactions }, { data: userReactions }, { data: commentCounts }, { data: userFollows }] =
+    const otherAuthorIds = authorIds.filter((id) => id !== userId);
+
+    // Fetch author profiles + reactions + comments + follows in parallel
+    const [profileMap, { data: allReactions }, { data: userReactions }, { data: commentCounts }, { data: userFollows }] =
       await Promise.all([
+        fetchAuthorProfiles(supabase, authorIds),
         supabase
           .from("reactions")
           .select("post_id,reaction_type")
           .in("post_id", postIds),
-        supabase
-          .from("reactions")
-          .select("post_id,reaction_type")
-          .eq("user_id", userId)
-          .in("post_id", postIds),
+        userId
+          ? supabase
+              .from("reactions")
+              .select("post_id,reaction_type")
+              .eq("user_id", userId)
+              .in("post_id", postIds)
+          : Promise.resolve({ data: [] }),
         supabase
           .from("comments")
           .select("post_id")
           .in("post_id", postIds),
-        userId && authorIds.length > 0
+        userId && otherAuthorIds.length > 0
           ? supabase
               .from("follows")
               .select("following_id")
               .eq("follower_id", userId)
-              .in("following_id", authorIds)
+              .in("following_id", otherAuthorIds)
           : Promise.resolve({ data: [] }),
       ]);
 
@@ -186,18 +191,10 @@ export async function getPostsWithReactions(
 
     return posts.map((row) => {
       const r = row as Record<string, unknown>;
-      const profileArr = r.profiles;
-      const author =
-        Array.isArray(profileArr) && profileArr.length > 0
-          ? (profileArr[0] as ProfileRecord)
-          : profileArr && typeof profileArr === "object"
-          ? (profileArr as ProfileRecord)
-          : null;
-
       const authorId = r.author_id as string | null;
       return normalizePost({
         ...r,
-        author,
+        author: authorId ? profileMap[authorId] ?? null : null,
         reactions_summary: reactionsMap[r.id as string] ?? {
           sparked: 0,
           fired_up: 0,
@@ -208,7 +205,8 @@ export async function getPostsWithReactions(
         author_is_following: authorId ? followingSet.has(authorId) : false,
       });
     });
-  } catch {
+  } catch (err) {
+    console.error("getPostsWithReactions unexpected error:", err);
     return fallbackPosts.slice(0, limit);
   }
 }

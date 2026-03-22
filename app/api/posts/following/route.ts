@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
-const POSTS_SELECT_WITH_AUTHOR = `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at,
-  profiles(id,username,display_name,avatar_url,vibe_score)`;
-const POSTS_SELECT_PLAIN = `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at`;
+const POST_FIELDS = `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at`;
 
 export async function GET() {
   const supabase = createSupabaseServerClient();
@@ -15,7 +13,6 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Get IDs of users this person follows
   const { data: follows } = await supabase
     .from("follows")
     .select("following_id")
@@ -27,33 +24,30 @@ export async function GET() {
     return NextResponse.json({ posts: [] });
   }
 
-  // Get posts from followed users
-  let { data: postsRaw, error: postsError } = await supabase
+  const { data: posts, error } = await supabase
     .from("posts")
-    .select(POSTS_SELECT_WITH_AUTHOR)
+    .select(POST_FIELDS)
     .in("author_id", followingIds)
     .order("created_at", { ascending: false })
     .limit(30);
 
-  // Fallback if join fails
-  if (postsError) {
-    const retry = await supabase
-      .from("posts")
-      .select(POSTS_SELECT_PLAIN)
-      .in("author_id", followingIds)
-      .order("created_at", { ascending: false })
-      .limit(30);
-    postsRaw = retry.data as typeof postsRaw;
-  }
-
-  const posts = postsRaw;
-
-  if (!posts?.length) {
+  if (error || !posts?.length) {
     return NextResponse.json({ posts: [] });
   }
 
-  const postIds = posts.map((p) => p.id);
+  // Fetch author profiles separately
+  const authorIds = Array.from(new Set(posts.map((p) => p.author_id as string).filter(Boolean)));
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id,username,display_name,avatar_url,vibe_score")
+    .in("id", authorIds);
 
+  const profileMap: Record<string, unknown> = {};
+  for (const p of profiles ?? []) {
+    profileMap[p.id] = p;
+  }
+
+  const postIds = posts.map((p) => p.id);
   const [{ data: userReactions }, { data: commentCounts }] = await Promise.all([
     supabase
       .from("reactions")
@@ -76,14 +70,7 @@ export async function GET() {
 
   const normalized = posts.map((row) => {
     const r = row as Record<string, unknown>;
-    const profileArr = r.profiles;
-    const author =
-      Array.isArray(profileArr) && profileArr.length > 0
-        ? profileArr[0]
-        : profileArr && typeof profileArr === "object"
-        ? profileArr
-        : null;
-
+    const authorId = r.author_id as string | null;
     return {
       id: String(r.id),
       title: String(r.title ?? ""),
@@ -91,8 +78,8 @@ export async function GET() {
       category: String(r.category ?? ""),
       source: String(r.source ?? ""),
       image_url: typeof r.image_url === "string" ? r.image_url : null,
-      author_id: typeof r.author_id === "string" ? r.author_id : null,
-      author,
+      author_id: authorId,
+      author: authorId ? profileMap[authorId] ?? null : null,
       is_user_created: Boolean(r.is_user_created),
       tags: Array.isArray(r.tags) ? r.tags : [],
       views_count: Number(r.views_count ?? 0),

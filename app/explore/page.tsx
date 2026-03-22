@@ -10,16 +10,9 @@ import { Search } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 const CATEGORIES = ["All", "Mindset", "Gym", "Diet", "Books", "Wellness", "Finance"];
+const POST_FIELDS = `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at`;
 
 function normalizeRow(row: Record<string, unknown>): PostRecord {
-  const profileArr = row.profiles;
-  const author =
-    Array.isArray(profileArr) && profileArr.length > 0
-      ? (profileArr[0] as ProfileRecord)
-      : profileArr && typeof profileArr === "object"
-      ? (profileArr as ProfileRecord)
-      : null;
-
   return {
     id: String(row.id),
     title: String(row.title ?? ""),
@@ -28,7 +21,7 @@ function normalizeRow(row: Record<string, unknown>): PostRecord {
     source: String(row.source ?? ""),
     image_url: typeof row.image_url === "string" ? row.image_url : null,
     author_id: typeof row.author_id === "string" ? row.author_id : null,
-    author,
+    author: (row.author as ProfileRecord | null) ?? null,
     is_user_created: Boolean(row.is_user_created),
     tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
     views_count: Number(row.views_count ?? 0),
@@ -40,10 +33,6 @@ function normalizeRow(row: Record<string, unknown>): PostRecord {
     author_is_following: Boolean(row.author_is_following),
   };
 }
-
-const POSTS_SELECT_WITH_AUTHOR = `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at,
-  profiles(id,username,display_name,avatar_url,vibe_score)`;
-const POSTS_SELECT_PLAIN = `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at`;
 
 async function getTrendingPosts(userId: string): Promise<PostRecord[]> {
   if (!isSupabaseConfigured()) return getFallbackPosts();
@@ -69,16 +58,10 @@ async function getTrendingPosts(userId: string): Promise<PostRecord[]> {
   let rawPosts: Record<string, unknown>[] | null = null;
 
   if (topIds.length > 0) {
-    let { data: posts, error } = await supabase
+    const { data: posts } = await supabase
       .from("posts")
-      .select(POSTS_SELECT_WITH_AUTHOR)
+      .select(POST_FIELDS)
       .in("id", topIds);
-
-    // Fallback: retry without join if FK mismatch
-    if (error) {
-      const retry = await supabase.from("posts").select(POSTS_SELECT_PLAIN).in("id", topIds);
-      posts = retry.data as typeof posts;
-    }
 
     if (posts?.length) {
       rawPosts = posts
@@ -88,16 +71,11 @@ async function getTrendingPosts(userId: string): Promise<PostRecord[]> {
 
   // Fall back to most recent posts if no trending
   if (!rawPosts) {
-    let { data: recent, error } = await supabase
+    const { data: recent } = await supabase
       .from("posts")
-      .select(POSTS_SELECT_WITH_AUTHOR)
+      .select(POST_FIELDS)
       .order("created_at", { ascending: false })
       .limit(20);
-
-    if (error) {
-      const retry = await supabase.from("posts").select(POSTS_SELECT_PLAIN).order("created_at", { ascending: false }).limit(20);
-      recent = retry.data as typeof recent;
-    }
 
     if (recent?.length) {
       rawPosts = recent as unknown as Record<string, unknown>[];
@@ -106,15 +84,23 @@ async function getTrendingPosts(userId: string): Promise<PostRecord[]> {
 
   if (!rawPosts?.length) return getFallbackPosts();
 
+  // Fetch author profiles separately
+  const allAuthorIds = Array.from(new Set(
+    rawPosts.map((p) => p.author_id as string | null).filter((id): id is string => Boolean(id))
+  ));
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id,username,display_name,avatar_url,vibe_score")
+    .in("id", allAuthorIds.length > 0 ? allAuthorIds : ["__none__"]);
+
+  const profileMap: Record<string, ProfileRecord> = {};
+  for (const p of profiles ?? []) {
+    profileMap[p.id] = p as ProfileRecord;
+  }
+
   // Fetch user reactions & follow states
   const postIds = rawPosts.map((p) => String(p.id));
-  const authorIds = Array.from(
-    new Set(
-      rawPosts
-        .map((p) => p.author_id as string | null)
-        .filter((id): id is string => Boolean(id) && id !== userId)
-    )
-  );
+  const otherAuthorIds = allAuthorIds.filter((id) => id !== userId);
 
   const [{ data: userReactions }, { data: userFollows }] = await Promise.all([
     userId
@@ -124,12 +110,12 @@ async function getTrendingPosts(userId: string): Promise<PostRecord[]> {
           .eq("user_id", userId)
           .in("post_id", postIds)
       : Promise.resolve({ data: [] }),
-    userId && authorIds.length > 0
+    userId && otherAuthorIds.length > 0
       ? supabase
           .from("follows")
           .select("following_id")
           .eq("follower_id", userId)
-          .in("following_id", authorIds)
+          .in("following_id", otherAuthorIds)
       : Promise.resolve({ data: [] }),
   ]);
 
@@ -148,6 +134,7 @@ async function getTrendingPosts(userId: string): Promise<PostRecord[]> {
     const authorId = row.author_id as string | null;
     return normalizeRow({
       ...row,
+      author: authorId ? profileMap[authorId] ?? null : null,
       user_reactions: urMap[id] ?? [],
       author_is_following: authorId ? followingSet.has(authorId) : false,
     });
@@ -175,7 +162,6 @@ export default async function ExplorePage({
 
   return (
     <main className="relative mx-auto h-screen max-w-md overflow-hidden">
-      {/* Floating header overlay */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 bg-gradient-to-b from-black/70 via-black/40 to-transparent pb-8 pt-4">
         <div className="pointer-events-auto flex items-center justify-between px-4 pb-2">
           <div>
@@ -190,7 +176,6 @@ export default async function ExplorePage({
             <span className="text-xs text-white/50">Search</span>
           </Link>
         </div>
-        {/* Category pills */}
         <div className="pointer-events-auto flex gap-2 overflow-x-auto px-4 py-2 scrollbar-none">
           {CATEGORIES.map((cat) => (
             <Link
@@ -208,7 +193,6 @@ export default async function ExplorePage({
         </div>
       </div>
 
-      {/* Full-screen snap scroll container */}
       <div className="h-screen overflow-y-auto snap-y-mandatory scrollbar-none feed-scroll">
         {filtered.map((post) => (
           <ReelCard key={post.id} post={post} userId={userId} />
