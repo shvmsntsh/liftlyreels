@@ -10,23 +10,25 @@ export async function GET(request: NextRequest) {
     const supabase = createSupabaseServerClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      // Check if profile exists — if not, redirect to profile setup
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: profile } = await supabase
           .from("profiles")
           .select("id")
           .eq("id", user.id)
-          .single();
+          .maybeSingle();
 
         if (!profile) {
-          return NextResponse.redirect(`${origin}/signup/profile?userId=${user.id}`);
+          // Pass invite code from user metadata to profile setup
+          const inviteCode = user.user_metadata?.invite_code || "";
+          const params = new URLSearchParams({ userId: user.id });
+          if (inviteCode) params.set("code", inviteCode);
+          return NextResponse.redirect(`${origin}/signup/profile?${params.toString()}`);
         }
       }
       return NextResponse.redirect(`${origin}${next}`);
     }
   }
 
-  // On error, go back to landing
   return NextResponse.redirect(`${origin}/?error=auth`);
 }

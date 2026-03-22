@@ -33,6 +33,14 @@ function ProfileSetupForm() {
       return;
     }
 
+    // Get invite code from URL params, user metadata, or ask user
+    const code = inviteCode || session?.user?.user_metadata?.invite_code || "";
+    if (!code) {
+      setError("Missing invite code. Please sign up again with an invite code.");
+      setLoading(false);
+      return;
+    }
+
     const res = await fetch("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -41,7 +49,7 @@ function ProfileSetupForm() {
         accessToken,
         username: username.trim().toLowerCase(),
         displayName: displayName.trim(),
-        inviteCode: inviteCode || "SPARK-RISE-001",
+        inviteCode: code,
       }),
     });
 

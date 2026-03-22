@@ -30,6 +30,21 @@ function SignupForm() {
     setLoading(true);
     setError("");
 
+    // ── Validate invite code FIRST (before creating auth account) ──
+    try {
+      const checkRes = await fetch(`/api/auth/check-invite?code=${encodeURIComponent(inviteCode.trim())}`);
+      const checkData = await checkRes.json();
+      if (!checkData.valid) {
+        setError(checkData.message || "Invalid invite code");
+        setLoading(false);
+        return;
+      }
+    } catch {
+      setError("Could not validate invite code. Try again.");
+      setLoading(false);
+      return;
+    }
+
     const supabase = getSupabaseClient();
     if (!supabase) {
       setError("Service unavailable.");
@@ -37,11 +52,14 @@ function SignupForm() {
       return;
     }
 
-    // Try sign-up
+    // Try sign-up (store invite code in user metadata for email confirmation flow)
     const { data, error: authError } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        data: { invite_code: inviteCode.trim() },
+      },
     });
 
     // If email already registered, try signing them in directly
