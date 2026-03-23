@@ -43,7 +43,6 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [currentCategory, setCurrentCategory] = useState<string | null>(null);
   const [trackLabel, setTrackLabel] = useState("");
   const userEnabledRef = useRef(true);
-  const [userEnabled, setUserEnabled] = useState(true);
   const unlockedRef = useRef(false);
   const wantedRef = useRef<{ category: string; trackId?: string | null } | null>(null);
   const pathname = usePathname();
@@ -69,10 +68,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const stored = localStorage.getItem("liftly-audio");
     if (stored === "off") {
-      setUserEnabled(false);
       userEnabledRef.current = false;
     } else {
-      setUserEnabled(true);
       userEnabledRef.current = true;
       if (!stored) localStorage.setItem("liftly-audio", "on");
     }
@@ -163,11 +160,9 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     if (userEnabledRef.current) {
       engine.pause();
       setIsPlaying(false);
-      setUserEnabled(false);
       userEnabledRef.current = false;
       localStorage.setItem("liftly-audio", "off");
     } else {
-      setUserEnabled(true);
       userEnabledRef.current = true;
       localStorage.setItem("liftly-audio", "on");
 

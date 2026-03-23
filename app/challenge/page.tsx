@@ -4,7 +4,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { DailyChallengeBar } from "@/components/DailyChallengeBar";
 import { HowToPlayCard } from "@/components/HowToPlayCard";
 import { DailyChallenge, getBadge, getNextBadge, getStreakRank, getNextStreakRank } from "@/lib/types";
-import { Flame, Trophy, Calendar, Crown, Target, Award, Sparkles, TrendingUp } from "lucide-react";
+import { Flame, Trophy, Crown, Target, Award, Sparkles, TrendingUp } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
