@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase-server";
 
 function getDb(authClient: ReturnType<typeof createSupabaseServerClient>) {
-  return process.env.SUPABASE_SERVICE_ROLE_KEY ? createSupabaseServiceClient() : authClient;
+  try {
+    return createSupabaseServiceClient();
+  } catch {
+    return authClient;
+  }
 }
 
 export async function GET() {
