@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase-server";
 
 export async function GET() {
   const supabase = createSupabaseServerClient();
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // +3 vibe for acting on a reel (even for fallback posts)
+  // Award +3 vibe to actor for acting on a reel
   const { data: profile } = await supabase
     .from("profiles")
     .select("vibe_score")
@@ -64,6 +64,32 @@ export async function POST(request: NextRequest) {
       .from("profiles")
       .update({ vibe_score: (profile.vibe_score ?? 0) + 3 })
       .eq("id", user.id);
+  }
+
+  // Update actor's streak
+  void supabase.rpc("update_user_streak", { user_uuid: user.id });
+
+  // Side effects: notify post owner + award vibe to post owner (non-blocking)
+  if (isRealPost) {
+    const db = process.env.SUPABASE_SERVICE_ROLE_KEY ? createSupabaseServiceClient() : supabase;
+    Promise.all([
+      (async () => {
+        const { data: post } = await db.from("posts").select("author_id").eq("id", postId).single();
+        if (!post?.author_id || post.author_id === user.id) return;
+        await db.from("notifications").insert({
+          user_id: post.author_id,
+          actor_id: user.id,
+          type: "impact",
+          post_id: postId,
+        });
+        const { data: ownerProfile } = await db.from("profiles").select("vibe_score").eq("id", post.author_id).single();
+        if (ownerProfile) {
+          await db.from("profiles")
+            .update({ vibe_score: (ownerProfile.vibe_score ?? 0) + 2 })
+            .eq("id", post.author_id);
+        }
+      })(),
+    ]).catch(() => null);
   }
 
   return NextResponse.json({ entry: { id: isRealPost ? postId : "local" }, success: true });
