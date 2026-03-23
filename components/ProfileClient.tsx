@@ -2,18 +2,31 @@
 
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Copy, Check, Flame, Zap, BookOpen, LogOut, Camera, Sparkles, Settings, Pencil, X, ImagePlus, Loader2 } from "lucide-react";
+import { Copy, Check, Flame, Zap, BookOpen, LogOut, Camera, Sparkles, Settings, Pencil, X, ImagePlus, Loader2, Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ProfileRecord, PostRecord, REEL_GRADIENTS, getStreakRank } from "@/lib/types";
 import { UserAvatar, DEFAULT_AVATARS } from "./UserAvatar";
 import { FollowersSheet } from "./FollowersSheet";
 import { StreakSheet } from "./StreakSheet";
+import { NotificationsSheet } from "./NotificationsSheet";
 import { getSupabaseClient } from "@/lib/supabase";
 import clsx from "clsx";
 
 // Changelog entries — update this with each deploy
 const CHANGELOG = [
+  {
+    version: "v1.6",
+    date: "Mar 23, 2026",
+    entries: [
+      "Activity notifications — see who sparked, commented, or followed you",
+      "Notification bell in feed header and profile with unread badge",
+      "Tap notifications to jump directly to the relevant reel",
+      "Engagement loop — every reaction, comment, follow, and impact awards vibe and streak",
+      "Post owners earn vibe when others interact with their reels",
+      "Fixed comments (Talk) — now works reliably on all devices",
+    ],
+  },
   {
     version: "v1.5",
     date: "Mar 22, 2026",
@@ -107,6 +120,8 @@ export function ProfileClient({
   const [uploadError, setUploadError] = useState("");
   const [followSheet, setFollowSheet] = useState<"followers" | "following" | null>(null);
   const [showStreakSheet, setShowStreakSheet] = useState(false);
+  const [showNotifSheet, setShowNotifSheet] = useState(false);
+  const [notifUnread, setNotifUnread] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -299,6 +314,17 @@ export function ProfileClient({
         {/* Top actions overlaying banner */}
         {isOwnProfile && (
           <div className="absolute top-3 right-3 flex gap-2 z-10">
+            <button
+              onClick={() => setShowNotifSheet(true)}
+              className="relative flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-black/30 backdrop-blur-md text-white/70 transition hover:text-white hover:bg-black/50"
+            >
+              <Bell className="h-3.5 w-3.5" />
+              {notifUnread > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-sky-500 px-1 text-[9px] font-bold leading-none text-white">
+                  {notifUnread > 9 ? "9+" : notifUnread}
+                </span>
+              )}
+            </button>
             <Link
               href="/settings"
               className="flex items-center gap-1.5 rounded-full border border-white/15 bg-black/30 backdrop-blur-md px-3 py-1.5 text-xs text-white/70 transition hover:text-white hover:bg-black/50"
@@ -855,6 +881,13 @@ export function ProfileClient({
         currentStreak={profile.streak_current}
         longestStreak={profile.streak_longest}
         lastActive={profile.streak_last_active}
+      />
+
+      {/* Notifications Sheet */}
+      <NotificationsSheet
+        isOpen={showNotifSheet}
+        onClose={() => setShowNotifSheet(false)}
+        onUnreadChange={setNotifUnread}
       />
     </div>
   );

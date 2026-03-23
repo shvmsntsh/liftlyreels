@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Search } from "lucide-react";
+import { Search, Bell } from "lucide-react";
 import Link from "next/link";
 import { ReelCard } from "./ReelCard";
 import { DailyChallengeBar } from "./DailyChallengeBar";
 import { TourOverlay } from "./TourOverlay";
+import { NotificationsSheet } from "./NotificationsSheet";
 import { PostRecord, DailyChallenge } from "@/lib/types";
 import clsx from "clsx";
 
@@ -22,6 +23,8 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
   const [tab, setTab] = useState<Tab>("foryou");
   const [followingPosts, setFollowingPosts] = useState<PostRecord[] | null>(null);
   const [loadingFollowing, setLoadingFollowing] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Update streak once per day when user visits feed
   useEffect(() => {
@@ -30,6 +33,14 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
     if (lastStreakDate === today) return;
     localStorage.setItem("liftly-streak-date", today);
     fetch("/api/streak", { method: "POST" }).catch(() => null);
+  }, []);
+
+  // Fetch unread notification count on mount
+  useEffect(() => {
+    fetch("/api/notifications")
+      .then((r) => r.json())
+      .then((data) => setUnreadCount(data.unreadCount ?? 0))
+      .catch(() => null);
   }, []);
 
   async function loadFollowing() {
@@ -56,7 +67,7 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
   return (
     <div className="h-screen overflow-y-auto snap-y-mandatory scrollbar-none feed-scroll">
       <TourOverlay />
-      {/* Header with tabs and search */}
+      {/* Header with tabs, search, and notifications */}
       <div className="snap-start sticky top-0 z-30 flex items-center justify-center gap-2 pt-4 pb-2 px-4 bg-transparent pointer-events-none">
         <div className="pointer-events-auto flex gap-1 rounded-full border border-white/10 bg-black/40 px-1 py-1 backdrop-blur-md">
           {(["foryou", "following"] as Tab[]).map((t) => (
@@ -80,6 +91,17 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
         >
           <Search className="h-3.5 w-3.5 text-white/70" />
         </Link>
+        <button
+          onClick={() => setNotifOpen(true)}
+          className="pointer-events-auto relative flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/40 backdrop-blur-md"
+        >
+          <Bell className="h-3.5 w-3.5 text-white/70" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-sky-500 px-1 text-[9px] font-bold leading-none text-white">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Daily challenge (for you tab only) */}
@@ -125,6 +147,12 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
           )}
         </>
       )}
+
+      <NotificationsSheet
+        isOpen={notifOpen}
+        onClose={() => setNotifOpen(false)}
+        onUnreadChange={setUnreadCount}
+      />
     </div>
   );
 }

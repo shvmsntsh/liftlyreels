@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase-server";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
@@ -33,7 +33,6 @@ export async function POST(request: NextRequest) {
 
   if (existing) {
     await supabase.from("reactions").delete().eq("id", existing.id);
-
     return NextResponse.json({ action: "removed" });
   } else {
     await supabase.from("reactions").insert({
@@ -42,8 +41,28 @@ export async function POST(request: NextRequest) {
       reaction_type: reactionType,
     });
 
-    // Update streak for current user when they react
-    await supabase.rpc("update_user_streak", { user_uuid: user.id });
+    // Side effects: streak for reactor + notify/vibe for post owner (non-blocking)
+    const db = process.env.SUPABASE_SERVICE_ROLE_KEY ? createSupabaseServiceClient() : supabase;
+    Promise.all([
+      supabase.rpc("update_user_streak", { user_uuid: user.id }),
+      (async () => {
+        const { data: post } = await db.from("posts").select("author_id").eq("id", postId).single();
+        if (!post?.author_id || post.author_id === user.id) return;
+        await db.from("notifications").insert({
+          user_id: post.author_id,
+          actor_id: user.id,
+          type: "reaction",
+          post_id: postId,
+          reaction_type: reactionType,
+        });
+        const { data: ownerProfile } = await db.from("profiles").select("vibe_score").eq("id", post.author_id).single();
+        if (ownerProfile) {
+          await db.from("profiles")
+            .update({ vibe_score: (ownerProfile.vibe_score ?? 0) + 1 })
+            .eq("id", post.author_id);
+        }
+      })(),
+    ]).catch(() => null);
 
     return NextResponse.json({ action: "added" });
   }
