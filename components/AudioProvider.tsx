@@ -38,6 +38,7 @@ const AUDIO_PAGES = ["/feed", "/explore"];
 
 export function AudioProvider({ children }: { children: React.ReactNode }) {
   const engineRef = useRef<AudioEngine | null>(null);
+  const audioElRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<string | null>(null);
   const [trackLabel, setTrackLabel] = useState("");
@@ -55,6 +56,14 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }
     return engineRef.current;
   }
+
+  // Bind DOM <audio> element to engine on mount
+  const audioRefCallback = useCallback((el: HTMLAudioElement | null) => {
+    audioElRef.current = el;
+    if (el) {
+      getEngine().setElement(el);
+    }
+  }, []);
 
   // Load stored preference
   useEffect(() => {
@@ -74,24 +83,26 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     if (unlockedRef.current) return;
 
     function unlock() {
+      if (unlockedRef.current) return;
       const engine = getEngine();
-      engine.unlock().then(() => {
-        unlockedRef.current = true;
-        const w = wantedRef.current;
-        if (
-          w &&
-          userEnabledRef.current &&
-          AUDIO_PAGES.includes(pathnameRef.current)
-        ) {
-          engine.play(w.category, w.trackId).then((ok) => {
-            if (ok) {
-              setIsPlaying(true);
-              setCurrentCategory(w.category);
-              setTrackLabel(engine.trackLabel);
-            }
-          });
-        }
-      });
+      // unlock() is synchronous — must be called inside the gesture handler directly
+      engine.unlock();
+      unlockedRef.current = true;
+
+      const w = wantedRef.current;
+      if (
+        w &&
+        userEnabledRef.current &&
+        AUDIO_PAGES.includes(pathnameRef.current)
+      ) {
+        engine.play(w.category, w.trackId).then((ok) => {
+          if (ok) {
+            setIsPlaying(true);
+            setCurrentCategory(w.category);
+            setTrackLabel(engine.trackLabel);
+          }
+        });
+      }
     }
 
     const events = ["touchstart", "touchend", "click", "keydown"];
@@ -158,19 +169,20 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     } else {
       setUserEnabled(true);
       userEnabledRef.current = true;
-      unlockedRef.current = true;
       localStorage.setItem("liftly-audio", "on");
+
+      // Unlock synchronously inside this click handler
+      engine.unlock();
+      unlockedRef.current = true;
 
       const w = wantedRef.current;
       if (w && AUDIO_PAGES.includes(pathnameRef.current)) {
-        engine.unlock().then(() => {
-          engine.play(w.category, w.trackId).then((ok) => {
-            setIsPlaying(ok);
-            if (ok) {
-              setCurrentCategory(w.category);
-              setTrackLabel(engine.trackLabel);
-            }
-          });
+        engine.play(w.category, w.trackId).then((ok) => {
+          setIsPlaying(ok);
+          if (ok) {
+            setCurrentCategory(w.category);
+            setTrackLabel(engine.trackLabel);
+          }
         });
       }
     }
@@ -183,6 +195,14 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       value={{ isPlaying, currentCategory, trackLabel, play, pause, toggle }}
     >
       {children}
+      {/* DOM-rendered <audio> element for iOS Safari compatibility */}
+      <audio
+        ref={audioRefCallback}
+        loop
+        playsInline
+        preload="auto"
+        style={{ display: "none" }}
+      />
       {showToggle && (
         <AudioToggleButton
           isPlaying={isPlaying}

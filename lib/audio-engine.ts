@@ -1,6 +1,7 @@
 /**
  * Audio engine that plays locally-hosted ambient WAV files.
- * Uses a single HTML Audio element for iOS compatibility.
+ * Accepts an external DOM <audio> element for iOS compatibility.
+ * iOS Safari requires the audio element to be rendered in JSX (not new Audio()).
  */
 
 import { getDefaultTrack, getTrackById, type AudioTrack } from "./audio-tracks";
@@ -10,36 +11,28 @@ export class AudioEngine {
   private _currentTrackId: string | null = null;
   private _currentCategory: string | null = null;
   private _isPlaying = false;
-  private unlocked = false;
 
-  private ensureAudio(): HTMLAudioElement {
-    if (!this.audio) {
-      this.audio = new Audio();
-      this.audio.loop = true;
-      this.audio.preload = "auto";
-      this.audio.volume = 0.5;
-    }
-    return this.audio;
+  /** Bind to a DOM-rendered <audio> element */
+  setElement(el: HTMLAudioElement): void {
+    this.audio = el;
   }
 
-  /** Unlock audio on iOS (call from a user gesture handler) */
-  async unlock(): Promise<void> {
-    if (this.unlocked) return;
-    const el = this.ensureAudio();
-    try {
-      el.muted = true;
-      // Use a tiny silence data URI to unlock
-      const prevSrc = el.src;
-      el.src =
-        "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
-      await el.play();
-      el.pause();
-      el.muted = false;
-      el.currentTime = 0;
-      if (prevSrc) el.src = prevSrc;
-      this.unlocked = true;
-    } catch {
-      // Silently fail — will retry on next gesture
+  /** Unlock audio on iOS (call synchronously inside a user gesture handler) */
+  unlock(): void {
+    const el = this.audio;
+    if (!el) return;
+    // iOS requires play() to be called synchronously in a gesture handler.
+    // Play muted silence to prime the element, then immediately pause.
+    el.muted = true;
+    const p = el.play();
+    if (p) {
+      p.then(() => {
+        el.pause();
+        el.muted = false;
+        el.currentTime = 0;
+      }).catch(() => {
+        el.muted = false;
+      });
     }
   }
 
@@ -48,9 +41,10 @@ export class AudioEngine {
     category: string,
     trackId?: string | null
   ): Promise<boolean> {
-    try {
-      const el = this.ensureAudio();
+    const el = this.audio;
+    if (!el) return false;
 
+    try {
       // Resolve which track to play
       let track: AudioTrack | undefined;
       if (trackId) {
@@ -76,6 +70,7 @@ export class AudioEngine {
       }
 
       this._currentCategory = category;
+      el.muted = false;
       await el.play();
       this._isPlaying = true;
       return true;
@@ -91,16 +86,6 @@ export class AudioEngine {
       this.audio.pause();
     }
     this._isPlaying = false;
-  }
-
-  /** Set volume (0-1) */
-  setVolume(v: number): void {
-    const el = this.ensureAudio();
-    el.volume = Math.max(0, Math.min(1, v));
-  }
-
-  get volume(): number {
-    return this.audio?.volume ?? 0.5;
   }
 
   get isPlaying(): boolean {
@@ -124,10 +109,12 @@ export class AudioEngine {
   destroy(): void {
     if (this.audio) {
       this.audio.pause();
-      this.audio.src = "";
-      this.audio = null;
+      this.audio.removeAttribute("src");
+      this.audio.load();
     }
     this._isPlaying = false;
     this._currentTrackId = null;
+    this._currentCategory = null;
+    this.audio = null;
   }
 }

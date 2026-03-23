@@ -85,6 +85,53 @@ export const CATEGORIES = [
 
 export type Category = (typeof CATEGORIES)[number];
 
+// Challenge badge tiers — unlocked by total challenge completions
+export const CHALLENGE_BADGES = [
+  { name: "Rookie", min: 0, icon: "🌱", color: "#94a3b8" },
+  { name: "Bronze", min: 7, icon: "🥉", color: "#cd7f32" },
+  { name: "Silver", min: 30, icon: "🥈", color: "#c0c0c0" },
+  { name: "Gold", min: 100, icon: "🥇", color: "#fbbf24" },
+  { name: "Diamond", min: 365, icon: "💎", color: "#60a5fa" },
+  { name: "Legend", min: 1000, icon: "👑", color: "#f59e0b" },
+] as const;
+
+export function getBadge(completions: number) {
+  for (let i = CHALLENGE_BADGES.length - 1; i >= 0; i--) {
+    if (completions >= CHALLENGE_BADGES[i].min) return CHALLENGE_BADGES[i];
+  }
+  return CHALLENGE_BADGES[0];
+}
+
+export function getNextBadge(completions: number) {
+  for (const badge of CHALLENGE_BADGES) {
+    if (completions < badge.min) return badge;
+  }
+  return null;
+}
+
+// Streak ranks — based on consecutive active days
+export const STREAK_RANKS = [
+  { name: "Rookie", min: 0, icon: "🌱", color: "#94a3b8" },
+  { name: "Warrior", min: 3, icon: "⚔️", color: "#f97316" },
+  { name: "Champion", min: 7, icon: "🏆", color: "#eab308" },
+  { name: "Legend", min: 14, icon: "🔥", color: "#ef4444" },
+  { name: "Immortal", min: 30, icon: "⭐", color: "#a855f7" },
+] as const;
+
+export function getStreakRank(streak: number) {
+  for (let i = STREAK_RANKS.length - 1; i >= 0; i--) {
+    if (streak >= STREAK_RANKS[i].min) return STREAK_RANKS[i];
+  }
+  return STREAK_RANKS[0];
+}
+
+export function getNextStreakRank(streak: number) {
+  for (const rank of STREAK_RANKS) {
+    if (streak < rank.min) return rank;
+  }
+  return null;
+}
+
 export const REEL_GRADIENTS: Record<string, { from: string; to: string; label: string }> = {
   ocean: { from: "#0c4a6e", to: "#0f172a", label: "Ocean" },
   sunset: { from: "#7c2d12", to: "#1c0a00", label: "Sunset" },

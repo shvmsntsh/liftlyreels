@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Search } from "lucide-react";
 import Link from "next/link";
 import { ReelCard } from "./ReelCard";
 import { DailyChallengeBar } from "./DailyChallengeBar";
+import { TourOverlay } from "./TourOverlay";
 import { PostRecord, DailyChallenge } from "@/lib/types";
 import clsx from "clsx";
 
@@ -21,6 +22,15 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
   const [tab, setTab] = useState<Tab>("foryou");
   const [followingPosts, setFollowingPosts] = useState<PostRecord[] | null>(null);
   const [loadingFollowing, setLoadingFollowing] = useState(false);
+
+  // Update streak once per day when user visits feed
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    const lastStreakDate = localStorage.getItem("liftly-streak-date");
+    if (lastStreakDate === today) return;
+    localStorage.setItem("liftly-streak-date", today);
+    fetch("/api/streak", { method: "POST" }).catch(() => null);
+  }, []);
 
   async function loadFollowing() {
     if (followingPosts !== null) return;
@@ -45,6 +55,7 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
 
   return (
     <div className="h-screen overflow-y-auto snap-y-mandatory scrollbar-none feed-scroll">
+      <TourOverlay />
       {/* Header with tabs and search */}
       <div className="snap-start sticky top-0 z-30 flex items-center justify-center gap-2 pt-4 pb-2 px-4 bg-transparent pointer-events-none">
         <div className="pointer-events-auto flex gap-1 rounded-full border border-white/10 bg-black/40 px-1 py-1 backdrop-blur-md">
