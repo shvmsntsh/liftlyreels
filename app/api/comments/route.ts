@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabase
     .from("comments")
-    .select("id,user_id,post_id,content,created_at,profiles(id,username,display_name,avatar_url)")
+    .select("id,user_id,post_id,content,created_at")
     .eq("post_id", postId)
     .order("created_at", { ascending: true })
     .limit(50);
@@ -24,7 +24,31 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ comments: data ?? [] });
+  const comments = data ?? [];
+
+  // Fetch profiles separately (comments.user_id references auth.users, not profiles)
+  const userIds = Array.from(new Set(comments.map((c) => c.user_id)));
+  let profilesMap: Record<string, { id: string; username: string; display_name: string | null; avatar_url: string | null }> = {};
+
+  if (userIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id,username,display_name,avatar_url")
+      .in("id", userIds);
+
+    if (profiles) {
+      for (const p of profiles) {
+        profilesMap[p.id] = p;
+      }
+    }
+  }
+
+  const enriched = comments.map((c) => ({
+    ...c,
+    profile: profilesMap[c.user_id] ?? { id: c.user_id, username: "unknown", display_name: null, avatar_url: null },
+  }));
+
+  return NextResponse.json({ comments: enriched });
 }
 
 export async function POST(request: NextRequest) {
@@ -54,14 +78,26 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase
     .from("comments")
     .insert({ user_id: user.id, post_id: postId, content: content.trim() })
-    .select("id,user_id,post_id,content,created_at,profiles(id,username,display_name,avatar_url)")
+    .select("id,user_id,post_id,content,created_at")
     .single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ comment: data });
+  // Fetch the commenter's profile separately
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id,username,display_name,avatar_url")
+    .eq("id", user.id)
+    .single();
+
+  const enriched = {
+    ...data,
+    profile: profile ?? { id: user.id, username: "unknown", display_name: null, avatar_url: null },
+  };
+
+  return NextResponse.json({ comment: enriched });
 }
 
 export async function DELETE(request: NextRequest) {

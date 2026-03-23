@@ -14,6 +14,7 @@ function SignupForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [inviteCode, setInviteCode] = useState(urlCode);
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -29,6 +30,12 @@ function SignupForm() {
     e.preventDefault();
     setLoading(true);
     setError("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      setLoading(false);
+      return;
+    }
 
     // ── Validate invite code FIRST (before creating auth account) ──
     try {
@@ -312,6 +319,26 @@ function SignupForm() {
                 </button>
               </div>
             </div>
+            <div>
+              <label htmlFor="su-confirm-pass" className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-slate-500">
+                Confirm Password
+              </label>
+              <input
+                id="su-confirm-pass"
+                type={showPass ? "text" : "password"}
+                name="confirm-password"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Re-enter password"
+                minLength={8}
+                className="w-full rounded-[14px] border border-white/8 bg-slate-900 px-4 py-3.5 text-[14px] text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
+                required
+              />
+              {confirmPassword.length > 0 && password !== confirmPassword && (
+                <p className="mt-1 text-[11px] text-rose-400">Passwords do not match</p>
+              )}
+            </div>
 
             {error && (
               <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
@@ -320,7 +347,7 @@ function SignupForm() {
 
             <button
               type="submit"
-              disabled={loading || !email || password.length < 8 || !inviteCode.trim()}
+              disabled={loading || !email || password.length < 8 || password !== confirmPassword || !inviteCode.trim()}
               className="flex w-full items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-sky-500 to-blue-600 py-4 text-[14px] font-bold text-white shadow-[0_4px_20px_rgba(56,189,248,0.3)] transition-all hover:brightness-110 disabled:opacity-50 disabled:shadow-none tap-highlight"
             >
               {loading ? "Creating account..." : <>Continue <ArrowRight className="h-4 w-4" /></>}

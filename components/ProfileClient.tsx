@@ -5,13 +5,33 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Copy, Check, Flame, Zap, BookOpen, LogOut, Camera, Sparkles, Settings, Pencil, X, ImagePlus, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ProfileRecord, PostRecord, REEL_GRADIENTS } from "@/lib/types";
+import { ProfileRecord, PostRecord, REEL_GRADIENTS, getStreakRank } from "@/lib/types";
 import { UserAvatar, DEFAULT_AVATARS } from "./UserAvatar";
+import { FollowersSheet } from "./FollowersSheet";
+import { StreakSheet } from "./StreakSheet";
 import { getSupabaseClient } from "@/lib/supabase";
 import clsx from "clsx";
 
 // Changelog entries — update this with each deploy
 const CHANGELOG = [
+  {
+    version: "v1.5",
+    date: "Mar 22, 2026",
+    entries: [
+      "Fixed audio playback on all reels (iOS Safari compatible)",
+      "Fixed comments (Talk) not loading or posting",
+      "Added confirm password field on signup",
+      "Streaks now update daily when visiting feed",
+      "Challenge system overhaul — daily auto-generated challenges",
+      "Badge progress system (Rookie to Legend)",
+      "Streak ranks (Warrior, Champion, Legend, Immortal)",
+      "How to Play card for challenge newcomers",
+      "First-time user tour with step-by-step walkthrough",
+      "Clickable profile stats — view followers, following, streak details",
+      "Curated audio and background picker for reel creation",
+      "Design polish with gradient banners and glass-morphism",
+    ],
+  },
   {
     version: "v1.4",
     date: "Mar 21, 2026",
@@ -85,6 +105,8 @@ export function ProfileClient({
   const [localPosts, setLocalPosts] = useState<PostRecord[]>(posts);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [followSheet, setFollowSheet] = useState<"followers" | "following" | null>(null);
+  const [showStreakSheet, setShowStreakSheet] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -270,31 +292,32 @@ export function ProfileClient({
 
   return (
     <div>
-      {/* Header bg gradient */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(56,189,248,0.12),transparent)]" />
-
-      <div className="relative mx-auto max-w-md px-4 pt-10">
-        {/* Top actions */}
+      {/* Gradient cover banner */}
+      <div className="relative h-28 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-sky-600/40 via-purple-600/30 to-blue-900/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--background)] to-transparent" />
+        {/* Top actions overlaying banner */}
         {isOwnProfile && (
-          <div className="flex justify-end gap-2 mb-4">
+          <div className="absolute top-3 right-3 flex gap-2 z-10">
             <Link
               href="/settings"
-              className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs transition"
-              style={{ borderColor: "var(--border)", color: "var(--muted)" }}
+              className="flex items-center gap-1.5 rounded-full border border-white/15 bg-black/30 backdrop-blur-md px-3 py-1.5 text-xs text-white/70 transition hover:text-white hover:bg-black/50"
             >
               <Settings className="h-3.5 w-3.5" />
               Settings
             </Link>
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs transition"
-              style={{ borderColor: "var(--border)", color: "var(--muted)" }}
+              className="flex items-center gap-1.5 rounded-full border border-white/15 bg-black/30 backdrop-blur-md px-3 py-1.5 text-xs text-white/70 transition hover:text-white hover:bg-black/50"
             >
               <LogOut className="h-3.5 w-3.5" />
               Sign out
             </button>
           </div>
         )}
+      </div>
+
+      <div className="relative mx-auto max-w-md px-4 -mt-10">
 
         {/* Avatar + name */}
         <div className="flex items-start gap-4">
@@ -445,45 +468,45 @@ export function ProfileClient({
           )}
         </AnimatePresence>
 
-        {/* Stats row */}
+        {/* Stats row — clickable */}
         <div className="mt-5 grid grid-cols-4 gap-2">
           {[
-            { label: "Reels", value: profile.posts_count ?? 0 },
-            { label: "Followers", value: followerCount },
-            { label: "Following", value: profile.following_count ?? 0 },
-            { label: "Vibe", value: profile.vibe_score },
-          ].map(({ label, value }) => (
-            <div key={label} className="rounded-xl border p-2 text-center"
-              style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
+            { label: "Reels", value: profile.posts_count ?? 0, onClick: undefined },
+            { label: "Followers", value: followerCount, onClick: () => setFollowSheet("followers") },
+            { label: "Following", value: profile.following_count ?? 0, onClick: () => setFollowSheet("following") },
+            { label: "Vibe", value: profile.vibe_score, onClick: undefined },
+          ].map(({ label, value, onClick }) => (
+            <button
+              key={label}
+              onClick={onClick}
+              disabled={!onClick}
+              className="rounded-xl p-2 text-center transition tap-highlight disabled:cursor-default hover:bg-white/8 backdrop-blur-xl"
+              style={{ border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)" }}
+            >
               <div className="text-base font-bold text-foreground">{value}</div>
               <div className="text-[10px] text-slate-500">{label}</div>
-            </div>
+            </button>
           ))}
         </div>
 
-        {/* Streak */}
-        <div className="mt-3 flex items-center gap-3 rounded-xl border border-orange-400/15 bg-orange-950/20 px-4 py-2.5">
+        {/* Streak — clickable */}
+        <button
+          onClick={() => setShowStreakSheet(true)}
+          className="mt-3 flex w-full items-center gap-3 rounded-xl border border-orange-400/15 bg-orange-950/20 px-4 py-2.5 text-left transition tap-highlight hover:bg-orange-950/30"
+        >
           <Flame className="h-4 w-4 text-orange-400 fill-current" />
           <div className="flex-1">
             <div className="text-sm font-bold text-foreground">
               {profile.streak_current} day streak
             </div>
             <div className="text-[11px] text-slate-500">
-              Longest: {profile.streak_longest} days
+              {getStreakRank(profile.streak_current).icon} {getStreakRank(profile.streak_current).name} · Longest: {profile.streak_longest} days
             </div>
           </div>
           <div className="text-xl">
-            {profile.streak_current >= 30
-              ? "\u{1F3C6}"
-              : profile.streak_current >= 14
-              ? "\u{1F48E}"
-              : profile.streak_current >= 7
-              ? "\u{1F525}"
-              : profile.streak_current >= 3
-              ? "\u{26A1}"
-              : "\u{1F331}"}
+            {getStreakRank(profile.streak_current).icon}
           </div>
-        </div>
+        </button>
 
         {/* Follow button (not own profile) */}
         {!isOwnProfile && currentUserId && (
@@ -816,6 +839,23 @@ export function ProfileClient({
           </div>
         )}
       </div>
+
+      {/* Followers/Following Sheet */}
+      <FollowersSheet
+        userId={profile.id}
+        type={followSheet ?? "followers"}
+        isOpen={followSheet !== null}
+        onClose={() => setFollowSheet(null)}
+      />
+
+      {/* Streak Details Sheet */}
+      <StreakSheet
+        isOpen={showStreakSheet}
+        onClose={() => setShowStreakSheet(false)}
+        currentStreak={profile.streak_current}
+        longestStreak={profile.streak_longest}
+        lastActive={profile.streak_last_active}
+      />
     </div>
   );
 }
