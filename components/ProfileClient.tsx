@@ -554,14 +554,14 @@ export function ProfileClient({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm"
+                  className="fixed inset-0 z-[110] flex items-end justify-center bg-black/60 backdrop-blur-sm"
                   onClick={(e) => e.target === e.currentTarget && setEditingPost(null)}
                 >
                   <motion.div
                     initial={{ y: 40 }}
                     animate={{ y: 0 }}
                     exit={{ y: 40 }}
-                    className="w-full max-w-md rounded-t-3xl border-t border-[var(--border)] bg-[var(--surface-1)] p-5 pb-10"
+                    className="w-full max-w-md rounded-t-3xl border-t border-[var(--border)] bg-[var(--surface-1)] p-5 pb-safe overflow-y-auto max-h-[85vh]"
                   >
                     <h3 className="mb-4 text-sm font-bold text-foreground">Edit Reel</h3>
                     <div className="space-y-3">

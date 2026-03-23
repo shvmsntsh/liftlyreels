@@ -21,14 +21,14 @@ export function StreakSheet({ isOpen, onClose, currentStreak, longestStreak, las
       {isOpen && (
         <>
           <motion.div
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[105] bg-black/60 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
           />
           <motion.div
-            className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-md rounded-t-3xl backdrop-blur-xl"
+            className="fixed inset-x-0 bottom-0 z-[110] mx-auto max-w-md rounded-t-3xl backdrop-blur-xl"
             style={{ backgroundColor: "var(--surface-1)", border: "1px solid var(--border)" }}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
