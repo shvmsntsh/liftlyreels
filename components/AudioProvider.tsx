@@ -109,16 +109,52 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     return () => events.forEach((e) => document.removeEventListener(e, unlock));
   }, []);
 
-  // Pause when leaving audio pages
+  // Pause when leaving audio pages — always call pause() regardless of isPlaying flag
   useEffect(() => {
     if (!AUDIO_PAGES.includes(pathname)) {
-      const engine = engineRef.current;
-      if (engine?.isPlaying) {
-        engine.pause();
-        setIsPlaying(false);
-      }
+      engineRef.current?.pause();
+      setIsPlaying(false);
     }
   }, [pathname]);
+
+  // Pause when tab is hidden / app backgrounded; resume when tab comes back
+  useEffect(() => {
+    function onVisibilityChange() {
+      if (document.hidden) {
+        engineRef.current?.pause();
+        setIsPlaying(false);
+      } else if (
+        AUDIO_PAGES.includes(pathnameRef.current) &&
+        userEnabledRef.current &&
+        wantedRef.current
+      ) {
+        // Coming back to tab while on feed/explore — resume last track
+        const engine = engineRef.current;
+        const w = wantedRef.current;
+        if (engine && w) {
+          engine.play(w.category, w.trackId).then((ok) => {
+            setIsPlaying(ok);
+            if (ok) {
+              setCurrentCategory(w.category);
+              setTrackLabel(engine.trackLabel);
+            }
+          });
+        }
+      }
+    }
+
+    function onPageHide() {
+      engineRef.current?.pause();
+      setIsPlaying(false);
+    }
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("pagehide", onPageHide);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("pagehide", onPageHide);
+    };
+  }, []);
 
   // Cleanup
   useEffect(() => {
