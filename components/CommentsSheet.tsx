@@ -27,6 +27,7 @@ export function CommentsSheet({ postId, isOpen, onClose, commentsCount, onCountC
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,9 +35,9 @@ export function CommentsSheet({ postId, isOpen, onClose, commentsCount, onCountC
     setLoading(true);
     fetch(`/api/comments?postId=${postId}`)
       .then((r) => r.json())
-      .then(({ comments }) => {
-        setComments(comments ?? []);
-        onCountChange(comments?.length ?? 0);
+      .then((data) => {
+        setComments(data.comments ?? []);
+        onCountChange(data.comments?.length ?? 0);
       })
       .finally(() => setLoading(false));
   }, [isOpen, postId]);
@@ -50,18 +51,23 @@ export function CommentsSheet({ postId, isOpen, onClose, commentsCount, onCountC
   async function handleSend() {
     if (!text.trim() || sending) return;
     setSending(true);
+    setSendError("");
     try {
       const res = await fetch("/api/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ postId, content: text.trim() }),
       });
-      const { comment } = await res.json();
-      if (comment) {
-        setComments((prev) => [...prev, comment]);
+      const data = await res.json();
+      if (data.comment) {
+        setComments((prev) => [...prev, data.comment]);
         onCountChange(comments.length + 1);
         setText("");
+      } else {
+        setSendError(data.error ?? "Failed to post comment. Please try again.");
       }
+    } catch {
+      setSendError("Network error. Please try again.");
     } finally {
       setSending(false);
     }
@@ -125,6 +131,9 @@ export function CommentsSheet({ postId, isOpen, onClose, commentsCount, onCountC
               <div ref={bottomRef} />
             </div>
 
+            {sendError && (
+              <p className="px-5 py-1.5 text-[12px] text-rose-400 bg-rose-500/10">{sendError}</p>
+            )}
             <div className="px-4 py-3 pb-safe" style={{ borderTop: "1px solid var(--border)" }}>
               <div
                 className="flex items-center gap-2 rounded-2xl px-3 py-2"

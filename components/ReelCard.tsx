@@ -159,9 +159,6 @@ export function ReelCard({ post, userId }: Props) {
     setTimeout(() => setShareLabel("Share"), 2000);
   }
 
-  // Condense content to a single elegant line
-  const subtitle = post.content[0] ?? "";
-
   return (
     <>
       <article
@@ -184,18 +181,18 @@ export function ReelCard({ post, userId }: Props) {
           />
         )}
 
-        {/* Gradient vignette overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/10" />
+        {/* Deep gradient — more opaque at bottom to support content */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/10" />
         {/* Top glow */}
         <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/40 to-transparent" />
 
         {/* Bottom content */}
-        <div className="relative z-10 flex items-end gap-3 px-5 pb-28 pt-8">
+        <div className="relative z-10 flex items-end gap-3 px-4 pb-28 pt-8">
           {/* Main content */}
           <div className="flex-1 min-w-0">
-            {/* Category badge */}
-            <div className="mb-3 flex items-center gap-2 flex-wrap">
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-0.5 text-[11px] font-bold uppercase tracking-[0.15em] text-white backdrop-blur-sm">
+            {/* Category + community badges */}
+            <div className="mb-2.5 flex items-center gap-2 flex-wrap">
+              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-white backdrop-blur-sm">
                 {post.category}
               </span>
               {post.is_user_created && (
@@ -206,24 +203,37 @@ export function ReelCard({ post, userId }: Props) {
             </div>
 
             {/* Title */}
-            <h2 className="text-[1.7rem] font-black leading-[1.12] tracking-tight text-white drop-shadow-lg text-balance">
+            <h2 className="text-[1.55rem] font-black leading-[1.15] tracking-tight text-white drop-shadow-lg">
               {post.title}
             </h2>
 
-            {/* Single elegant subtitle */}
-            {subtitle && (
-              <motion.p
-                initial={{ opacity: 0, y: 6 }}
+            {/* Content points — all shown in frosted glass card */}
+            {post.content.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1, duration: 0.4 }}
-                className="mt-2.5 text-[14.5px] leading-[1.5] text-white/75 font-medium tracking-wide"
-                style={{ textWrap: "pretty" }}
+                transition={{ delay: 0.08, duration: 0.35 }}
+                className="mt-3 rounded-2xl overflow-hidden"
+                style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}
               >
-                {subtitle}
-              </motion.p>
+                {post.content.map((line, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-2.5 px-3.5 py-2.5"
+                    style={i > 0 ? { borderTop: "1px solid rgba(255,255,255,0.06)" } : undefined}
+                  >
+                    <span className="mt-0.5 flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white/50">
+                      {i + 1}
+                    </span>
+                    <p className="text-[13.5px] leading-[1.45] text-white/90 font-medium">
+                      {line}
+                    </p>
+                  </div>
+                ))}
+              </motion.div>
             )}
 
-            {/* Clickable tags */}
+            {/* Tags */}
             {post.tags && post.tags.length > 0 && (
               <div className="mt-2.5 flex flex-wrap gap-1.5">
                 {post.tags.slice(0, 4).map((tag) => (
@@ -239,28 +249,25 @@ export function ReelCard({ post, userId }: Props) {
             )}
 
             {/* Author + follow row */}
-            <div className="mt-4 flex items-center gap-3">
+            <div className="mt-3 flex items-center gap-3">
               {post.author ? (
                 <>
                   <Link
                     href={`/profile/${post.author.username}`}
-                    className="flex items-center gap-2.5 min-w-0"
+                    className="flex items-center gap-2 min-w-0"
                   >
                     <UserAvatar
                       username={post.author.username}
                       avatarUrl={post.author.avatar_url}
-                      size="md"
+                      size="sm"
                     />
                     <div className="min-w-0">
-                      <p className="text-[13px] font-bold text-white truncate">
+                      <p className="text-[12px] font-bold text-white truncate">
                         {post.author.display_name ?? post.author.username}
                       </p>
-                      <p className="text-[11px] text-white/50">
-                        @{post.author.username}
-                      </p>
+                      <p className="text-[10px] text-white/45">@{post.author.username}</p>
                     </div>
                   </Link>
-                  {/* Follow button on reel */}
                   {userId && post.author.id !== userId && (
                     <button
                       onClick={handleFollow}
@@ -271,11 +278,7 @@ export function ReelCard({ post, userId }: Props) {
                           : "bg-sky-500 text-white shadow-[0_2px_8px_rgba(56,189,248,0.3)]"
                       )}
                     >
-                      {isFollowing ? (
-                        <><UserCheck className="h-3 w-3" /> Following</>
-                      ) : (
-                        <><UserPlus className="h-3 w-3" /> Follow</>
-                      )}
+                      {isFollowing ? <><UserCheck className="h-3 w-3" /> Following</> : <><UserPlus className="h-3 w-3" /> Follow</>}
                     </button>
                   )}
                 </>
