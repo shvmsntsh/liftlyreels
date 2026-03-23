@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
   // Fetch profiles separately (comments.user_id references auth.users, not profiles)
   const userIds = Array.from(new Set(comments.map((c) => c.user_id)));
-  let profilesMap: Record<string, { id: string; username: string; display_name: string | null; avatar_url: string | null }> = {};
+  const profilesMap: Record<string, { id: string; username: string; display_name: string | null; avatar_url: string | null }> = {};
 
   if (userIds.length > 0) {
     const { data: profiles } = await supabase
