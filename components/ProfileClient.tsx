@@ -16,6 +16,18 @@ import clsx from "clsx";
 // Changelog entries — update this with each deploy
 const CHANGELOG = [
   {
+    version: "v1.7",
+    date: "Mar 27, 2026",
+    entries: [
+      "Full light mode — every screen adapts to system theme",
+      "Fixed streak 'Longest' display showing 0 when streak is active",
+      "Fixed reel posting stuck on 'Posting...' — network errors now surface correctly",
+      "Fixed comments input hidden behind iPhone keyboard — sheet lifts above keyboard",
+      "Fixed audio unlock race condition — sound now plays reliably on iOS",
+      "iOS comments: tap 'Send' on keyboard to post without needing to reach the button",
+    ],
+  },
+  {
     version: "v1.6",
     date: "Mar 23, 2026",
     entries: [

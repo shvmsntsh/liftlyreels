@@ -99,29 +99,34 @@ export default function CreatePage() {
       .filter(Boolean)
       .slice(0, 5);
 
-    const res = await fetch("/api/posts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: title.trim(),
-        content: validBullets,
-        category,
-        tags: tagList,
-        gradient,
-        audio_track: audioTrack,
-        image_url: imageUrl,
-      }),
-    });
+    try {
+      const res = await fetch("/api/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: title.trim(),
+          content: validBullets,
+          category,
+          tags: tagList,
+          gradient,
+          audio_track: audioTrack,
+          image_url: imageUrl,
+        }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok || data.error) {
-      setError(data.error ?? "Failed to post reel");
+      if (!res.ok || data.error) {
+        setError(data.error ?? "Failed to post reel");
+        setLoading(false);
+        return;
+      }
+
+      window.location.href = "/feed";
+    } catch {
+      setError("Network error. Please check your connection and try again.");
       setLoading(false);
-      return;
     }
-
-    window.location.href = "/feed";
   }
 
   const gradientStyle = REEL_GRADIENTS[gradient] ?? REEL_GRADIENTS.ocean;

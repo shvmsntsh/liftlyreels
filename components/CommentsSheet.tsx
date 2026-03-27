@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send } from "lucide-react";
 import { CommentRecord } from "@/lib/types";
@@ -28,7 +28,27 @@ export function CommentsSheet({ postId, isOpen, onClose, commentsCount, onCountC
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Track keyboard height via visualViewport (iOS Safari compatible)
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    const vv = typeof window !== "undefined" ? window.visualViewport : null;
+    if (!vv) return;
+    function update() {
+      const offset = window.innerHeight - vv!.offsetTop - vv!.height;
+      setKeyboardOffset(Math.max(0, offset));
+    }
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    update();
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+      setKeyboardOffset(0);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -85,8 +105,12 @@ export function CommentsSheet({ postId, isOpen, onClose, commentsCount, onCountC
             onClick={onClose}
           />
           <motion.div
-            className="fixed inset-x-0 bottom-0 z-[110] mx-auto max-w-md rounded-t-3xl backdrop-blur-xl"
-            style={{ backgroundColor: "var(--surface-1)", border: "1px solid var(--border)" }}
+            className="fixed inset-x-0 z-[110] mx-auto max-w-md rounded-t-3xl backdrop-blur-xl"
+            style={{
+              backgroundColor: "var(--surface-1)",
+              border: "1px solid var(--border)",
+              bottom: keyboardOffset,
+            }}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
@@ -146,6 +170,7 @@ export function CommentsSheet({ postId, isOpen, onClose, commentsCount, onCountC
                   placeholder="Add a positive thought..."
                   className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted outline-none"
                   onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                  enterKeyHint="send"
                 />
                 <span className="text-[10px] text-slate-600">{text.length}/200</span>
                 <button
