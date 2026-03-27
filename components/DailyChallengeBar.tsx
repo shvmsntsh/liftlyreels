@@ -93,7 +93,7 @@ export function DailyChallengeBar({ challenge, fullPage }: Props) {
           </div>
         </div>
 
-        <h2 className="mt-4 text-2xl font-bold leading-snug text-white">
+        <h2 className="mt-4 text-2xl font-bold leading-snug text-foreground">
           {challenge.challenge_text}
         </h2>
 
@@ -131,7 +131,7 @@ export function DailyChallengeBar({ challenge, fullPage }: Props) {
                     onChange={(e) => setNote(e.target.value.slice(0, 140))}
                     placeholder="Briefly share what you did or plan to do..."
                     rows={3}
-                    className="w-full resize-none rounded-xl px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none focus:border-orange-400/40"
+                    className="w-full resize-none rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted outline-none focus:border-orange-400/40"
                     style={{
                       backgroundColor: "var(--surface-2)",
                       border: "1px solid var(--border)",

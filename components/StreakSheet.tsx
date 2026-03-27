@@ -36,11 +36,11 @@ export function StreakSheet({ isOpen, onClose, currentStreak, longestStreak, las
             transition={{ type: "spring", damping: 30, stiffness: 400 }}
           >
             <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--border)" }}>
-              <h3 className="text-base font-semibold text-white flex items-center gap-2">
+              <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
                 <Flame className="h-5 w-5 text-orange-400" />
                 Streak Details
               </h3>
-              <button onClick={onClose} className="rounded-full p-1.5 text-slate-400 hover:text-white">
+              <button onClick={onClose} className="rounded-full p-1.5 text-muted hover:text-foreground">
                 <X className="h-5 w-5" />
               </button>
             </div>

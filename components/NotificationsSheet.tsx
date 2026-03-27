@@ -60,7 +60,7 @@ function iconBg(type: string, reactionType: string | null): string {
   if (reactionType === "sparked") return "bg-amber-500/20 text-amber-400";
   if (reactionType === "fired_up") return "bg-orange-500/20 text-orange-400";
   if (reactionType === "bookmarked") return "bg-sky-500/20 text-sky-400";
-  return "bg-white/10 text-white/60";
+  return "bg-[var(--surface-2)] text-muted";
 }
 
 type Props = {
@@ -121,11 +121,11 @@ export function NotificationsSheet({ isOpen, onClose, onUnreadChange }: Props) {
               className="flex items-center justify-between px-5 py-4"
               style={{ borderBottom: "1px solid var(--border)" }}
             >
-              <h3 className="text-base font-semibold text-white flex items-center gap-2">
+              <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
                 <Bell className="h-4.5 w-4.5 text-sky-400" />
                 Activity
               </h3>
-              <button onClick={onClose} className="rounded-full p-1.5 text-slate-400 hover:text-white">
+              <button onClick={onClose} className="rounded-full p-1.5 text-muted hover:text-foreground">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -163,7 +163,7 @@ export function NotificationsSheet({ isOpen, onClose, onUnreadChange }: Props) {
 
                     {/* Text */}
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm leading-snug ${n.read ? "text-slate-300" : "text-white font-medium"}`}>
+                      <p className={`text-sm leading-snug ${n.read ? "text-muted" : "text-foreground font-medium"}`}>
                         {notificationText(n)}
                       </p>
                       {n.post?.title && (

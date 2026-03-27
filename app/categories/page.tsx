@@ -30,7 +30,7 @@ export default async function CategoriesPage() {
 
       <div className="relative mb-6">
         <p className="text-xs font-semibold uppercase tracking-widest text-sky-400">Browse</p>
-        <h1 className="mt-1 text-3xl font-black text-white">Categories</h1>
+        <h1 className="mt-1 text-3xl font-black text-foreground">Categories</h1>
         <p className="mt-1 text-sm text-slate-400">
           Focused knowledge drops for every part of your life
         </p>
@@ -52,7 +52,7 @@ export default async function CategoriesPage() {
               <div className="flex items-center gap-3">
                 <span className="text-2xl">{meta.emoji}</span>
                 <div>
-                  <p className="font-bold text-white">{name}</p>
+                  <p className="font-bold text-foreground">{name}</p>
                   <p className="text-xs text-slate-400">{meta.tagline}</p>
                 </div>
               </div>

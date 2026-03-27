@@ -225,7 +225,7 @@ export default async function ChallengePage() {
       >
         <div className="mx-auto flex max-w-md items-center justify-between">
           <div>
-            <h1 className="text-lg font-bold text-white flex items-center gap-2">
+            <h1 className="text-lg font-bold text-foreground flex items-center gap-2">
               <Target className="h-5 w-5 text-orange-400" />
               Daily Challenges
             </h1>
@@ -248,15 +248,15 @@ export default async function ChallengePage() {
         <div
           className="rounded-2xl p-4 backdrop-blur-sm"
           style={{
-            backgroundColor: "rgba(255,255,255,0.03)",
-            border: "1px solid rgba(255,255,255,0.08)",
+            backgroundColor: "var(--glass-bg)",
+            border: "1px solid var(--glass-border)",
           }}
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <span className="text-2xl">{badge.icon}</span>
               <div>
-                <p className="text-sm font-bold text-white">{badge.name} Badge</p>
+                <p className="text-sm font-bold text-foreground">{badge.name} Badge</p>
                 <p className="text-[11px] text-slate-500">{totalCompletions} total completions</p>
               </div>
             </div>
@@ -312,8 +312,8 @@ export default async function ChallengePage() {
               key={label}
               className="rounded-2xl p-3 text-center backdrop-blur-sm"
               style={{
-                backgroundColor: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                backgroundColor: "var(--glass-bg)",
+                border: "1px solid var(--glass-border)",
               }}
             >
               <Icon className={`mx-auto mb-1 h-4 w-4 ${color}`} />
@@ -344,8 +344,8 @@ export default async function ChallengePage() {
           <div
             className="rounded-2xl p-4 backdrop-blur-sm"
             style={{
-              backgroundColor: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              backgroundColor: "var(--glass-bg)",
+              border: "1px solid var(--glass-border)",
             }}
           >
             <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-400">
@@ -357,7 +357,7 @@ export default async function ChallengePage() {
                 <div key={u.username} className="text-center">
                   <div className={`text-lg font-bold ${podiumColors[i]}`}>{podiumLabels[i]}</div>
                   <div
-                    className="mx-auto mt-1 h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold text-white"
+                    className="mx-auto mt-1 h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold text-foreground"
                     style={{ backgroundColor: "var(--surface-3)" }}
                   >
                     {u.avatar_url ? (
@@ -381,8 +381,8 @@ export default async function ChallengePage() {
           <div
             className="rounded-2xl p-4 backdrop-blur-sm"
             style={{
-              backgroundColor: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              backgroundColor: "var(--glass-bg)",
+              border: "1px solid var(--glass-border)",
             }}
           >
             <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -395,7 +395,7 @@ export default async function ChallengePage() {
                 <div key={u.username} className="flex items-center gap-3 py-2">
                   <span className="w-5 text-sm font-bold text-slate-500">{i + 1}</span>
                   <div
-                    className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold text-white overflow-hidden"
+                    className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold text-foreground overflow-hidden"
                     style={{ backgroundColor: "var(--surface-3)" }}
                   >
                     {u.avatar_url ? (
@@ -437,8 +437,8 @@ export default async function ChallengePage() {
                     c.user_completed
                       ? undefined
                       : {
-                          backgroundColor: "rgba(255,255,255,0.03)",
-                          border: "1px solid rgba(255,255,255,0.08)",
+                          backgroundColor: "var(--glass-bg)",
+                          border: "1px solid var(--glass-border)",
                         }
                   }
                 >

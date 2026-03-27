@@ -14,7 +14,7 @@ export function SectionHeader({
       <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-300/80">
         {eyebrow}
       </p>
-      <h1 className="mt-3 text-3xl font-bold text-white">{title}</h1>
+      <h1 className="mt-3 text-3xl font-bold text-foreground">{title}</h1>
       <p className="mt-2 text-sm leading-6 text-slate-400">{description}</p>
     </header>
   );

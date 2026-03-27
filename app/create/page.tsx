@@ -146,7 +146,7 @@ export default function CreatePage() {
               "flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition",
               preview
                 ? "border-sky-400/40 bg-sky-400/10 text-sky-300"
-                : "border-[var(--border)] text-slate-400 hover:text-white"
+                : "border-[var(--border)] text-muted hover:text-foreground"
             )}
           >
             <Eye className="h-3.5 w-3.5" />
@@ -243,7 +243,7 @@ export default function CreatePage() {
                       "rounded-full border px-3 py-1 text-xs font-semibold transition",
                       category === cat
                         ? "border-sky-400/50 bg-sky-400/15 text-sky-300"
-                        : "border-[var(--border)] text-slate-400 hover:text-white"
+                        : "border-[var(--border)] text-muted hover:text-foreground"
                     )}
                   >
                     {cat}
@@ -447,7 +447,7 @@ function TrackRow({
           "flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition",
           playing
             ? "bg-sky-500 text-white"
-            : "bg-white/5 text-slate-400 hover:text-white"
+            : "bg-white/5 text-muted hover:text-foreground"
         )}
       >
         {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 ml-0.5" />}

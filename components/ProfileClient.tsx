@@ -507,7 +507,7 @@ export function ProfileClient({
               onClick={onClick}
               disabled={!onClick}
               className="rounded-xl p-2 text-center transition tap-highlight disabled:cursor-default hover:bg-white/8 backdrop-blur-xl"
-              style={{ border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)" }}
+              style={{ border: "1px solid var(--border)", background: "var(--glass-bg)" }}
             >
               <div className="text-base font-bold text-foreground">{value}</div>
               <div className="text-[10px] text-slate-500">{label}</div>
@@ -523,10 +523,10 @@ export function ProfileClient({
           <Flame className="h-4 w-4 text-orange-400 fill-current" />
           <div className="flex-1">
             <div className="text-sm font-bold text-foreground">
-              {profile.streak_current} day streak
+              {profile.streak_current} {profile.streak_current === 1 ? "day" : "days"} streak
             </div>
             <div className="text-[11px] text-slate-500">
-              {getStreakRank(profile.streak_current).icon} {getStreakRank(profile.streak_current).name} · Longest: {profile.streak_longest} days
+              {getStreakRank(profile.streak_current).icon} {getStreakRank(profile.streak_current).name} · Longest: {Math.max(profile.streak_current, profile.streak_longest ?? 0)} {Math.max(profile.streak_current, profile.streak_longest ?? 0) === 1 ? "day" : "days"}
             </div>
           </div>
           <div className="text-xl">
@@ -541,7 +541,7 @@ export function ProfileClient({
             className={clsx(
               "mt-4 w-full rounded-xl py-3 text-sm font-bold transition",
               following
-                ? "border border-white/20 bg-transparent text-white hover:bg-white/5"
+                ? "border border-[var(--border)] bg-transparent text-foreground hover:bg-[var(--surface-2)]"
                 : "bg-sky-500 text-white hover:bg-sky-400"
             )}
           >
@@ -771,7 +771,7 @@ export function ProfileClient({
                 {profile.invite_code && (
                   <button
                     onClick={() => copyCode(profile.invite_code!)}
-                    className="text-slate-400 hover:text-white"
+                    className="text-muted hover:text-foreground"
                   >
                     {copiedCode === profile.invite_code ? (
                       <Check className="h-4 w-4 text-emerald-400" />
@@ -819,7 +819,7 @@ export function ProfileClient({
                       </button>
                       <button
                         onClick={() => copyCode(ic.code)}
-                        className="text-slate-400 hover:text-white"
+                        className="text-muted hover:text-foreground"
                       >
                         {copiedCode === ic.code ? (
                           <Check className="h-4 w-4 text-emerald-400" />
@@ -879,7 +879,7 @@ export function ProfileClient({
         isOpen={showStreakSheet}
         onClose={() => setShowStreakSheet(false)}
         currentStreak={profile.streak_current}
-        longestStreak={profile.streak_longest}
+        longestStreak={Math.max(profile.streak_current, profile.streak_longest ?? 0)}
         lastActive={profile.streak_last_active}
       />
 

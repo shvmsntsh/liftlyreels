@@ -61,7 +61,7 @@ export function ImpactModal({ postTitle, postId, isOpen, onClose, onLogged }: Pr
           >
             <button
               onClick={onClose}
-              className="absolute right-4 top-4 text-slate-400 hover:text-white"
+              className="absolute right-4 top-4 text-slate-400 hover:text-foreground"
             >
               <X className="h-4 w-4" />
             </button>
@@ -87,7 +87,7 @@ export function ImpactModal({ postTitle, postId, isOpen, onClose, onLogged }: Pr
               onChange={(e) => setAction(e.target.value.slice(0, 140))}
               placeholder="e.g. I woke up 30 mins earlier and hit the gym..."
               rows={3}
-              className="w-full resize-none rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none focus:border-amber-400/40"
+              className="w-full resize-none rounded-xl border border-white/10 bg-[var(--input-bg)] px-3 py-2 text-sm text-foreground placeholder:text-muted outline-none focus:border-amber-400/40"
             />
             <div className="mb-3 text-right text-[10px] text-slate-600">{action.length}/140</div>
 

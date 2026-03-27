@@ -62,7 +62,7 @@ export default function LoginPage() {
         className="w-full max-w-sm"
       >
         <div className="mb-8 text-center">
-          <Link href="/" className="text-4xl font-black text-white hover:text-sky-300 transition">
+          <Link href="/" className="text-4xl font-black text-foreground hover:text-sky-400 transition">
             Liftly
           </Link>
           <p className="mt-2 text-sm text-slate-400">Welcome back. Keep the streak going.</p>
@@ -82,7 +82,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full rounded-[14px] border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-[14px] text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
+                className="w-full rounded-[14px] border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-[14px] text-foreground placeholder:text-muted outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
                 required
               />
             </div>
@@ -97,7 +97,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-[14px] border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 pr-11 text-[14px] text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
+                  className="w-full rounded-[14px] border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 pr-11 text-[14px] text-foreground placeholder:text-muted outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
                   required
                 />
                 <button
