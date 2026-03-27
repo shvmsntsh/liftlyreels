@@ -22,18 +22,13 @@ export class AudioEngine {
     const el = this.audio;
     if (!el) return;
     // iOS requires play() to be called synchronously in a gesture handler.
-    // Play muted silence to prime the element, then immediately pause.
+    // Play muted silence to prime the element — do NOT pause, as engine.play()
+    // will immediately take over by setting a new src. Pausing here races with
+    // the real play() call and silences it.
     el.muted = true;
-    const p = el.play();
-    if (p) {
-      p.then(() => {
-        el.pause();
-        el.muted = false;
-        el.currentTime = 0;
-      }).catch(() => {
-        el.muted = false;
-      });
-    }
+    el.play().catch(() => {});
+    // Unmute immediately so engine.play() inherits the correct state
+    el.muted = false;
   }
 
   /** Play a specific track by ID, or the default track for a category */
