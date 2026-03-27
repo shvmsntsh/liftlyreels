@@ -523,10 +523,10 @@ export function ProfileClient({
           <Flame className="h-4 w-4 text-orange-400 fill-current" />
           <div className="flex-1">
             <div className="text-sm font-bold text-foreground">
-              {profile.streak_current} day streak
+              {profile.streak_current} {profile.streak_current === 1 ? "day" : "days"} streak
             </div>
             <div className="text-[11px] text-slate-500">
-              {getStreakRank(profile.streak_current).icon} {getStreakRank(profile.streak_current).name} · Longest: {profile.streak_longest} days
+              {getStreakRank(profile.streak_current).icon} {getStreakRank(profile.streak_current).name} · Longest: {Math.max(profile.streak_current, profile.streak_longest ?? 0)} {Math.max(profile.streak_current, profile.streak_longest ?? 0) === 1 ? "day" : "days"}
             </div>
           </div>
           <div className="text-xl">
@@ -879,7 +879,7 @@ export function ProfileClient({
         isOpen={showStreakSheet}
         onClose={() => setShowStreakSheet(false)}
         currentStreak={profile.streak_current}
-        longestStreak={profile.streak_longest}
+        longestStreak={Math.max(profile.streak_current, profile.streak_longest ?? 0)}
         lastActive={profile.streak_last_active}
       />
 

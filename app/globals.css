@@ -2,40 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Light mode (default) ── */
+/* ── Dark mode (default — dark-first app) ── */
 :root {
-  --background: #ffffff;
-  --foreground: #0f172a;
-  --muted: #64748b;
-  --surface-1: #f8fafc;
-  --surface-2: #f1f5f9;
-  --surface-3: #e2e8f0;
-  --panel: #ffffff;
-  --panel-strong: #f8fafc;
-  --line: rgba(0, 0, 0, 0.06);
-  --border: rgba(0, 0, 0, 0.08);
-  --border-hover: rgba(0, 0, 0, 0.15);
-  --accent: #0284c7;
-  --accent-hover: #0369a1;
-  --accent-soft: rgba(2, 132, 199, 0.1);
-  --success: #059669;
-  --warning: #d97706;
-  --danger: #dc2626;
-  --on-accent: #ffffff;
+  --background: #050816;
+  --foreground: #f7f8fc;
+  --muted: #94a3b8;
+  --surface-1: #0c1425;
+  --surface-2: #111b2e;
+  --surface-3: #182338;
+  --panel: #0f172a;
+  --panel-strong: #111827;
+  --line: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.15);
+  --accent: #38bdf8;
+  --accent-hover: #7dd3fc;
+  --accent-soft: rgba(56, 189, 248, 0.12);
+  --success: #34d399;
+  --warning: #fb923c;
+  --danger: #f87171;
+  --on-accent: #050816;
   --nav-height: 72px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --nav-bg: rgba(255, 255, 255, 0.92);
-  --nav-border: rgba(0, 0, 0, 0.08);
-  --nav-text: #334155;
-  --nav-text-active: #0284c7;
-  --input-bg: #f1f5f9;
-  --card-bg: #ffffff;
-  --card-border: rgba(0, 0, 0, 0.06);
-  color-scheme: light;
+  --nav-bg: rgba(8, 15, 30, 0.95);
+  --nav-border: rgba(255, 255, 255, 0.08);
+  --nav-text: #94a3b8;
+  --nav-text-active: #38bdf8;
+  --input-bg: #111b2e;
+  --card-bg: #0c1425;
+  --card-border: rgba(255, 255, 255, 0.06);
+  color-scheme: dark;
 }
 
-/* ── Dark mode ── */
-@media (prefers-color-scheme: dark) {
+/* ── Light mode override ── */
+@media (prefers-color-scheme: light) {
   :root {
     --background: #050816;
     --foreground: #f7f8fc;
