@@ -39,7 +39,7 @@ export function HowToPlayCard() {
             </p>
             <button
               onClick={dismiss}
-              className="rounded-full p-1 text-slate-500 hover:text-white transition"
+              className="rounded-full p-1 text-muted hover:text-foreground transition"
             >
               <X className="h-4 w-4" />
             </button>

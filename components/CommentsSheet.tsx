@@ -93,10 +93,10 @@ export function CommentsSheet({ postId, isOpen, onClose, commentsCount, onCountC
             transition={{ type: "spring", damping: 30, stiffness: 400 }}
           >
             <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--border)" }}>
-              <h3 className="text-base font-semibold text-white">
+              <h3 className="text-base font-semibold text-foreground">
                 Comments {commentsCount > 0 && <span className="text-slate-400">({commentsCount})</span>}
               </h3>
-              <button onClick={onClose} className="rounded-full p-1.5 text-slate-400 hover:text-white">
+              <button onClick={onClose} className="rounded-full p-1.5 text-muted hover:text-foreground">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -118,12 +118,12 @@ export function CommentsSheet({ postId, isOpen, onClose, commentsCount, onCountC
                     />
                     <div className="flex-1">
                       <div className="flex items-baseline gap-2">
-                        <span className="text-xs font-semibold text-white">
+                        <span className="text-xs font-semibold text-foreground">
                           {c.profile?.display_name ?? c.profile?.username ?? "User"}
                         </span>
                         <span className="text-[10px] text-slate-500">{timeAgo(c.created_at)}</span>
                       </div>
-                      <p className="mt-0.5 text-sm text-slate-200 leading-5">{c.content}</p>
+                      <p className="mt-0.5 text-sm text-muted leading-5">{c.content}</p>
                     </div>
                   </div>
                 ))
@@ -144,7 +144,7 @@ export function CommentsSheet({ postId, isOpen, onClose, commentsCount, onCountC
                   value={text}
                   onChange={(e) => setText(e.target.value.slice(0, 200))}
                   placeholder="Add a positive thought..."
-                  className="flex-1 bg-transparent text-sm text-white placeholder:text-slate-500 outline-none"
+                  className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted outline-none"
                   onKeyDown={(e) => e.key === "Enter" && handleSend()}
                 />
                 <span className="text-[10px] text-slate-600">{text.length}/200</span>

@@ -173,7 +173,7 @@ function SignupForm() {
         <div className="mb-4 mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-400/20">
           <Check className="h-8 w-8 text-emerald-400" />
         </div>
-        <h2 className="text-2xl font-bold text-white">You&apos;re in!</h2>
+        <h2 className="text-2xl font-bold text-foreground">You&apos;re in!</h2>
         <p className="mt-2 text-slate-400">Taking you to your feed...</p>
       </motion.div>
     );
@@ -190,7 +190,7 @@ function SignupForm() {
         <div className="mb-5 mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-sky-400/15 border border-sky-400/30">
           <Mail className="h-7 w-7 text-sky-300" />
         </div>
-        <h2 className="text-2xl font-bold text-white">Check your email</h2>
+        <h2 className="text-2xl font-bold text-foreground">Check your email</h2>
         <p className="mt-2 text-[15px] text-slate-400 leading-relaxed">
           We sent a confirmation link to
         </p>
@@ -198,7 +198,7 @@ function SignupForm() {
         <p className="mt-4 text-[13px] text-slate-500 leading-relaxed max-w-xs mx-auto">
           Click the link in the email to confirm your account. You&apos;ll be taken back here to finish setting up your profile.
         </p>
-        <div className="mt-8 rounded-2xl border border-white/8 bg-slate-950/60 p-4 text-left">
+        <div className="mt-8 rounded-2xl border border-[var(--border)] bg-[var(--surface-1)] p-4 text-left">
           <p className="text-[12px] text-slate-500 mb-1 font-semibold uppercase tracking-wider">Having issues?</p>
           <p className="text-[12px] text-slate-400">Check your spam folder, or{" "}
             <button
@@ -226,7 +226,7 @@ function SignupForm() {
             You&apos;re invited
           </motion.div>
         )}
-        <Link href="/" className="text-[36px] font-black text-white hover:text-sky-300 transition block">
+        <Link href="/" className="text-[36px] font-black text-foreground hover:text-sky-400 transition block">
           Liftly
         </Link>
         <p className="mt-1 text-[13px] text-slate-500">
@@ -242,7 +242,7 @@ function SignupForm() {
               "flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-all",
               step === s ? "bg-sky-500 text-white shadow-[0_0_12px_rgba(56,189,248,0.5)]"
                 : s === "account" && step === "profile" ? "bg-sky-500/80 text-white"
-                : "border border-white/15 text-slate-600"
+                : "border border-[var(--border)] text-muted"
             )}>
               {s === "account" && step === "profile" ? <Check className="h-3.5 w-3.5" /> : i + 1}
             </div>
@@ -251,7 +251,7 @@ function SignupForm() {
         ))}
       </div>
 
-      <div className="rounded-[24px] border border-white/8 bg-slate-950/70 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-2xl">
+      <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-1)] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.3)] backdrop-blur-2xl">
         {/* ── Step 1: Account ── */}
         {step === "account" && (
           <form onSubmit={handleAccountStep} className="space-y-3.5" autoComplete="on">
@@ -312,7 +312,7 @@ function SignupForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Min 8 characters"
                   minLength={8}
-                  className="w-full rounded-[14px] border border-white/8 bg-slate-900 px-4 py-3.5 pr-12 text-[14px] text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
+                  className="w-full rounded-[14px] border border-[var(--border)] bg-[var(--input-bg)] px-4 py-3.5 pr-12 text-[14px] text-foreground placeholder:text-muted outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
                   required
                 />
                 <button
@@ -321,7 +321,7 @@ function SignupForm() {
                     e.preventDefault(); // prevent focus shift
                     setShowPass((v) => !v);
                   }}
-                  className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-center text-slate-500 hover:text-white transition-colors z-10 tap-highlight"
+                  className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-center text-slate-500 hover:text-foreground transition-colors z-10 tap-highlight"
                   tabIndex={-1}
                   aria-label={showPass ? "Hide password" : "Show password"}
                 >
@@ -354,19 +354,19 @@ function SignupForm() {
                   placeholder="Re-enter password"
                   minLength={8}
                   className={clsx(
-                    "w-full rounded-[14px] border bg-slate-900 px-4 py-3.5 pr-12 text-[14px] text-white placeholder:text-slate-600 outline-none transition-all",
+                    "w-full rounded-[14px] border bg-[var(--input-bg)] px-4 py-3.5 pr-12 text-[14px] text-foreground placeholder:text-muted outline-none transition-all",
                     confirmPassword.length > 0 && password !== confirmPassword
                       ? "border-rose-500/50 focus:border-rose-500/70"
                       : confirmPassword.length > 0 && password === confirmPassword
                       ? "border-emerald-500/40 focus:border-emerald-500/60"
-                      : "border-white/8 focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)]"
+                      : "border-[var(--border)] focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)]"
                   )}
                   required
                 />
                 <button
                   type="button"
                   onPointerDown={(e) => { e.preventDefault(); setShowConfirmPass((v) => !v); }}
-                  className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-center text-slate-500 hover:text-white transition-colors z-10"
+                  className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-center text-slate-500 hover:text-foreground transition-colors z-10"
                   tabIndex={-1}
                   aria-label={showConfirmPass ? "Hide password" : "Show password"}
                 >
@@ -424,7 +424,7 @@ function SignupForm() {
                   onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
                   placeholder="yourhandle"
                   maxLength={20}
-                  className="w-full rounded-[14px] border border-white/8 bg-slate-900 pl-8 pr-4 py-3.5 text-[14px] text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
+                  className="w-full rounded-[14px] border border-[var(--border)] bg-[var(--input-bg)] pl-8 pr-4 py-3.5 text-[14px] text-foreground placeholder:text-muted outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
                   required
                 />
               </div>

@@ -70,7 +70,7 @@ function ProfileSetupForm() {
         <div className="mb-4 mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-400/20">
           <Check className="h-8 w-8 text-emerald-400" />
         </div>
-        <h2 className="text-2xl font-bold text-white">You&apos;re in!</h2>
+        <h2 className="text-2xl font-bold text-foreground">You&apos;re in!</h2>
         <p className="mt-2 text-slate-400">Taking you to your feed...</p>
       </div>
     );
@@ -79,11 +79,11 @@ function ProfileSetupForm() {
   return (
     <>
       <div className="mb-8 text-center">
-        <h1 className="text-4xl font-black text-white">Liftly</h1>
+        <h1 className="text-4xl font-black text-foreground">Liftly</h1>
         <p className="mt-2 text-[13px] text-slate-500">Email confirmed! Set up your profile.</p>
       </div>
 
-      <div className="rounded-[24px] border border-white/8 bg-slate-950/70 p-6 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
+      <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-1)] p-6 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
         <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
           <div>
             <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-slate-500">Username</label>
@@ -95,7 +95,7 @@ function ProfileSetupForm() {
                 onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
                 placeholder="yourhandle"
                 maxLength={20}
-                className="w-full rounded-[14px] border border-white/8 bg-slate-900 pl-8 pr-4 py-3.5 text-[14px] text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 transition-all"
+                className="w-full rounded-[14px] border border-[var(--border)] bg-[var(--input-bg)] pl-8 pr-4 py-3.5 text-[14px] text-foreground placeholder:text-muted outline-none focus:border-sky-400/50 transition-all"
                 required
               />
             </div>
@@ -108,7 +108,7 @@ function ProfileSetupForm() {
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="How you want to appear"
               maxLength={40}
-              className="w-full rounded-[14px] border border-white/8 bg-slate-900 px-4 py-3.5 text-[14px] text-white placeholder:text-slate-600 outline-none focus:border-sky-400/50 transition-all"
+              className="w-full rounded-[14px] border border-[var(--border)] bg-[var(--input-bg)] px-4 py-3.5 text-[14px] text-foreground placeholder:text-muted outline-none focus:border-sky-400/50 transition-all"
               required
             />
           </div>

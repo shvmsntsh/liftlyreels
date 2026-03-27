@@ -73,10 +73,10 @@ export function FollowersSheet({ userId, type, isOpen, onClose }: Props) {
             transition={{ type: "spring", damping: 30, stiffness: 400 }}
           >
             <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--border)" }}>
-              <h3 className="text-base font-semibold text-white capitalize">
+              <h3 className="text-base font-semibold text-foreground capitalize">
                 {type} {users.length > 0 && <span className="text-slate-400">({users.length})</span>}
               </h3>
-              <button onClick={onClose} className="rounded-full p-1.5 text-slate-400 hover:text-white">
+              <button onClick={onClose} className="rounded-full p-1.5 text-muted hover:text-foreground">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -99,7 +99,7 @@ export function FollowersSheet({ userId, type, isOpen, onClose }: Props) {
                       />
                     </Link>
                     <Link href={`/profile/${u.username}`} onClick={onClose} className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-white truncate">
+                      <p className="text-sm font-semibold text-foreground truncate">
                         {u.display_name ?? u.username}
                       </p>
                       <p className="text-xs text-slate-500">@{u.username}</p>
@@ -110,7 +110,7 @@ export function FollowersSheet({ userId, type, isOpen, onClose }: Props) {
                         disabled={togglingId === u.id}
                         className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
                           u.is_following
-                            ? "border border-white/10 text-slate-400 hover:text-white hover:border-white/20"
+                            ? "border border-[var(--border)] text-muted hover:text-foreground hover:border-[var(--border-hover)]"
                             : "bg-sky-500 text-white hover:bg-sky-400"
                         }`}
                       >

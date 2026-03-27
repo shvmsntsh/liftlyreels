@@ -69,7 +69,7 @@ export default async function SavedPage() {
             <Bookmark className="h-7 w-7 text-sky-400" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-white">Nothing saved yet</h2>
+            <h2 className="text-lg font-bold text-foreground">Nothing saved yet</h2>
             <p className="mt-1 text-sm text-slate-400">
               Tap 🔖 on any reel to bookmark it here.
             </p>
