@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send } from "lucide-react";
 import { CommentRecord } from "@/lib/types";
@@ -93,19 +94,19 @@ export function CommentsSheet({ postId, isOpen, onClose, commentsCount, onCountC
     }
   }
 
-  return (
+  const sheetContent = (
     <AnimatePresence>
       {isOpen && (
         <>
           <motion.div
-            className="fixed inset-0 z-[105] bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
           />
           <motion.div
-            className="fixed inset-x-0 z-[110] mx-auto max-w-md rounded-t-3xl backdrop-blur-xl"
+            className="fixed inset-x-0 z-[210] mx-auto max-w-md rounded-t-3xl backdrop-blur-xl"
             style={{
               backgroundColor: "var(--surface-1)",
               border: "1px solid var(--border)",
@@ -125,7 +126,7 @@ export function CommentsSheet({ postId, isOpen, onClose, commentsCount, onCountC
               </button>
             </div>
 
-            <div className="max-h-[60vh] overflow-y-auto px-5 py-3 space-y-4">
+            <div className="max-h-[50vh] overflow-y-auto px-5 py-3 space-y-4">
               {loading ? (
                 <div className="py-8 text-center text-slate-500 text-sm">Loading...</div>
               ) : comments.length === 0 ? (
@@ -187,4 +188,11 @@ export function CommentsSheet({ postId, isOpen, onClose, commentsCount, onCountC
       )}
     </AnimatePresence>
   );
+
+  // Portal to document.body so the sheet escapes any parent stacking context
+  // (e.g. the feed scroll container), ensuring it renders above the BottomNav on iOS Safari
+  if (typeof document !== "undefined") {
+    return createPortal(sheetContent, document.body);
+  }
+  return sheetContent;
 }
