@@ -28,6 +28,7 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
   const [loadingFollowing, setLoadingFollowing] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [loggedCount, setLoggedCount] = useState(0);
 
   // Update streak once per day when user visits feed
   useEffect(() => {
@@ -144,10 +145,15 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
             <>
               {activePosts.map((post, index) => (
                 <React.Fragment key={post.id}>
-                  <ReelCard post={post} userId={userId} />
+                  <ReelCard
+                    post={post}
+                    userId={userId}
+                    onActionLogged={() => setLoggedCount((n) => n + 1)}
+                  />
                   {(index + 1) % 5 === 0 && (index + 1) < activePosts.length && (
                     <ScrollNudgeCard
                       count={index + 1}
+                      actionsLogged={loggedCount}
                       onScrollBack={() => window.scrollTo({ top: 0, behavior: "smooth" })}
                     />
                   )}

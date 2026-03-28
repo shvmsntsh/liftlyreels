@@ -11,7 +11,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("impact_journal")
-    .select("id,post_id,action_taken,created_at,posts(id,title,category,gradient)")
+    .select("id,post_id,action_taken,created_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(20);
@@ -20,7 +20,25 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ entries: data ?? [] });
+  // Fetch post details separately (no FK join — profiles references auth.users)
+  const postIds = Array.from(new Set((data ?? []).map((e) => e.post_id).filter(Boolean)));
+  const postMap: Record<string, { title: string; category: string; gradient: string }> = {};
+  if (postIds.length > 0) {
+    const { data: posts } = await supabase
+      .from("posts")
+      .select("id,title,category,gradient")
+      .in("id", postIds);
+    for (const p of posts ?? []) {
+      postMap[p.id] = { title: p.title, category: p.category, gradient: p.gradient };
+    }
+  }
+
+  const entries = (data ?? []).map((e) => ({
+    ...e,
+    post: e.post_id ? (postMap[e.post_id] ?? null) : null,
+  }));
+
+  return NextResponse.json({ entries });
 }
 
 export async function POST(request: NextRequest) {

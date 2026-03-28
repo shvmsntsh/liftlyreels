@@ -16,6 +16,20 @@ import clsx from "clsx";
 // Changelog entries — update this with each deploy
 const CHANGELOG = [
   {
+    version: "v1.13",
+    date: "Mar 27, 2026",
+    entries: [
+      "Action logging fixed — impact now saves reliably (removed broken FK join)",
+      "Quick-tap logging — tap a template to log instantly, no submit button needed",
+      "Confetti + haptic feedback every time you log an action",
+      "Motivational messages after logging — different one each time",
+      "Success animation: ring pulse, star burst, +3 Vibe badge",
+      "ScrollNudge now tracks real logged actions — shows encouragement if you've proved things",
+      "I Did This button pulses with a glow to draw attention",
+      "Haptic feedback on all reactions, follow, and key taps",
+    ],
+  },
+  {
     version: "v1.12",
     date: "Mar 27, 2026",
     entries: [

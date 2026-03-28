@@ -7,6 +7,7 @@ import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PostRecord, ReactionType, REEL_GRADIENTS } from "@/lib/types";
+import { haptic } from "@/lib/haptics";
 import { UserAvatar } from "./UserAvatar";
 import { CommentsSheet } from "./CommentsSheet";
 import { ReportSheet } from "./ReportSheet";
@@ -29,6 +30,7 @@ function ActionButton({ icon, label, onClick, active, activeClass, glow }: Actio
     <button
       type="button"
       onClick={() => {
+        haptic("light");
         setPressed(true);
         setTimeout(() => setPressed(false), 200);
         onClick?.();
@@ -60,9 +62,10 @@ function ActionButton({ icon, label, onClick, active, activeClass, glow }: Actio
 type Props = {
   post: PostRecord;
   userId?: string;
+  onActionLogged?: () => void;
 };
 
-export function ReelCard({ post, userId }: Props) {
+export function ReelCard({ post, userId, onActionLogged }: Props) {
   const cardRef = useRef<HTMLElement>(null);
   const { play } = useAudio();
   const router = useRouter();
@@ -343,14 +346,16 @@ export function ReelCard({ post, userId }: Props) {
         {!isFallback && (
           <div className="relative z-10 px-4 pb-24">
             <motion.button
-              onClick={() => setActionOpen(true)}
+              onClick={() => { haptic("medium"); setActionOpen(true); }}
               className={clsx(
                 "flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-[15px] font-bold transition-all active:scale-[0.97]",
                 actionLogged
                   ? "border border-emerald-400/30 bg-emerald-500/15 text-emerald-300 shadow-[0_4px_20px_rgba(16,185,129,0.15)]"
-                  : "bg-emerald-500 text-white shadow-[0_4px_20px_rgba(16,185,129,0.35)]"
+                  : "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-[0_4px_24px_rgba(16,185,129,0.45)]"
               )}
-              whileTap={{ scale: 0.97 }}
+              whileTap={{ scale: 0.96 }}
+              animate={!actionLogged ? { boxShadow: ["0 4px 24px rgba(16,185,129,0.45)", "0 4px 32px rgba(16,185,129,0.65)", "0 4px 24px rgba(16,185,129,0.45)"] } : {}}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             >
               <CheckCircle className={clsx("h-5 w-5", actionLogged && "fill-current")} />
               {actionLogged ? "Proved It!" : "I Did This"}
@@ -376,6 +381,7 @@ export function ReelCard({ post, userId }: Props) {
         onLogged={() => {
           setActionLogged(true);
           setActionOpen(false);
+          onActionLogged?.();
         }}
       />
 
