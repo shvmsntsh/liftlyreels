@@ -54,7 +54,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex h-[100dvh] flex-col bg-background overflow-hidden">
+    <main className="relative flex h-[100dvh] flex-col bg-background overflow-hidden">
       {/* Subtle top tint — stronger so it bleeds visually into status bar */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_0%,rgba(6,182,212,0.12),transparent)] dark:bg-[radial-gradient(ellipse_70%_50%_at_50%_0%,rgba(6,182,212,0.18),transparent)]" />
 

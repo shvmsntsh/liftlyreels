@@ -12,6 +12,7 @@ import { StreakSheet } from "./StreakSheet";
 import { NotificationsSheet } from "./NotificationsSheet";
 import { getSupabaseClient } from "@/lib/supabase";
 import clsx from "clsx";
+import { BUILD_VERSION } from "@/lib/version";
 
 // Changelog entries — update this with each deploy
 const CHANGELOG = [
@@ -986,14 +987,16 @@ export function ProfileClient({
         {/* Updates / Changelog tab */}
         {activeTab === "updates" && (
           <div className="mt-4 space-y-4 pb-6">
-            {CHANGELOG.map((release) => (
+            {CHANGELOG.map((release, idx) => (
               <div key={release.version} className="rounded-xl border p-4"
                 style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
                 <div className="flex items-center gap-2 mb-2.5">
                   <span className="rounded-full bg-sky-500/15 border border-sky-400/20 px-2 py-0.5 text-[11px] font-bold text-sky-300">
                     {release.version}
                   </span>
-                  <span className="text-[11px] text-slate-500">{release.date}</span>
+                  <span className="text-[11px] text-slate-500">
+                    {idx === 0 ? BUILD_VERSION.split("·")[1]?.trim() ?? release.date : release.date}
+                  </span>
                 </div>
                 <ul className="space-y-1.5">
                   {release.entries.map((entry, i) => (
@@ -1003,6 +1006,9 @@ export function ProfileClient({
                     </li>
                   ))}
                 </ul>
+                {idx === 0 && (
+                  <p className="mt-2.5 text-[9px] text-slate-600 tabular-nums">Build: {BUILD_VERSION}</p>
+                )}
               </div>
             ))}
           </div>

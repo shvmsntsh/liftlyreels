@@ -6,6 +6,7 @@ import { ArrowRight, Zap, Flame, Trophy } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { LiftlyLogo } from "@/components/LiftlyLogo";
+import { BUILD_VERSION } from "@/lib/version";
 
 const pillars = [
   { icon: Zap, label: "Watch & Act", desc: "See it. Do it. Log it.", color: "#10b981" },
@@ -197,6 +198,7 @@ export default function LandingPage() {
           <Link href="/terms" className="hover:opacity-100 transition-opacity">Terms</Link>
           <Link href="/privacy" className="hover:opacity-100 transition-opacity">Privacy</Link>
         </div>
+        <p className="mt-1.5 text-[9px] text-muted opacity-25 tabular-nums">{BUILD_VERSION}</p>
       </motion.div>
     </main>
   );
