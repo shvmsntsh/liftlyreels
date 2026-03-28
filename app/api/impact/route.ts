@@ -92,5 +92,17 @@ export async function POST(request: NextRequest) {
     ]).catch(() => null);
   }
 
-  return NextResponse.json({ entry: { id: isRealPost ? postId : "local" }, success: true });
+  // Return updated streak for milestone detection
+  const { data: updatedProfile } = await supabase
+    .from("profiles")
+    .select("streak_current,vibe_score")
+    .eq("id", user.id)
+    .single();
+
+  return NextResponse.json({
+    entry: { id: isRealPost ? postId : "local" },
+    success: true,
+    streak: updatedProfile?.streak_current ?? null,
+    vibe: updatedProfile?.vibe_score ?? null,
+  });
 }

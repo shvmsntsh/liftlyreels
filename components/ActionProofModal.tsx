@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, X } from "lucide-react";
 import { ACTION_TEMPLATES } from "@/lib/types";
+import { StreakCelebration, isMilestone } from "./StreakCelebration";
 
 type Props = {
   postTitle: string;
@@ -18,6 +19,7 @@ export function ActionProofModal({ postTitle, postId, category, isOpen, onClose,
   const [action, setAction] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [milestoneStreak, setMilestoneStreak] = useState<number | null>(null);
 
   const templates = ACTION_TEMPLATES[category] ?? ACTION_TEMPLATES.Mindset;
 
@@ -39,6 +41,10 @@ export function ActionProofModal({ postTitle, postId, category, isOpen, onClose,
         return;
       }
 
+      const data = await res.json().catch(() => null);
+      if (data?.streak && isMilestone(data.streak)) {
+        setMilestoneStreak(data.streak);
+      }
       onLogged();
       setAction("");
     } catch {
@@ -49,6 +55,12 @@ export function ActionProofModal({ postTitle, postId, category, isOpen, onClose,
   }
 
   return (
+    <>
+      <StreakCelebration
+        streak={milestoneStreak ?? 0}
+        show={milestoneStreak !== null}
+        onDone={() => setMilestoneStreak(null)}
+      />
     <AnimatePresence>
       {isOpen && (
         <>
@@ -133,5 +145,6 @@ export function ActionProofModal({ postTitle, postId, category, isOpen, onClose,
         </>
       )}
     </AnimatePresence>
+    </>
   );
 }

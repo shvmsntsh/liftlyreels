@@ -32,7 +32,7 @@ function LiftlyMark({ size = 36, animated = false }: { size?: number; animated?:
     controls.start({
       pathLength: 1,
       opacity: 1,
-      transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.2 },
+      transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] as [number, number, number, number], delay: 0.2 },
     });
   }, [animated, controls]);
 
@@ -96,7 +96,7 @@ const container = {
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
 };
 
 const fadeScale = {
@@ -271,7 +271,7 @@ export default function LandingPage() {
               className="block"
               initial={{ opacity: 0, x: -16 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.55, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ delay: 0.55, duration: 0.45, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
             >
               Stop scrolling.
             </motion.span>
@@ -279,7 +279,7 @@ export default function LandingPage() {
               className="block bg-gradient-to-r from-emerald-400 via-teal-300 to-sky-400 bg-clip-text text-transparent"
               initial={{ opacity: 0, x: 16 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.7, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ delay: 0.7, duration: 0.45, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
             >
               Start proving.
             </motion.span>

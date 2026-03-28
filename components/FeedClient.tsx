@@ -9,10 +9,12 @@ import { DailyChallengeBar } from "./DailyChallengeBar";
 import { ScrollNudgeCard } from "./ScrollNudgeCard";
 import { TourOverlay } from "./TourOverlay";
 import { NotificationsSheet } from "./NotificationsSheet";
+import { ActionFeedTab } from "./ActionFeedTab";
+import { MorningMissionModal } from "./MorningMissionModal";
 import { PostRecord, DailyChallenge } from "@/lib/types";
 import clsx from "clsx";
 
-type Tab = "foryou" | "following";
+type Tab = "foryou" | "following" | "proof";
 
 type Props = {
   initialPosts: PostRecord[];
@@ -64,25 +66,33 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
   }
 
   const activePosts = tab === "foryou" ? initialPosts : (followingPosts ?? []);
+  const isReelTab = tab === "foryou" || tab === "following";
+
+  const tabLabels: { key: Tab; label: string }[] = [
+    { key: "foryou", label: "For You" },
+    { key: "following", label: "Following" },
+    { key: "proof", label: "Proof" },
+  ];
 
   return (
-    <div className="h-screen overflow-y-auto snap-y-mandatory scrollbar-none feed-scroll">
+    <div className={clsx("h-screen scrollbar-none", isReelTab ? "overflow-y-auto snap-y-mandatory feed-scroll" : "overflow-y-auto")}>
       <TourOverlay />
+      <MorningMissionModal challengeText={challenge?.challenge_text ?? null} />
       {/* Header with tabs, search, and notifications */}
       <div className="snap-start sticky top-0 z-30 flex items-center justify-center gap-2 pt-4 pb-2 px-4 bg-transparent pointer-events-none">
-        <div className="pointer-events-auto flex gap-1 rounded-full border border-white/10 bg-black/40 px-1 py-1 backdrop-blur-md">
-          {(["foryou", "following"] as Tab[]).map((t) => (
+        <div className="pointer-events-auto flex gap-0.5 rounded-full border border-white/10 bg-black/40 px-1 py-1 backdrop-blur-md">
+          {tabLabels.map(({ key, label }) => (
             <button
-              key={t}
-              onClick={() => handleTabChange(t)}
+              key={key}
+              onClick={() => handleTabChange(key)}
               className={clsx(
-                "rounded-full px-4 py-1.5 text-xs font-bold transition tap-highlight",
-                tab === t
+                "rounded-full px-3 py-1.5 text-xs font-bold transition tap-highlight",
+                tab === key
                   ? "bg-white/15 text-white"
                   : "text-white/50 hover:text-white/80"
               )}
             >
-              {t === "foryou" ? "For You" : "Following"}
+              {label}
             </button>
           ))}
         </div>
@@ -105,54 +115,65 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
         </button>
       </div>
 
-      {/* Daily challenge (for you tab only) */}
-      {tab === "foryou" && challenge && (
-        <div className="snap-start relative flex h-screen items-center justify-center overflow-hidden px-4 py-8">
-          <DailyChallengeBar challenge={challenge} fullPage />
+      {/* Proof feed tab */}
+      {tab === "proof" && (
+        <div className="mx-auto max-w-md min-h-screen pb-28">
+          <ActionFeedTab />
         </div>
       )}
 
-      {/* Posts */}
-      {loadingFollowing ? (
-        <div className="snap-start flex h-screen items-center justify-center">
-          <motion.div
-            className="h-8 w-8 rounded-full border-2 border-white/40 border-t-white"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-          />
-        </div>
-      ) : (
+      {/* Reel tabs content */}
+      {isReelTab && (
         <>
-          {activePosts.map((post, index) => (
-            <React.Fragment key={post.id}>
-              <ReelCard post={post} userId={userId} />
-              {(index + 1) % 5 === 0 && (index + 1) < activePosts.length && (
-                <ScrollNudgeCard
-                  count={index + 1}
-                  onScrollBack={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                />
-              )}
-            </React.Fragment>
-          ))}
-
-          {activePosts.length === 0 && (
-            <div className="snap-start flex h-screen items-center justify-center">
-              <div className="text-center px-8">
-                {tab === "following" ? (
-                  <>
-                    <p className="text-lg font-semibold text-white">No posts yet</p>
-                    <p className="mt-2 text-sm text-white/50">
-                      Follow creators to see their reels here
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-lg font-semibold text-white">No reels yet</p>
-                    <p className="mt-2 text-sm text-white/50">Be the first to create one!</p>
-                  </>
-                )}
-              </div>
+          {/* Daily challenge (for you tab only) */}
+          {tab === "foryou" && challenge && (
+            <div className="snap-start relative flex h-screen items-center justify-center overflow-hidden px-4 py-8">
+              <DailyChallengeBar challenge={challenge} fullPage />
             </div>
+          )}
+
+          {loadingFollowing ? (
+            <div className="snap-start flex h-screen items-center justify-center">
+              <motion.div
+                className="h-8 w-8 rounded-full border-2 border-white/40 border-t-white"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+              />
+            </div>
+          ) : (
+            <>
+              {activePosts.map((post, index) => (
+                <React.Fragment key={post.id}>
+                  <ReelCard post={post} userId={userId} />
+                  {(index + 1) % 5 === 0 && (index + 1) < activePosts.length && (
+                    <ScrollNudgeCard
+                      count={index + 1}
+                      onScrollBack={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                    />
+                  )}
+                </React.Fragment>
+              ))}
+
+              {activePosts.length === 0 && (
+                <div className="snap-start flex h-screen items-center justify-center">
+                  <div className="text-center px-8">
+                    {tab === "following" ? (
+                      <>
+                        <p className="text-lg font-semibold text-white">No posts yet</p>
+                        <p className="mt-2 text-sm text-white/50">
+                          Follow creators to see their reels here
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-lg font-semibold text-white">No reels yet</p>
+                        <p className="mt-2 text-sm text-white/50">Be the first to create one!</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </>
       )}
