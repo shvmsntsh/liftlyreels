@@ -3,9 +3,9 @@ import { isSupabaseConfigured } from "@/lib/supabase";
 import { BottomNav } from "@/components/BottomNav";
 import { DailyChallengeBar } from "@/components/DailyChallengeBar";
 import { HowToPlayCard } from "@/components/HowToPlayCard";
-import { CommitmentChain } from "@/components/CommitmentChain";
 import { DailyChallenge, getBadge, getNextBadge, getStreakRank, getNextStreakRank } from "@/lib/types";
 import { Flame, Trophy, Crown, Target, Award, Sparkles, TrendingUp } from "lucide-react";
+import { StreakDefenseBanner } from "@/components/StreakDefenseBanner";
 
 export const dynamic = "force-dynamic";
 
@@ -110,9 +110,12 @@ export default async function ChallengePage() {
   // Ensure today's challenge exists (auto-pick from pool)
   await ensureTodayChallenge();
 
-  const [challenges, totalCompletions] = await Promise.all([
+  const [challenges, totalCompletions, profileData] = await Promise.all([
     getRecentChallenges(userId),
     getUserTotalCompletions(userId),
+    userId
+      ? supabase.from("profiles").select("streak_current").eq("id", userId).single().then((r) => r.data)
+      : Promise.resolve(null),
   ]);
 
   const today = challenges.find(
@@ -240,6 +243,9 @@ export default async function ChallengePage() {
           </div>
         </div>
       </div>
+
+      {/* Streak defense banner — shown after 4pm if streak at risk */}
+      <StreakDefenseBanner streak={profileData?.streak_current ?? 0} />
 
       <div className="mx-auto max-w-md space-y-5 px-4 pt-5">
         {/* How to Play card (dismissible) */}
@@ -378,9 +384,6 @@ export default async function ChallengePage() {
             )}
           </div>
         )}
-
-        {/* Commitment Chain */}
-        <CommitmentChain />
 
         {/* Today's challenge */}
         {today ? (

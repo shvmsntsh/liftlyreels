@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { REEL_GRADIENTS } from "@/lib/types";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { ReelProveButton } from "@/components/ReelProveButton";
 
 export const dynamic = "force-dynamic";
 
@@ -18,12 +19,25 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     .eq("id", params.id)
     .single();
   if (!post) return { title: "Liftly Reel" };
+
+  // Get proof count for OG description
+  const { count } = await supabase
+    .from("impact_journal")
+    .select("id", { count: "exact", head: true })
+    .eq("post_id", params.id);
+
+  const proofCount = count ?? 0;
+  const ogDesc =
+    proofCount > 0
+      ? `${proofCount} ${proofCount === 1 ? "person has" : "people have"} proved they did this. Can you? Join Liftly →`
+      : `${post.content?.[0] ?? ""} | Liftly — Stop Scrolling. Start Proving.`;
+
   return {
     title: `${post.title} — Liftly`,
-    description: `${post.content?.[0] ?? ""} | Liftly — Stop Scrolling. Start Proving.`,
+    description: ogDesc,
     openGraph: {
       title: post.title,
-      description: post.content?.[0] ?? "",
+      description: ogDesc,
       siteName: "Liftly",
     },
   };
@@ -34,28 +48,40 @@ export default async function PublicReelPage({ params }: { params: Params }) {
 
   const supabase = createSupabaseServerClient();
 
-  const { data: post } = await supabase
-    .from("posts")
-    .select("id,title,content,category,gradient,source,tags,views_count,author_id,image_url,created_at")
-    .eq("id", params.id)
-    .single();
+  const [
+    { data: post },
+    { data: { user } },
+  ] = await Promise.all([
+    supabase
+      .from("posts")
+      .select("id,title,content,category,gradient,source,tags,views_count,author_id,image_url,created_at")
+      .eq("id", params.id)
+      .single(),
+    supabase.auth.getUser(),
+  ]);
 
   if (!post) notFound();
 
-  // Fetch author separately
-  const { data: author } = post.author_id
-    ? await supabase
-        .from("profiles")
-        .select("username,display_name,avatar_url")
-        .eq("id", post.author_id)
-        .single()
-    : { data: null };
+  // Fetch author + proof count + recent provers — all in parallel
+  const [
+    { data: author },
+    { count: proofCount },
+    { data: recentProvers },
+    { data: reactions },
+  ] = await Promise.all([
+    post.author_id
+      ? supabase.from("profiles").select("username,display_name,avatar_url").eq("id", post.author_id).single()
+      : Promise.resolve({ data: null }),
+    supabase.from("impact_journal").select("id", { count: "exact", head: true }).eq("post_id", params.id),
+    supabase.from("impact_journal").select("user_id").eq("post_id", params.id).order("created_at", { ascending: false }).limit(5),
+    supabase.from("reactions").select("reaction_type").eq("post_id", params.id),
+  ]);
 
-  // Fetch reaction counts
-  const { data: reactions } = await supabase
-    .from("reactions")
-    .select("reaction_type")
-    .eq("post_id", params.id);
+  // Fetch prover profiles separately (no FK join)
+  const proverIds = Array.from(new Set((recentProvers ?? []).map((p) => p.user_id)));
+  const { data: proverProfiles } = proverIds.length > 0
+    ? await supabase.from("profiles").select("id,username,avatar_url").in("id", proverIds)
+    : { data: [] };
 
   const reactionCounts = { sparked: 0, fired_up: 0, bookmarked: 0 };
   for (const r of reactions ?? []) {
@@ -70,6 +96,7 @@ export default async function PublicReelPage({ params }: { params: Params }) {
   const gradient = REEL_GRADIENTS[post.gradient] ?? REEL_GRADIENTS.ocean;
   const content = Array.isArray(post.content) ? post.content as string[] : [];
   const tags = Array.isArray(post.tags) ? post.tags as string[] : [];
+  const totalProofs = proofCount ?? 0;
 
   return (
     <main
@@ -95,12 +122,14 @@ export default async function PublicReelPage({ params }: { params: Params }) {
           </div>
           <span className="text-sm font-black text-white tracking-tight">Liftly</span>
         </Link>
-        <Link
-          href="/signup"
-          className="rounded-full bg-emerald-500 px-4 py-1.5 text-xs font-bold text-white shadow-lg hover:bg-emerald-400 transition"
-        >
-          Join Free
-        </Link>
+        {!user && (
+          <Link
+            href="/signup"
+            className="rounded-full bg-emerald-500 px-4 py-1.5 text-xs font-bold text-white shadow-lg hover:bg-emerald-400 transition"
+          >
+            Join Free
+          </Link>
+        )}
       </div>
 
       {/* Reel content */}
@@ -153,7 +182,7 @@ export default async function PublicReelPage({ params }: { params: Params }) {
 
         {/* Author */}
         {author && (
-          <div className="mb-8 flex items-center gap-2 text-sm text-white/60">
+          <div className="mb-6 flex items-center gap-2 text-sm text-white/60">
             <div className="h-6 w-6 rounded-full bg-white/15 flex items-center justify-center text-[10px] font-bold text-white overflow-hidden">
               {author.avatar_url ? (
                 <img src={author.avatar_url} alt="" className="h-full w-full object-cover" />
@@ -165,21 +194,40 @@ export default async function PublicReelPage({ params }: { params: Params }) {
           </div>
         )}
 
+        {/* Social proof — avatar stack + prover count */}
+        {totalProofs > 0 && (
+          <div className="mb-6 flex flex-col items-center gap-2">
+            {/* Avatar stack */}
+            {(proverProfiles ?? []).length > 0 && (
+              <div className="flex items-center">
+                {(proverProfiles ?? []).slice(0, 5).map((p, i) => (
+                  <div
+                    key={p.id}
+                    className="h-8 w-8 rounded-full border-2 border-white/20 bg-white/15 flex items-center justify-center text-[11px] font-bold text-white overflow-hidden"
+                    style={{ marginLeft: i === 0 ? 0 : -10, zIndex: 5 - i }}
+                  >
+                    {p.avatar_url ? (
+                      <img src={p.avatar_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      p.username[0]?.toUpperCase()
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            <p className="text-[13px] font-semibold text-white/70">
+              <span className="font-black text-white">{totalProofs}</span>{" "}
+              {totalProofs === 1 ? "person proved" : "people proved"} this
+            </p>
+          </div>
+        )}
+
         {/* CTA */}
-        <div className="w-full space-y-3">
-          <Link
-            href="/signup"
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-4 text-base font-black text-white shadow-[0_4px_24px_rgba(16,185,129,0.4)] transition hover:bg-emerald-400"
-          >
-            I Did This — Join Liftly
-          </Link>
-          <Link
-            href="/login"
-            className="block w-full py-3 text-center text-sm font-semibold text-white/50 hover:text-white/80 transition"
-          >
-            Already have an account? Log in
-          </Link>
-        </div>
+        <ReelProveButton
+          postId={params.id}
+          proofCount={totalProofs}
+          isLoggedIn={!!user}
+        />
       </div>
 
       {/* Footer */}

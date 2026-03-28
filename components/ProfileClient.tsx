@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Copy, Check, Flame, Zap, BookOpen, LogOut, Camera, Sparkles, Settings, Pencil, X, ImagePlus, Loader2, Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -13,9 +13,23 @@ import { NotificationsSheet } from "./NotificationsSheet";
 import { getSupabaseClient } from "@/lib/supabase";
 import clsx from "clsx";
 import { BUILD_VERSION } from "@/lib/version";
+import { StreakDefenseBanner } from "./StreakDefenseBanner";
 
 // Changelog entries — update this with each deploy
 const CHANGELOG = [
+  {
+    version: "v1.15",
+    date: "Mar 27, 2026",
+    entries: [
+      "Proof Vault — profile proof tab rebuilt as trophy case with stats + styled cards",
+      "Category accent colors on every proof card (Gym, Books, Mindset, etc.)",
+      "Stats bar on own profile: total proofs, days active, top category",
+      "Social proof on share links — avatar stack + proof count on /r/[id] pages",
+      "Dynamic CTA on share links: 'Join X people who actually did this →'",
+      "Logged-in users can prove directly from share link without going to feed",
+      "Streak Defense Banner — shows after 4pm when streak is at risk",
+    ],
+  },
   {
     version: "v1.14",
     date: "Mar 28, 2026",
@@ -218,8 +232,23 @@ export function ProfileClient({
   const [showStreakSheet, setShowStreakSheet] = useState(false);
   const [showNotifSheet, setShowNotifSheet] = useState(false);
   const [notifUnread, setNotifUnread] = useState(0);
+  const [lazyImpact, setLazyImpact] = useState<Array<{
+    id: string; post_id: string; action_taken: string; created_at: string;
+    post: { title: string; category: string; gradient: string } | null;
+  }> | null>(null);
+  const [impactLoading, setImpactLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    if (activeTab !== "impact" || lazyImpact !== null || impactLoading) return;
+    setImpactLoading(true);
+    fetch("/api/impact")
+      .then((r) => r.json())
+      .then((d) => { setLazyImpact(d.entries ?? []); })
+      .catch(() => { setLazyImpact([]); })
+      .finally(() => setImpactLoading(false));
+  }, [activeTab, lazyImpact, impactLoading]);
 
   async function toggleFollow() {
     if (!currentUserId || isOwnProfile) return;
@@ -691,6 +720,9 @@ export function ProfileClient({
           </button>
         )}
 
+        {/* Streak defense banner — own profile only */}
+        {isOwnProfile && <StreakDefenseBanner streak={profile.streak_current} />}
+
         {/* Tabs */}
         <div className="mt-6 flex border-b border-white/10">
           {(isOwnProfile ? ownTabs : otherTabs).map((tab) => (
@@ -876,34 +908,110 @@ export function ProfileClient({
         )}
 
         {/* Proof tab */}
-        {activeTab === "impact" && (
-          <div className="mt-4 space-y-3 pb-6">
-            <p className="text-sm text-muted">
-              Your proof wall — every action you&apos;ve taken and proved.
-            </p>
-            {impactEntries.map((entry) => (
-              <div
-                key={entry.id}
-                className="overflow-hidden rounded-xl border border-emerald-400/15 bg-emerald-950/20"
-              >
-                <div className="p-3">
-                  <p className="text-sm text-slate-200">{entry.action_taken}</p>
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    {new Date(entry.created_at).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </p>
+        {activeTab === "impact" && (() => {
+          const CATEGORY_COLORS: Record<string, string> = {
+            Gym: "#10b981", Books: "#0ea5e9", Diet: "#22c55e",
+            Mindset: "#f59e0b", Wellness: "#14b8a6", Finance: "#8b5cf6", Relationships: "#ec4899",
+          };
+          function relTime(iso: string) {
+            const diff = Date.now() - new Date(iso).getTime();
+            const mins = Math.floor(diff / 60000);
+            if (mins < 60) return `${Math.max(1, mins)}m ago`;
+            const hrs = Math.floor(mins / 60);
+            if (hrs < 24) return `${hrs}h ago`;
+            const days = Math.floor(hrs / 24);
+            if (days < 7) return `${days}d ago`;
+            return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+          }
+          const entries = lazyImpact ?? [];
+          const totalProofs = entries.length;
+          const daysActive = new Set(entries.map((e) => e.created_at.slice(0, 10))).size;
+          const catFreq: Record<string, number> = {};
+          for (const e of entries) { if (e.post?.category) catFreq[e.post.category] = (catFreq[e.post.category] ?? 0) + 1; }
+          const favCat = Object.entries(catFreq).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+
+          return (
+            <div className="mt-4 pb-8">
+              {/* Stats bar — own profile only */}
+              {isOwnProfile && (
+                <div className="mb-5 grid grid-cols-3 gap-2">
+                  {[
+                    { label: "Proofs Logged", value: impactLoading ? "—" : String(totalProofs) },
+                    { label: "Days Active", value: impactLoading ? "—" : String(daysActive) },
+                    { label: "Top Category", value: impactLoading ? "—" : (favCat ?? "—") },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="flex flex-col items-center rounded-2xl border bg-surface-1 px-2 py-3 text-center">
+                      <span className="text-[18px] font-black text-foreground tabular-nums">{value}</span>
+                      <span className="mt-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted">{label}</span>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            ))}
-            {impactEntries.length === 0 && (
-              <div className="py-8 text-center text-slate-500 text-sm">
-                No proof yet. Tap &quot;I Did This&quot; on any reel to log your first action.
-              </div>
-            )}
-          </div>
-        )}
+              )}
+
+              {/* Loading skeleton */}
+              {impactLoading && (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-20 animate-pulse rounded-2xl bg-surface-1" />
+                  ))}
+                </div>
+              )}
+
+              {/* Proof cards */}
+              {!impactLoading && entries.length > 0 && (
+                <div className="space-y-3">
+                  {entries.map((entry) => {
+                    const cat = entry.post?.category ?? "";
+                    const color = CATEGORY_COLORS[cat] ?? "#64748b";
+                    const title = entry.post?.title ?? "Personal action";
+                    return (
+                      <div key={entry.id} className="flex overflow-hidden rounded-2xl border bg-surface-1">
+                        {/* Left accent bar */}
+                        <div className="w-1 flex-shrink-0 rounded-l-2xl" style={{ background: color }} />
+                        <div className="flex-1 px-3.5 py-3">
+                          <p className="text-[11px] font-semibold text-muted line-clamp-1 mb-1">{title}</p>
+                          <p className="text-[13px] font-medium text-foreground leading-snug">
+                            <span className="text-muted mr-1 select-none">&ldquo;</span>
+                            {entry.action_taken}
+                            <span className="text-muted ml-1 select-none">&rdquo;</span>
+                          </p>
+                          <div className="mt-2 flex items-center gap-2">
+                            {cat && (
+                              <span
+                                className="rounded-full px-2 py-0.5 text-[10px] font-bold"
+                                style={{ background: `${color}22`, color }}
+                              >
+                                {cat}
+                              </span>
+                            )}
+                            <span className="text-[10px] text-muted">{relTime(entry.created_at)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Empty state */}
+              {!impactLoading && entries.length === 0 && (
+                <div className="flex flex-col items-center py-12 text-center">
+                  <div className="mb-3 text-4xl">🏆</div>
+                  <p className="text-[15px] font-bold text-foreground">Your proof record starts here</p>
+                  <p className="mt-1 max-w-[220px] text-[12px] text-muted leading-relaxed">
+                    Every reel you act on gets logged here. Your permanent trophy case.
+                  </p>
+                  <Link
+                    href="/feed"
+                    className="mt-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-2.5 text-[13px] font-bold text-white"
+                  >
+                    Go prove something →
+                  </Link>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Invite codes tab */}
         {activeTab === "invite" && (
