@@ -54,14 +54,15 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex h-[100dvh] flex-col bg-[#060813] overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_40%_at_50%_0%,rgba(6,182,212,0.07),transparent)]" />
+    <main className="page-full flex h-[100dvh] flex-col bg-background overflow-hidden">
+      {/* Subtle top tint */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_40%_at_50%_0%,rgba(6,182,212,0.05),transparent)] dark:bg-[radial-gradient(ellipse_70%_40%_at_50%_0%,rgba(6,182,212,0.07),transparent)]" />
 
       {/* Logo section */}
       <div className="flex flex-col items-center pt-14 pb-8 relative z-10">
         <Link href="/"><LiftlyLogo size={56} /></Link>
-        <h1 className="mt-3 text-xl font-black text-white tracking-tight">Liftly</h1>
-        <p className="mt-1 text-sm text-slate-500">Welcome back. Keep the streak going.</p>
+        <h1 className="mt-3 text-xl font-black text-foreground tracking-tight">Liftly</h1>
+        <p className="mt-1 text-sm text-muted">Welcome back. Keep the streak going.</p>
       </div>
 
       {/* Form */}
@@ -73,7 +74,7 @@ export default function LoginPage() {
         >
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-slate-500">
+              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-muted">
                 Email
               </label>
               <input
@@ -81,13 +82,13 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full rounded-[14px] border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-[14px] text-foreground placeholder:text-muted outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
+                className="w-full rounded-[14px] border bg-[var(--input-bg)] px-4 py-3 text-[14px] text-foreground placeholder:text-muted outline-none focus:border-sky-500/50 dark:focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
                 required
               />
             </div>
 
             <div>
-              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-slate-500">
+              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-muted">
                 Password
               </label>
               <div className="relative">
@@ -96,13 +97,13 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-[14px] border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 pr-11 text-[14px] text-foreground placeholder:text-muted outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
+                  className="w-full rounded-[14px] border bg-[var(--input-bg)] px-4 py-3 pr-11 text-[14px] text-foreground placeholder:text-muted outline-none focus:border-sky-500/50 dark:focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 tap-highlight"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors tap-highlight"
                 >
                   {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -113,7 +114,7 @@ export default function LoginPage() {
               <motion.p
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-[13px] text-rose-400"
+                className="text-[13px] text-rose-500 dark:text-rose-400"
               >
                 {error}
               </motion.p>
@@ -122,7 +123,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading || !email || !password}
-              className="flex w-full items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-sky-500 to-blue-600 py-4 text-[14px] font-bold text-white shadow-[0_4px_20px_rgba(56,189,248,0.35)] transition-all hover:brightness-110 disabled:opacity-50 disabled:shadow-none tap-highlight"
+              className="flex w-full items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-sky-500 to-blue-600 py-4 text-[14px] font-bold text-white shadow-[0_4px_20px_rgba(56,189,248,0.3)] transition-all hover:brightness-110 disabled:opacity-50 disabled:shadow-none tap-highlight"
             >
               {loading ? "Signing in..." : <>Sign In <ArrowRight className="h-4 w-4" /></>}
             </button>
@@ -132,9 +133,9 @@ export default function LoginPage() {
 
       {/* Bottom links */}
       <div className="relative z-10 px-5 pb-8 pt-4 text-center">
-        <p className="text-[13px] text-slate-600">
+        <p className="text-[13px] text-muted">
           Don&apos;t have an account?{" "}
-          <Link href="/" className="font-semibold text-sky-400 hover:text-sky-300">
+          <Link href="/" className="font-semibold text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 transition-colors">
             Get an invite
           </Link>
         </p>

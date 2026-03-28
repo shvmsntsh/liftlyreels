@@ -121,6 +121,17 @@ select {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* Safe area top — accounts for notch / dynamic island */
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Full-screen page: extends behind status bar, adds safe top inset */
+.page-full {
+  min-height: 100dvh;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
 /* Hide scrollbar but keep functionality */
 .scrollbar-none {
   -ms-overflow-style: none;

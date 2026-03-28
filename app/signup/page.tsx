@@ -166,7 +166,7 @@ function SignupForm() {
   // ── Done ──
   if (step === "done") {
     return (
-      <div className="flex h-[100dvh] flex-col items-center justify-center bg-[#060813]">
+      <div className="page-full flex h-[100dvh] flex-col items-center justify-center bg-background">
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -180,8 +180,8 @@ function SignupForm() {
           >
             <LiftlyLogo size={72} />
           </motion.div>
-          <h2 className="text-2xl font-black text-white">You&apos;re in!</h2>
-          <p className="mt-2 text-slate-400">Taking you to your feed...</p>
+          <h2 className="text-2xl font-black text-foreground">You&apos;re in!</h2>
+          <p className="mt-2 text-muted">Taking you to your feed...</p>
         </motion.div>
       </div>
     );
@@ -190,58 +190,58 @@ function SignupForm() {
   // ── Email verification pending ──
   if (step === "verify") {
     return (
-      <div className="flex h-[100dvh] flex-col items-center justify-center bg-[#060813] px-6">
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center w-full max-w-sm"
-      >
-        <div className="mb-5 mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-sky-400/15 border border-sky-400/30">
-          <Mail className="h-7 w-7 text-sky-300" />
-        </div>
-        <h2 className="text-2xl font-bold text-foreground">Check your email</h2>
-        <p className="mt-2 text-[15px] text-slate-400 leading-relaxed">
-          We sent a confirmation link to
-        </p>
-        <p className="mt-1 font-semibold text-sky-300">{email}</p>
-        <p className="mt-4 text-[13px] text-slate-500 leading-relaxed max-w-xs mx-auto">
-          Click the link in the email to confirm your account. You&apos;ll be taken back here to finish setting up your profile.
-        </p>
-        <div className="mt-8 rounded-2xl border border-[var(--border)] bg-[var(--surface-1)] p-4 text-left">
-          <p className="text-[12px] text-slate-500 mb-1 font-semibold uppercase tracking-wider">Having issues?</p>
-          <p className="text-[12px] text-slate-400">Check your spam folder, or{" "}
-            <button
-              onClick={() => setStep("account")}
-              className="text-sky-400 hover:text-sky-300 font-semibold"
-            >
-              try a different email
-            </button>
+      <div className="page-full flex h-[100dvh] flex-col items-center justify-center bg-background px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center w-full max-w-sm"
+        >
+          <div className="mb-5 mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-sky-400/15 border border-sky-400/30">
+            <Mail className="h-7 w-7 text-sky-500 dark:text-sky-300" />
+          </div>
+          <h2 className="text-2xl font-bold text-foreground">Check your email</h2>
+          <p className="mt-2 text-[15px] text-muted leading-relaxed">
+            We sent a confirmation link to
           </p>
-        </div>
-      </motion.div>
+          <p className="mt-1 font-semibold text-sky-500 dark:text-sky-300">{email}</p>
+          <p className="mt-4 text-[13px] text-muted leading-relaxed max-w-xs mx-auto">
+            Click the link in the email to confirm your account. You&apos;ll be taken back here to finish setting up your profile.
+          </p>
+          <div className="mt-8 rounded-2xl border bg-surface-1 p-4 text-left">
+            <p className="text-[12px] text-muted mb-1 font-semibold uppercase tracking-wider">Having issues?</p>
+            <p className="text-[12px] text-muted">Check your spam folder, or{" "}
+              <button
+                onClick={() => setStep("account")}
+                className="text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 font-semibold"
+              >
+                try a different email
+              </button>
+            </p>
+          </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-[#060813] overflow-hidden">
+    <div className="page-full flex h-[100dvh] flex-col bg-background overflow-hidden">
       {/* Ambient */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_40%_at_50%_0%,rgba(6,182,212,0.07),transparent)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_40%_at_50%_0%,rgba(6,182,212,0.05),transparent)] dark:bg-[radial-gradient(ellipse_70%_40%_at_50%_0%,rgba(6,182,212,0.07),transparent)]" />
 
       {/* Logo + heading */}
       <div className="flex flex-col items-center pt-14 pb-6 relative z-10">
         <Link href="/">
           <LiftlyLogo size={56} animate />
         </Link>
-        <h1 className="mt-3 text-xl font-black text-white tracking-tight">Liftly</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="mt-3 text-xl font-black text-foreground tracking-tight">Liftly</h1>
+        <p className="mt-1 text-sm text-muted">
           {step === "account" ? "Create your account" : "Set up your profile"}
         </p>
         {codeVerified && step === "account" && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold text-emerald-400"
+            className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400"
           >
             <Sparkles className="h-3 w-3" />
             You&apos;re invited
@@ -250,11 +250,11 @@ function SignupForm() {
 
         {/* Step indicator */}
         <div className="mt-4 flex items-center gap-1.5">
-          {["account", "profile"].map((s, i) => (
+          {["account", "profile"].map((s) => (
             <div key={s} className="flex items-center gap-1.5">
               <div className={clsx(
                 "h-1.5 rounded-full transition-all",
-                step === s ? "w-6 bg-sky-400" : s === "account" && step === "profile" ? "w-3 bg-sky-600" : "w-3 bg-white/15"
+                step === s ? "w-6 bg-sky-500 dark:bg-sky-400" : s === "account" && step === "profile" ? "w-3 bg-sky-400/50 dark:bg-sky-600" : "w-3 bg-foreground/10"
               )} />
             </div>
           ))}
@@ -267,13 +267,13 @@ function SignupForm() {
         {step === "account" && (
           <form onSubmit={handleAccountStep} className="space-y-3.5" autoComplete="on">
             <div>
-              <label htmlFor="su-invite" className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-slate-500">
+              <label htmlFor="su-invite" className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-muted">
                 Invite Code
               </label>
               {codeVerified ? (
                 <div className="flex items-center gap-3 rounded-[14px] border border-emerald-500/25 bg-emerald-500/8 px-4 py-3 text-[14px]">
-                  <span className="flex-1 font-mono tracking-wider text-emerald-300">{inviteCode}</span>
-                  <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400">
+                  <span className="flex-1 font-mono tracking-wider text-emerald-600 dark:text-emerald-300">{inviteCode}</span>
+                  <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
                     <Check className="h-3.5 w-3.5" /> Verified
                   </span>
                 </div>
@@ -287,13 +287,13 @@ function SignupForm() {
                   onChange={(e) => setInviteCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ""))}
                   placeholder="e.g. SPARK-RISE-001"
                   maxLength={30}
-                  className="w-full rounded-[14px] border border-[var(--border)] bg-[var(--input-bg)] px-4 py-3.5 text-[14px] text-foreground font-mono tracking-wider placeholder:text-muted placeholder:font-sans placeholder:tracking-normal outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
+                  className="w-full rounded-[14px] border bg-[var(--input-bg)] px-4 py-3.5 text-[14px] text-foreground font-mono tracking-wider placeholder:text-muted placeholder:font-sans placeholder:tracking-normal outline-none focus:border-sky-500/50 dark:focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
                   required
                 />
               )}
             </div>
             <div>
-              <label htmlFor="su-email" className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-slate-500">
+              <label htmlFor="su-email" className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-muted">
                 Email
               </label>
               <input
@@ -304,15 +304,14 @@ function SignupForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full rounded-[14px] border border-[var(--border)] bg-[var(--input-bg)] px-4 py-3.5 text-[14px] text-foreground placeholder:text-muted outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
+                className="w-full rounded-[14px] border bg-[var(--input-bg)] px-4 py-3.5 text-[14px] text-foreground placeholder:text-muted outline-none focus:border-sky-500/50 dark:focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
                 required
               />
             </div>
             <div>
-              <label htmlFor="su-pass" className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-slate-500">
+              <label htmlFor="su-pass" className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-muted">
                 Password
               </label>
-              {/* Wrapper with isolation to prevent autofill overlay covering button */}
               <div className="relative isolate">
                 <input
                   id="su-pass"
@@ -323,16 +322,16 @@ function SignupForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Min 8 characters"
                   minLength={8}
-                  className="w-full rounded-[14px] border border-[var(--border)] bg-[var(--input-bg)] px-4 py-3.5 pr-12 text-[14px] text-foreground placeholder:text-muted outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
+                  className="w-full rounded-[14px] border bg-[var(--input-bg)] px-4 py-3.5 pr-12 text-[14px] text-foreground placeholder:text-muted outline-none focus:border-sky-500/50 dark:focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
                   required
                 />
                 <button
                   type="button"
                   onPointerDown={(e) => {
-                    e.preventDefault(); // prevent focus shift
+                    e.preventDefault();
                     setShowPass((v) => !v);
                   }}
-                  className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-center text-slate-500 hover:text-foreground transition-colors z-10 tap-highlight"
+                  className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-center text-muted hover:text-foreground transition-colors z-10 tap-highlight"
                   tabIndex={-1}
                   aria-label={showPass ? "Hide password" : "Show password"}
                 >
@@ -341,7 +340,7 @@ function SignupForm() {
               </div>
             </div>
             <div>
-              <label htmlFor="su-confirm-pass" className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-slate-500">
+              <label htmlFor="su-confirm-pass" className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-muted">
                 Confirm Password
               </label>
               <div className="relative isolate">
@@ -360,14 +359,14 @@ function SignupForm() {
                       ? "border-rose-500/50 focus:border-rose-500/70"
                       : confirmPassword.length > 0 && password === confirmPassword
                       ? "border-emerald-500/40 focus:border-emerald-500/60"
-                      : "border-[var(--border)] focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)]"
+                      : "border focus:border-sky-500/50 dark:focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)]"
                   )}
                   required
                 />
                 <button
                   type="button"
                   onPointerDown={(e) => { e.preventDefault(); setShowConfirmPass((v) => !v); }}
-                  className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-center text-slate-500 hover:text-foreground transition-colors z-10"
+                  className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-center text-muted hover:text-foreground transition-colors z-10"
                   tabIndex={-1}
                   aria-label={showConfirmPass ? "Hide password" : "Show password"}
                 >
@@ -375,16 +374,16 @@ function SignupForm() {
                 </button>
               </div>
               {confirmPassword.length > 0 && password !== confirmPassword && (
-                <p className="mt-1 text-[11px] text-rose-400">Passwords do not match</p>
+                <p className="mt-1 text-[11px] text-rose-500 dark:text-rose-400">Passwords do not match</p>
               )}
               {confirmPassword.length > 0 && password === confirmPassword && (
-                <p className="mt-1 text-[11px] text-emerald-400 flex items-center gap-1"><Check className="h-3 w-3" /> Passwords match</p>
+                <p className="mt-1 text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1"><Check className="h-3 w-3" /> Passwords match</p>
               )}
             </div>
 
             {error && (
               <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
-                className="text-[13px] text-rose-400">{error}</motion.p>
+                className="text-[13px] text-rose-500 dark:text-rose-400">{error}</motion.p>
             )}
 
             <button
@@ -401,11 +400,11 @@ function SignupForm() {
         {step === "profile" && (
           <form onSubmit={handleProfileStep} className="space-y-4" autoComplete="off">
             <div>
-              <label htmlFor="su-username" className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-slate-500">
+              <label htmlFor="su-username" className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-muted">
                 Username
               </label>
               <div className="relative">
-                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-[14px] select-none">@</span>
+                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted text-[14px] select-none">@</span>
                 <input
                   id="su-username"
                   type="text"
@@ -415,14 +414,14 @@ function SignupForm() {
                   onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
                   placeholder="yourhandle"
                   maxLength={20}
-                  className="w-full rounded-[14px] border border-[var(--border)] bg-[var(--input-bg)] pl-8 pr-4 py-3.5 text-[14px] text-foreground placeholder:text-muted outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
+                  className="w-full rounded-[14px] border bg-[var(--input-bg)] pl-8 pr-4 py-3.5 text-[14px] text-foreground placeholder:text-muted outline-none focus:border-sky-500/50 dark:focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
                   required
                 />
               </div>
-              <p className="mt-1.5 text-[11px] text-slate-600">Letters, numbers, underscores only.</p>
+              <p className="mt-1.5 text-[11px] text-muted opacity-70">Letters, numbers, underscores only.</p>
             </div>
             <div>
-              <label htmlFor="su-displayname" className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-slate-500">
+              <label htmlFor="su-displayname" className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-muted">
                 Display Name
               </label>
               <input
@@ -434,14 +433,14 @@ function SignupForm() {
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="How you want to appear"
                 maxLength={40}
-                className="w-full rounded-[14px] border border-[var(--border)] bg-[var(--input-bg)] px-4 py-3.5 text-[14px] text-foreground placeholder:text-muted outline-none focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
+                className="w-full rounded-[14px] border bg-[var(--input-bg)] px-4 py-3.5 text-[14px] text-foreground placeholder:text-muted outline-none focus:border-sky-500/50 dark:focus:border-sky-400/50 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] transition-all"
                 required
               />
             </div>
 
             {error && (
               <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
-                className="text-[13px] text-rose-400">{error}</motion.p>
+                className="text-[13px] text-rose-500 dark:text-rose-400">{error}</motion.p>
             )}
 
             <button
@@ -465,17 +464,17 @@ function SignupForm() {
 
       {/* Bottom links */}
       <div className="relative z-10 px-5 pb-8 pt-4 text-center">
-        <p className="text-[13px] text-slate-600">
+        <p className="text-[13px] text-muted">
           Already have an account?{" "}
-          <Link href="/login" className="font-semibold text-sky-400 hover:text-sky-300 transition-colors">
+          <Link href="/login" className="font-semibold text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 transition-colors">
             Sign in
           </Link>
         </p>
-        <p className="mt-2 text-[11px] text-slate-700">
+        <p className="mt-2 text-[11px] text-muted opacity-50">
           By joining you agree to our{" "}
-          <Link href="/terms" className="underline hover:text-slate-500 transition-colors">Terms</Link>
+          <Link href="/terms" className="underline hover:opacity-80 transition-opacity">Terms</Link>
           {" "}and{" "}
-          <Link href="/privacy" className="underline hover:text-slate-500 transition-colors">Privacy Policy</Link>
+          <Link href="/privacy" className="underline hover:opacity-80 transition-opacity">Privacy Policy</Link>
         </p>
       </div>
     </div>
@@ -484,11 +483,7 @@ function SignupForm() {
 
 export default function SignupPage() {
   return (
-    <Suspense fallback={
-      <div className="flex h-[100dvh] items-center justify-center bg-[#060813]">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-sky-400" />
-      </div>
-    }>
+    <Suspense>
       <SignupForm />
     </Suspense>
   );
