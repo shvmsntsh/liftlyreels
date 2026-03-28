@@ -16,6 +16,18 @@ import clsx from "clsx";
 // Changelog entries — update this with each deploy
 const CHANGELOG = [
   {
+    version: "v1.11",
+    date: "Mar 27, 2026",
+    entries: [
+      "Commitment Chains — start a 7, 30, or 75-day personal challenge",
+      "Choose a goal from presets or write your own, mark daily progress",
+      "Chain breaks detection — missed yesterday? Start fresh",
+      "Proof tab visible on other users' profiles — see what they've done",
+      "Weekly activity tracker on profile — 7-dot view of active days",
+      "Impact entries now fetched for all profiles (public social proof)",
+    ],
+  },
+  {
     version: "v1.10",
     date: "Mar 27, 2026",
     entries: [
@@ -350,7 +362,7 @@ export function ProfileClient({
       : { label: "Newcomer", color: "text-slate-300", bg: "bg-slate-400/10 border-slate-400/20" };
 
   const ownTabs: Tab[] = ["reels", "impact", "invite", "updates"];
-  const otherTabs: Tab[] = ["reels"];
+  const otherTabs: Tab[] = ["reels", "impact"];
 
   return (
     <div>
@@ -581,6 +593,51 @@ export function ProfileClient({
             {getStreakRank(profile.streak_current).icon}
           </div>
         </button>
+
+        {/* Weekly Activity (own profile only) */}
+        {isOwnProfile && (() => {
+          const today = new Date();
+          const dayOfWeek = today.getDay(); // 0=Sun
+          const monday = new Date(today);
+          monday.setDate(today.getDate() - ((dayOfWeek + 6) % 7));
+          const weekDays = Array.from({ length: 7 }, (_, i) => {
+            const d = new Date(monday);
+            d.setDate(monday.getDate() + i);
+            return d.toISOString().slice(0, 10);
+          });
+          const activeDays = new Set(impactEntries.map((e) => e.created_at.slice(0, 10)));
+          const doneThisWeek = weekDays.filter((d) => activeDays.has(d)).length;
+          const dayLabels = ["M", "T", "W", "T", "F", "S", "S"];
+          const todayStr = today.toISOString().slice(0, 10);
+          return (
+            <div className="mt-3 rounded-xl border border-white/8 bg-white/3 px-4 py-3">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">This Week</p>
+                <p className="text-[11px] text-emerald-400 font-bold">{doneThisWeek}/7 active days</p>
+              </div>
+              <div className="flex items-center justify-between">
+                {weekDays.map((d, i) => {
+                  const active = activeDays.has(d);
+                  const isToday = d === todayStr;
+                  return (
+                    <div key={d} className="flex flex-col items-center gap-1">
+                      <div className={`h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
+                        active
+                          ? "bg-emerald-400 text-black shadow-[0_0_8px_rgba(52,211,153,0.4)]"
+                          : isToday
+                          ? "border border-slate-500 text-slate-500"
+                          : "bg-white/5 text-slate-700"
+                      }`}>
+                        {active ? "✓" : ""}
+                      </div>
+                      <span className={`text-[9px] ${isToday ? "text-slate-400 font-bold" : "text-slate-700"}`}>{dayLabels[i]}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Follow button (not own profile) */}
         {!isOwnProfile && currentUserId && (

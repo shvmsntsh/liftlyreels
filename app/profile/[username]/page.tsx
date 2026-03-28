@@ -63,14 +63,12 @@ export default async function ProfilePage({
           .eq("following_id", profile.id)
           .single()
       : Promise.resolve({ data: null }),
-    isOwnProfile
-      ? supabase
-          .from("impact_journal")
-          .select("id,post_id,action_taken,created_at")
-          .eq("user_id", profile.id)
-          .order("created_at", { ascending: false })
-          .limit(10)
-      : Promise.resolve({ data: [] }),
+    supabase
+      .from("impact_journal")
+      .select("id,post_id,action_taken,created_at")
+      .eq("user_id", profile.id)
+      .order("created_at", { ascending: false })
+      .limit(20),
     isOwnProfile
       ? supabase
           .from("invite_codes")

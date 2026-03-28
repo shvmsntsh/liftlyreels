@@ -3,6 +3,7 @@ import { isSupabaseConfigured } from "@/lib/supabase";
 import { BottomNav } from "@/components/BottomNav";
 import { DailyChallengeBar } from "@/components/DailyChallengeBar";
 import { HowToPlayCard } from "@/components/HowToPlayCard";
+import { CommitmentChain } from "@/components/CommitmentChain";
 import { DailyChallenge, getBadge, getNextBadge, getStreakRank, getNextStreakRank } from "@/lib/types";
 import { Flame, Trophy, Crown, Target, Award, Sparkles, TrendingUp } from "lucide-react";
 
@@ -377,6 +378,9 @@ export default async function ChallengePage() {
             )}
           </div>
         )}
+
+        {/* Commitment Chain */}
+        <CommitmentChain />
 
         {/* Today's challenge */}
         {today ? (
