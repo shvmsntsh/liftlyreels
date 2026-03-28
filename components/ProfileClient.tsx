@@ -16,6 +16,19 @@ import clsx from "clsx";
 // Changelog entries — update this with each deploy
 const CHANGELOG = [
   {
+    version: "v1.8",
+    date: "Mar 27, 2026",
+    entries: [
+      "New identity: Stop Scrolling. Start Proving. — app-wide messaging overhaul",
+      "Animated landing page with Liftly logo mark (checkmark-arrow + emerald glow)",
+      "\"I Did This\" hero button on every reel — full-width, impossible to miss",
+      "Quick-action template pills — tap to pre-fill your proof log by category",
+      "Scroll Nudge Card — after 5 passive reels, prompted to go prove something",
+      "Action proof is now text-only — fast to log, optimized for MVP",
+      "\"Act\" tab in bottom nav replaces \"Challenge\" — clearer call to action",
+    ],
+  },
+  {
     version: "v1.7",
     date: "Mar 27, 2026",
     entries: [
@@ -96,7 +109,7 @@ type Props = {
   posts: PostRecord[];
   isOwnProfile: boolean;
   currentUserId?: string;
-  impactEntries: Array<{ id: string; post_id: string; action_taken: string; photo_url?: string | null; created_at: string }>;
+  impactEntries: Array<{ id: string; post_id: string; action_taken: string; created_at: string }>;
   inviteCodes: Array<{ code: string; used_by: string | null; created_at: string }>;
 };
 
@@ -757,14 +770,6 @@ export function ProfileClient({
                 key={entry.id}
                 className="overflow-hidden rounded-xl border border-emerald-400/15 bg-emerald-950/20"
               >
-                {entry.photo_url && (
-                  <img
-                    src={entry.photo_url}
-                    alt="Proof"
-                    className="w-full max-h-48 object-cover"
-                    loading="lazy"
-                  />
-                )}
                 <div className="p-3">
                   <p className="text-sm text-slate-200">{entry.action_taken}</p>
                   <p className="mt-1 text-[11px] text-slate-500">
