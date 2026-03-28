@@ -16,6 +16,16 @@ import clsx from "clsx";
 // Changelog entries — update this with each deploy
 const CHANGELOG = [
   {
+    version: "v1.12",
+    date: "Mar 27, 2026",
+    entries: [
+      "New Liftly logo — consistent emerald→sky branding across all screens",
+      "Login & Signup redesigned as full-screen mobile-app layouts (no card wrappers)",
+      "Animated logo draw-in on signup completion",
+      "Terms and Privacy footer links on all auth screens",
+    ],
+  },
+  {
     version: "v1.11",
     date: "Mar 27, 2026",
     entries: [
