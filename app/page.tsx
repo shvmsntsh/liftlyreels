@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
@@ -38,12 +38,12 @@ const fadeUp = {
 
 const fadeScale = {
   hidden: { opacity: 0, scale: 0.85 },
-  show: { opacity: 1, scale: 1, transition: { type: "spring", damping: 18, stiffness: 260 } },
+  show: { opacity: 1, scale: 1, transition: { type: "spring" as const, damping: 18, stiffness: 260 } },
 };
 
 const popIn = {
   hidden: { opacity: 0, scale: 0.6, y: 8 },
-  show: { opacity: 1, scale: 1, y: 0, transition: { type: "spring", damping: 14, stiffness: 400 } },
+  show: { opacity: 1, scale: 1, y: 0, transition: { type: "spring" as const, damping: 14, stiffness: 400 } },
 };
 
 // ── Data ───────────────────────────────────────────────────────
