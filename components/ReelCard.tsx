@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Bookmark, MessageCircle, Share2, Zap, Flame, CheckCircle, UserPlus, UserCheck, Hash } from "lucide-react";
+import { Bookmark, MessageCircle, Share2, Zap, Flame, CheckCircle, UserPlus, UserCheck, Hash, Flag } from "lucide-react";
 import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PostRecord, ReactionType, REEL_GRADIENTS } from "@/lib/types";
 import { UserAvatar } from "./UserAvatar";
 import { CommentsSheet } from "./CommentsSheet";
+import { ReportSheet } from "./ReportSheet";
 import { useAudio } from "./AudioProvider";
 import { ActionProofModal } from "./ActionProofModal";
 
@@ -105,6 +106,7 @@ export function ReelCard({ post, userId }: Props) {
   const [actionLogged, setActionLogged] = useState(false);
   const [shareLabel, setShareLabel] = useState("Share");
   const [isFollowing, setIsFollowing] = useState(post.author_is_following ?? false);
+  const [reportOpen, setReportOpen] = useState(false);
 
   const gradient = REEL_GRADIENTS[post.gradient ?? "ocean"] ?? REEL_GRADIENTS.ocean;
   const isFallback = post.id.startsWith("fallback-");
@@ -327,6 +329,13 @@ export function ReelCard({ post, userId }: Props) {
               label={shareLabel}
               onClick={handleShare}
             />
+            {!isFallback && userId && (
+              <ActionButton
+                icon={<Flag className="h-4 w-4 opacity-50" />}
+                label="Report"
+                onClick={() => setReportOpen(true)}
+              />
+            )}
           </div>
         </div>
 
@@ -368,6 +377,12 @@ export function ReelCard({ post, userId }: Props) {
           setActionLogged(true);
           setActionOpen(false);
         }}
+      />
+
+      <ReportSheet
+        postId={post.id}
+        isOpen={reportOpen}
+        onClose={() => setReportOpen(false)}
       />
     </>
   );

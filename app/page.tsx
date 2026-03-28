@@ -506,12 +506,15 @@ export default function LandingPage() {
         </motion.div>
 
         {/* ── Footer ── */}
-        <motion.p
-          className="mt-6 text-center text-[10px] font-medium tracking-wide text-[var(--muted)]/30"
-          variants={fadeUp}
-        >
-          No doom scrolling &middot; No fake motivation &middot; Just proof
-        </motion.p>
+        <motion.div className="mt-6 flex flex-col items-center gap-2" variants={fadeUp}>
+          <p className="text-center text-[10px] font-medium tracking-wide text-[var(--muted)]/30">
+            No doom scrolling &middot; No fake motivation &middot; Just proof
+          </p>
+          <div className="flex gap-4 text-[10px] text-[var(--muted)]/20">
+            <a href="/terms" className="hover:text-[var(--muted)]/50 transition">Terms</a>
+            <a href="/privacy" className="hover:text-[var(--muted)]/50 transition">Privacy</a>
+          </div>
+        </motion.div>
       </motion.div>
     </main>
   );
