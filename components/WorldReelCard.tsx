@@ -33,6 +33,27 @@ const CAT_COLORS: Record<string, { from: string; to: string }> = {
   Education: { from: "#1a2a3a", to: "#0a1520" },
 };
 
+// Curated Unsplash photo IDs per category — stable, relevant fallback images
+const CAT_UNSPLASH: Record<string, string> = {
+  "Technology & AI": "photo-1518770660439-4636190af475",
+  Business: "photo-1507679799987-c73779587ccf",
+  "World News": "photo-1526778548025-fa2f459cd5c1",
+  Science: "photo-1532094349884-543bc11b234d",
+  Sport: "photo-1526232761682-d26e03ac148e",
+  Environment: "photo-1441974231531-c6227db76b6e",
+  "Health & Life": "photo-1571019613454-1cb2f99b2d8b",
+  "Money & Finance": "photo-1611974789855-9c2a0a7236a3",
+  Culture: "photo-1533929736458-ca588d08c8be",
+  Education: "photo-1481627834876-b7833e8f5570",
+};
+
+function getImageUrl(item: NewsSlide): string | null {
+  if (item.image_url) return item.image_url;
+  const photoId = CAT_UNSPLASH[item.category];
+  if (photoId) return `https://images.unsplash.com/${photoId}?w=800&h=1200&fit=crop&auto=format&q=75`;
+  return null;
+}
+
 function IntroSlide() {
   return (
     <div
@@ -100,16 +121,16 @@ function IntroSlide() {
 
 function NewsItemSlide({ item, index }: { item: NewsSlide; index: number }) {
   const colors = CAT_COLORS[item.category] ?? { from: "#1a1a2e", to: "#0a0a1f" };
-  const hasImage = !!item.image_url;
+  const imageUrl = getImageUrl(item);
 
   return (
     <div className="relative h-full w-full overflow-hidden">
       {/* Background */}
-      {hasImage ? (
+      {imageUrl ? (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={item.image_url!}
+            src={imageUrl}
             alt=""
             className="absolute inset-0 h-full w-full object-cover"
           />
