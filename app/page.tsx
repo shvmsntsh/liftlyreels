@@ -40,7 +40,7 @@ export default function LandingPage() {
   }
 
   return (
-    <main className="page-full relative flex h-[100dvh] flex-col items-center justify-between overflow-hidden px-5 pb-8 pt-12 bg-background">
+    <main className="relative flex h-[100dvh] flex-col items-center justify-between overflow-hidden px-5 pb-8 bg-background">
 
       {/* Ambient orbs — visible in dark, very subtle in light */}
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -60,7 +60,7 @@ export default function LandingPage() {
 
       {/* ── Logo + headline ── */}
       <motion.div
-        className="relative z-10 flex flex-col items-center text-center"
+        className="pt-top-safe relative z-10 flex flex-col items-center text-center"
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}

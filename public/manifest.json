@@ -5,8 +5,8 @@
   "start_url": "/feed",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#050816",
-  "theme_color": "#050816",
+  "background_color": "#080f1e",
+  "theme_color": "#080f1e",
   "categories": ["lifestyle", "health", "education"],
   "icons": [
     {

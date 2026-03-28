@@ -166,7 +166,7 @@ function SignupForm() {
   // ── Done ──
   if (step === "done") {
     return (
-      <div className="page-full flex h-[100dvh] flex-col items-center justify-center bg-background">
+      <div className="flex h-[100dvh] flex-col items-center justify-center bg-background pt-safe">
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -190,7 +190,7 @@ function SignupForm() {
   // ── Email verification pending ──
   if (step === "verify") {
     return (
-      <div className="page-full flex h-[100dvh] flex-col items-center justify-center bg-background px-6">
+      <div className="flex h-[100dvh] flex-col items-center justify-center bg-background px-6 pt-safe">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -224,12 +224,12 @@ function SignupForm() {
   }
 
   return (
-    <div className="page-full flex h-[100dvh] flex-col bg-background overflow-hidden">
+    <div className="flex h-[100dvh] flex-col bg-background overflow-hidden">
       {/* Ambient */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_40%_at_50%_0%,rgba(6,182,212,0.05),transparent)] dark:bg-[radial-gradient(ellipse_70%_40%_at_50%_0%,rgba(6,182,212,0.07),transparent)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_0%,rgba(6,182,212,0.12),transparent)] dark:bg-[radial-gradient(ellipse_70%_50%_at_50%_0%,rgba(6,182,212,0.18),transparent)]" />
 
       {/* Logo + heading */}
-      <div className="flex flex-col items-center pt-14 pb-6 relative z-10">
+      <div className="pt-top-safe flex flex-col items-center pb-6 relative z-10">
         <Link href="/">
           <LiftlyLogo size={56} animate />
         </Link>

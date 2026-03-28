@@ -4,7 +4,7 @@
 
 /* ── Dark mode (default — dark-first app) ── */
 :root {
-  --background: #050816;
+  --background: #080f1e;
   --foreground: #f7f8fc;
   --muted: #94a3b8;
   --surface-1: #0c1425;
@@ -130,6 +130,11 @@ select {
 .page-full {
   min-height: 100dvh;
   padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Auth page top padding: safe area + breathing room, min 3rem */
+.pt-top-safe {
+  padding-top: max(3rem, calc(env(safe-area-inset-top, 0px) + 1rem));
 }
 
 /* Hide scrollbar but keep functionality */

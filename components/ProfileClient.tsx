@@ -16,6 +16,18 @@ import clsx from "clsx";
 // Changelog entries — update this with each deploy
 const CHANGELOG = [
   {
+    version: "v1.14",
+    date: "Mar 28, 2026",
+    entries: [
+      "Light & dark mode across landing, login, signup — fully theme-aware",
+      "Full-screen layout with viewport-fit:cover — content behind status bar",
+      "Status bar now blends seamlessly with app background",
+      "LiftlyLogo redesigned — consistent across all screens with animated glow",
+      "Landing page redesigned to single screen (no scroll needed)",
+      "Signup cleaned up — confirm password field, lucide eye toggle icons",
+    ],
+  },
+  {
     version: "v1.13",
     date: "Mar 27, 2026",
     entries: [

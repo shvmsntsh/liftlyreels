@@ -54,12 +54,12 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="page-full flex h-[100dvh] flex-col bg-background overflow-hidden">
-      {/* Subtle top tint */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_40%_at_50%_0%,rgba(6,182,212,0.05),transparent)] dark:bg-[radial-gradient(ellipse_70%_40%_at_50%_0%,rgba(6,182,212,0.07),transparent)]" />
+    <main className="flex h-[100dvh] flex-col bg-background overflow-hidden">
+      {/* Subtle top tint — stronger so it bleeds visually into status bar */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_0%,rgba(6,182,212,0.12),transparent)] dark:bg-[radial-gradient(ellipse_70%_50%_at_50%_0%,rgba(6,182,212,0.18),transparent)]" />
 
       {/* Logo section */}
-      <div className="flex flex-col items-center pt-14 pb-8 relative z-10">
+      <div className="pt-top-safe flex flex-col items-center pb-8 relative z-10">
         <Link href="/"><LiftlyLogo size={56} /></Link>
         <h1 className="mt-3 text-xl font-black text-foreground tracking-tight">Liftly</h1>
         <p className="mt-1 text-sm text-muted">Welcome back. Keep the streak going.</p>
