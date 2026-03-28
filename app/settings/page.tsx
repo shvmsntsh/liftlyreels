@@ -118,7 +118,7 @@ export default function SettingsPage() {
     }
     loadProfile();
 
-    const stored = localStorage.getItem("liftly_audio");
+    const stored = localStorage.getItem("liftly-audio");
     setAudioEnabled(stored !== "off");
   }, [router]);
 
@@ -194,7 +194,7 @@ export default function SettingsPage() {
   function toggleAudio() {
     const next = !audioEnabled;
     setAudioEnabled(next);
-    localStorage.setItem("liftly_audio", next ? "on" : "off");
+    localStorage.setItem("liftly-audio", next ? "on" : "off");
     window.dispatchEvent(new CustomEvent("liftly_audio_change", { detail: next }));
   }
 

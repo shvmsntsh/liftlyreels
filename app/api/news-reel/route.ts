@@ -28,6 +28,22 @@ const CATEGORY_MAP: Record<string, string> = {
   Relationships: "culture",
 };
 
+// ── HTML/entity decoder — used by parser and cache cleaner ────────────────
+function decode(s: string): string {
+  return s
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#039;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_m, d) => String.fromCharCode(parseInt(d)))
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 // ── RSS item parser ───────────────────────────────────────────────────────
 function parseRSSItem(xml: string, section: (typeof SECTIONS)[0]) {
   const get = (tag: string) =>
@@ -44,20 +60,6 @@ function parseRSSItem(xml: string, section: (typeof SECTIONS)[0]) {
     null;
 
   if (!title) return null;
-
-  const decode = (s: string) =>
-    s
-      .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
-      .replace(/<[^>]*>/g, "")
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/&#039;/g, "'")
-      .replace(/&quot;/g, '"')
-      .replace(/&apos;/g, "'")
-      .replace(/&#(\d+);/g, (_m, d) => String.fromCharCode(parseInt(d)))
-      .replace(/\s+/g, " ")
-      .trim();
 
   return {
     title: decode(title).slice(0, 120),
@@ -165,7 +167,13 @@ export async function GET(request: Request) {
       .maybeSingle();
 
     if (cached?.slides && Array.isArray(cached.slides) && cached.slides.length > 0) {
-      return NextResponse.json({ reel_id: cached.id, slides: cached.slides });
+      // Clean cached data in case it has residual HTML from pre-fix era
+      const cleanSlides = (cached.slides as Record<string, string>[]).map((s) => ({
+        ...s,
+        title: decode(s.title ?? ""),
+        description: decode(s.description ?? ""),
+      }));
+      return NextResponse.json({ reel_id: cached.id, slides: cleanSlides });
     }
   } catch {
     // Table may not exist yet — continue to generate fresh

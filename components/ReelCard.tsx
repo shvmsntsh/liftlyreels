@@ -20,10 +20,11 @@ type ActionButtonProps = {
   onClick?: () => void;
   active?: boolean;
   activeClass?: string;
+  activeTextClass?: string;
   glow?: string;
 };
 
-function ActionButton({ icon, label, onClick, active, activeClass, glow }: ActionButtonProps) {
+function ActionButton({ icon, label, onClick, active, activeClass, activeTextClass, glow }: ActionButtonProps) {
   const [pressed, setPressed] = useState(false);
 
   return (
@@ -37,7 +38,7 @@ function ActionButton({ icon, label, onClick, active, activeClass, glow }: Actio
       }}
       className={clsx(
         "flex flex-col items-center gap-1.5 tap-highlight",
-        active ? activeClass : "text-white"
+        active ? activeTextClass : "text-white"
       )}
     >
       <motion.div
@@ -113,6 +114,15 @@ export function ReelCard({ post, userId, onActionLogged }: Props) {
 
   const gradient = REEL_GRADIENTS[post.gradient ?? "ocean"] ?? REEL_GRADIENTS.ocean;
   const isFallback = post.id.startsWith("fallback-");
+
+  // Fetch proof status on mount — persist across reloads
+  useEffect(() => {
+    if (!userId || isFallback) return;
+    fetch(`/api/impact?postId=${post.id}`)
+      .then((r) => r.json())
+      .then((d) => { if (d.proved) setActionLogged(true); })
+      .catch(() => {});
+  }, [userId, post.id, isFallback]);
 
   const toggleReaction = useCallback(
     async (type: ReactionType) => {
@@ -303,6 +313,7 @@ export function ReelCard({ post, userId, onActionLogged }: Props) {
               label={reactions.sparked || "Spark"}
               active={myReactions.has("sparked")}
               activeClass="border-amber-300/50 bg-amber-400/20 text-amber-300"
+              activeTextClass="text-amber-300"
               glow="shadow-amber-500/30"
               onClick={() => toggleReaction("sparked")}
             />
@@ -311,6 +322,7 @@ export function ReelCard({ post, userId, onActionLogged }: Props) {
               label={reactions.fired_up || "Fire"}
               active={myReactions.has("fired_up")}
               activeClass="border-orange-300/50 bg-orange-400/20 text-orange-300"
+              activeTextClass="text-orange-300"
               glow="shadow-orange-500/30"
               onClick={() => toggleReaction("fired_up")}
             />
@@ -319,6 +331,7 @@ export function ReelCard({ post, userId, onActionLogged }: Props) {
               label={reactions.bookmarked || "Save"}
               active={myReactions.has("bookmarked")}
               activeClass="border-sky-300/50 bg-sky-400/20 text-sky-300"
+              activeTextClass="text-sky-300"
               glow="shadow-sky-500/30"
               onClick={() => toggleReaction("bookmarked")}
             />

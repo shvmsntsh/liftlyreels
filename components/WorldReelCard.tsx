@@ -47,11 +47,26 @@ const CAT_UNSPLASH: Record<string, string> = {
   Education: "photo-1481627834876-b7833e8f5570",
 };
 
-function getImageUrl(item: NewsSlide): string | null {
-  if (item.image_url) return item.image_url;
-  const photoId = CAT_UNSPLASH[item.category];
+function getFallbackUrl(category: string): string | null {
+  const photoId = CAT_UNSPLASH[category];
   if (photoId) return `https://images.unsplash.com/${photoId}?w=800&h=1200&fit=crop&auto=format&q=75`;
   return null;
+}
+
+/** Strip any residual HTML tags from text (defense-in-depth for cached dirty data) */
+function cleanText(s: string): string {
+  return s
+    .replace(/<!\[CDATA\[[\s\S]*?\]\]>/g, "")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#039;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_m, d) => String.fromCharCode(parseInt(d)))
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function IntroSlide() {
@@ -121,18 +136,32 @@ function IntroSlide() {
 
 function NewsItemSlide({ item, index }: { item: NewsSlide; index: number }) {
   const colors = CAT_COLORS[item.category] ?? { from: "#1a1a2e", to: "#0a0a1f" };
-  const imageUrl = getImageUrl(item);
+  const primaryUrl = item.image_url || null;
+  const fallbackUrl = getFallbackUrl(item.category);
+  const [imgSrc, setImgSrc] = useState<string | null>(primaryUrl || fallbackUrl);
+  const [imgFailed, setImgFailed] = useState(false);
+
+  const title = cleanText(item.title);
+  const description = cleanText(item.description);
 
   return (
     <div className="relative h-full w-full overflow-hidden">
       {/* Background */}
-      {imageUrl ? (
+      {imgSrc && !imgFailed ? (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={imageUrl}
+            src={imgSrc}
             alt=""
             className="absolute inset-0 h-full w-full object-cover"
+            onError={() => {
+              // If primary failed, try fallback; if fallback also failed, use gradient
+              if (imgSrc === primaryUrl && fallbackUrl) {
+                setImgSrc(fallbackUrl);
+              } else {
+                setImgFailed(true);
+              }
+            }}
           />
           {/* Dark gradient overlay for readability */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20" />
@@ -144,8 +173,8 @@ function NewsItemSlide({ item, index }: { item: NewsSlide; index: number }) {
         />
       )}
 
-      {/* Content — pinned to bottom */}
-      <div className="absolute inset-x-0 bottom-0 px-5" style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 3.5rem)" }}>
+      {/* Content — pinned to bottom, above safe area */}
+      <div className="absolute inset-x-0 bottom-0 px-5 pb-16">
         {/* Story number + category */}
         <div className="mb-3 flex items-center gap-2">
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-[11px] font-black text-white">
@@ -159,13 +188,13 @@ function NewsItemSlide({ item, index }: { item: NewsSlide; index: number }) {
 
         {/* Headline */}
         <h2 className="mb-3 text-[22px] font-black leading-tight text-white">
-          {item.title}
+          {title}
         </h2>
 
         {/* Description */}
-        {item.description && (
+        {description && (
           <p className="mb-4 text-[13px] leading-relaxed text-white/60 line-clamp-3">
-            {item.description}
+            {description}
           </p>
         )}
 
@@ -191,6 +220,14 @@ export function WorldReelCard({ slides, onDismiss }: Props) {
   const total = slides.length + 1; // +1 for intro
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(1);
+
+  // Dispatch event to hide AudioToggle while WorldReel is open
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("liftly-world-reel", { detail: true }));
+    return () => {
+      window.dispatchEvent(new CustomEvent("liftly-world-reel", { detail: false }));
+    };
+  }, []);
 
   const goNext = useCallback(() => {
     if (current < total - 1) {
@@ -233,7 +270,7 @@ export function WorldReelCard({ slides, onDismiss }: Props) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[100] bg-black"
+      className="fixed inset-0 z-[150] bg-black"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -257,13 +294,13 @@ export function WorldReelCard({ slides, onDismiss }: Props) {
         ))}
       </div>
 
-      {/* ── Dismiss button ── */}
+      {/* ── Dismiss button — top right, clear of audio toggle ── */}
       <button
         onClick={onDismiss}
-        className="absolute right-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm"
-        style={{ top: "calc(env(safe-area-inset-top, 0px) + 2.25rem)" }}
+        className="absolute right-4 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 backdrop-blur-sm"
+        style={{ top: "calc(env(safe-area-inset-top, 0px) + 2rem)" }}
       >
-        <X className="h-4 w-4 text-white" />
+        <X className="h-5 w-5 text-white" />
       </button>
 
       {/* ── Slides ── */}

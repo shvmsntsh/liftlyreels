@@ -18,15 +18,14 @@ export function BottomNav({ streak }: { streak?: number }) {
   return (
     <nav
       className="fixed bottom-0 inset-x-0 z-[100]"
-      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      style={{
+        background: "var(--nav-bg)",
+        borderTop: "1px solid var(--nav-border)",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+      }}
     >
-      <div
-        className="flex items-stretch justify-around"
-        style={{
-          background: "var(--nav-bg)",
-          borderTop: "1px solid var(--nav-border)",
-        }}
-      >
+      <div className="flex items-stretch justify-around">
+
         {items.map(({ href, icon: Icon, label, accent }) => {
           const isActive =
             pathname === href ||

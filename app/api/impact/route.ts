@@ -1,12 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase-server";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const supabase = createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Check if a specific post has been proved
+  const { searchParams } = new URL(request.url);
+  const checkPostId = searchParams.get("postId");
+  if (checkPostId) {
+    const { count } = await supabase
+      .from("impact_journal")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("post_id", checkPostId);
+    return NextResponse.json({ proved: (count ?? 0) > 0 });
   }
 
   const { data, error } = await supabase
@@ -60,6 +72,29 @@ export async function POST(request: NextRequest) {
   const isRealPost = UUID_RE.test(postId);
 
   if (isRealPost) {
+    // Check if user already proved this reel — prevent duplicates
+    const { count: existing } = await supabase
+      .from("impact_journal")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("post_id", postId);
+
+    if ((existing ?? 0) > 0) {
+      // Already proved — return success without awarding points again
+      const today = new Date().toISOString().slice(0, 10);
+      const { count: dailyCount } = await supabase
+        .from("impact_journal")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .gte("created_at", `${today}T00:00:00.000Z`);
+      return NextResponse.json({
+        entry: { id: postId },
+        success: true,
+        already_proved: true,
+        daily_count: dailyCount ?? 1,
+      });
+    }
+
     const { error } = await supabase
       .from("impact_journal")
       .insert({ user_id: user.id, post_id: postId, action_taken: actionTaken.trim() })

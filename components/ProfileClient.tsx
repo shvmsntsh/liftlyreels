@@ -18,6 +18,20 @@ import { StreakDefenseBanner } from "./StreakDefenseBanner";
 // Changelog entries — update this with each deploy
 const CHANGELOG = [
   {
+    version: "v1.19",
+    date: "Mar 28, 2026",
+    entries: [
+      "World Reel: real article images with fallback chain, clean text rendering",
+      "Fixed: all content visible above bottom nav (native iOS tab bar positioning)",
+      "Fixed: sound button no longer overlaps close button in World Reel",
+      "Audio: Settings page and feed audio now properly synced",
+      "Reaction buttons: clean circular highlight instead of boxy background",
+      "Proved reels persist across reloads — no duplicate proofs or points",
+      "Build timestamp auto-generated in IST at deploy time",
+      "Bottom nav flush to screen edge like native iOS app",
+    ],
+  },
+  {
     version: "v1.18",
     date: "Mar 28, 2026",
     entries: [
@@ -25,11 +39,8 @@ const CHANGELOG = [
       "Fixed: 'I Did This' button fully visible above bottom nav on all iOS devices",
       "Fixed: 'Go prove it' scroll-to-top now scrolls correctly in the feed",
       "World Reel: actual news article images via og:image fallback",
-      "World Reel: safe area fixes for notch and home indicator",
       "What's New popup auto-shows once on every new deployment",
       "iOS viewport fix: dynamic viewport height (100dvh) on all full-screen cards",
-      "News API: improved HTML cleaning (CDATA, numeric entities, <p> tags stripped)",
-      "Changelog popup and action modal now positioned above bottom nav",
     ],
   },
   {

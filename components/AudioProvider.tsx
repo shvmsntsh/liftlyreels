@@ -220,6 +220,47 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const showToggle = AUDIO_PAGES.includes(pathname);
+  const [worldReelOpen, setWorldReelOpen] = useState(false);
+
+  // Listen for Settings page audio toggle (custom event)
+  useEffect(() => {
+    function onSettingsAudioChange(e: Event) {
+      const enabled = (e as CustomEvent).detail as boolean;
+      if (enabled && !userEnabledRef.current) {
+        userEnabledRef.current = true;
+        localStorage.setItem("liftly-audio", "on");
+        const engine = getEngine();
+        engine.unlock();
+        unlockedRef.current = true;
+        const w = wantedRef.current;
+        if (w && AUDIO_PAGES.includes(pathnameRef.current)) {
+          engine.play(w.category, w.trackId).then((ok) => {
+            setIsPlaying(ok);
+            if (ok) {
+              setCurrentCategory(w.category);
+              setTrackLabel(engine.trackLabel);
+            }
+          });
+        }
+      } else if (!enabled && userEnabledRef.current) {
+        engineRef.current?.pause();
+        setIsPlaying(false);
+        userEnabledRef.current = false;
+        localStorage.setItem("liftly-audio", "off");
+      }
+    }
+    window.addEventListener("liftly_audio_change", onSettingsAudioChange);
+    return () => window.removeEventListener("liftly_audio_change", onSettingsAudioChange);
+  }, []);
+
+  // Hide AudioToggle when WorldReel overlay is open
+  useEffect(() => {
+    function onWorldReel(e: Event) {
+      setWorldReelOpen((e as CustomEvent).detail as boolean);
+    }
+    window.addEventListener("liftly-world-reel", onWorldReel);
+    return () => window.removeEventListener("liftly-world-reel", onWorldReel);
+  }, []);
 
   return (
     <Ctx.Provider
@@ -234,7 +275,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         preload="auto"
         style={{ display: "none" }}
       />
-      {showToggle && (
+      {showToggle && !worldReelOpen && (
         <AudioToggleButton
           isPlaying={isPlaying}
           label={trackLabel}
