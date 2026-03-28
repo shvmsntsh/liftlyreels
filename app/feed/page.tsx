@@ -34,7 +34,7 @@ export default async function FeedPage() {
   }
 
   return (
-    <main className="relative mx-auto h-screen max-w-md overflow-hidden">
+    <main className="relative mx-auto h-[100dvh] max-w-md overflow-hidden">
       <FeedClient initialPosts={posts} userId={userId} challenge={challenge} />
       <BottomNav streak={streak} />
     </main>

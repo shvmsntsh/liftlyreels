@@ -47,6 +47,7 @@ function parseRSSItem(xml: string, section: (typeof SECTIONS)[0]) {
 
   const decode = (s: string) =>
     s
+      .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
       .replace(/<[^>]*>/g, "")
       .replace(/&amp;/g, "&")
       .replace(/&lt;/g, "<")
@@ -54,6 +55,7 @@ function parseRSSItem(xml: string, section: (typeof SECTIONS)[0]) {
       .replace(/&#039;/g, "'")
       .replace(/&quot;/g, '"')
       .replace(/&apos;/g, "'")
+      .replace(/&#(\d+);/g, (_m, d) => String.fromCharCode(parseInt(d)))
       .replace(/\s+/g, " ")
       .trim();
 
@@ -67,6 +69,24 @@ function parseRSSItem(xml: string, section: (typeof SECTIONS)[0]) {
     url,
     pub_date: pubDate,
   };
+}
+
+async function fetchOgImage(articleUrl: string): Promise<string | null> {
+  if (!articleUrl || articleUrl === "#") return null;
+  try {
+    const res = await fetch(articleUrl, {
+      signal: AbortSignal.timeout(3000),
+      headers: { "User-Agent": "Liftly/1.0" },
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const match =
+      html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i) ??
+      html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i);
+    return match?.[1] ?? null;
+  } catch {
+    return null;
+  }
 }
 
 async function fetchSectionArticle(section: (typeof SECTIONS)[0]) {
@@ -89,10 +109,18 @@ async function fetchSectionArticle(section: (typeof SECTIONS)[0]) {
         if (!isNaN(dt) && dt < since) continue;
       }
 
+      // If no image from RSS, try og:image from article page
+      if (!parsed.image_url) {
+        parsed.image_url = await fetchOgImage(parsed.url);
+      }
       return parsed;
     }
     // No 24h article — return latest anyway as fallback
-    return items[0] ? parseRSSItem(items[0], section) : null;
+    const fallback = items[0] ? parseRSSItem(items[0], section) : null;
+    if (fallback && !fallback.image_url) {
+      fallback.image_url = await fetchOgImage(fallback.url);
+    }
+    return fallback;
   } catch {
     return null;
   }

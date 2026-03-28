@@ -31,7 +31,7 @@ export function SavedPostsClient({ posts }: SavedPostsClientProps) {
   }, [posts, savedIds]);
 
   return (
-    <div className="snap-y-mandatory h-screen overflow-y-auto">
+    <div className="snap-y-mandatory h-[100dvh] overflow-y-auto">
       {savedPosts.map((post) => (
         <ReelCard key={post.id} post={post} />
       ))}

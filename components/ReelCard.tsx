@@ -170,7 +170,7 @@ export function ReelCard({ post, userId, onActionLogged }: Props) {
       <article
         ref={cardRef}
         id={post.id}
-        className="snap-start relative flex h-screen flex-col justify-end overflow-hidden"
+        className="snap-start relative flex h-[100dvh] flex-col justify-end overflow-hidden"
       >
         {/* Background */}
         {post.image_url ? (
@@ -344,7 +344,7 @@ export function ReelCard({ post, userId, onActionLogged }: Props) {
 
         {/* Hero CTA: "I Did This" */}
         {!isFallback && (
-          <div className="relative z-10 px-4 pb-24">
+          <div className="relative z-10 px-4 pb-nav">
             <motion.button
               onClick={() => { haptic("medium"); setActionOpen(true); }}
               className={clsx(

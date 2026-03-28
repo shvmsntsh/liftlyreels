@@ -37,6 +37,37 @@ export function AppUpdateBanner() {
     }
   }, []);
 
+  // On mount — detect if BUILD_VERSION changed since last visit (new deploy)
+  useEffect(() => {
+    const STORAGE_KEY = "liftly-last-seen-version";
+    const lastSeen = localStorage.getItem(STORAGE_KEY);
+
+    // First ever visit — store version silently, no popup
+    if (!lastSeen) {
+      localStorage.setItem(STORAGE_KEY, BUILD_VERSION);
+      return;
+    }
+
+    // Same version as last visit — nothing to show
+    if (lastSeen === BUILD_VERSION) return;
+
+    // New deployment detected — update stored version
+    localStorage.setItem(STORAGE_KEY, BUILD_VERSION);
+
+    // Skip if the "just-updated" flow already handles it
+    if (sessionStorage.getItem("liftly-just-updated")) return;
+
+    // Show changelog popup for this new version
+    fetch("/api/version")
+      .then((r) => r.json())
+      .then((data: VersionData) => {
+        setChangelog(data);
+        setShowChangelog(true);
+        setTimeout(() => setShowChangelog(false), 5000);
+      })
+      .catch(() => null);
+  }, []);
+
   // Poll for version changes
   useEffect(() => {
     function poll() {
@@ -111,7 +142,8 @@ export function AppUpdateBanner() {
       <AnimatePresence>
         {showChangelog && changelog && (
           <motion.div
-            className="fixed bottom-24 left-4 right-4 z-[200] rounded-2xl border border-emerald-400/20 bg-black/90 p-5 shadow-2xl backdrop-blur-xl"
+            className="fixed left-4 right-4 z-[200] rounded-2xl border border-emerald-400/20 bg-black/90 p-5 shadow-2xl backdrop-blur-xl"
+            style={{ bottom: "calc(var(--nav-height) + var(--safe-bottom) + 1rem)" }}
             initial={{ opacity: 0, y: 24, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.95 }}

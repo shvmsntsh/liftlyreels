@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Search, Bell } from "lucide-react";
 import Link from "next/link";
@@ -25,6 +25,7 @@ type Props = {
 };
 
 export function FeedClient({ initialPosts, userId, challenge }: Props) {
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState<Tab>("foryou");
   const [followingPosts, setFollowingPosts] = useState<PostRecord[] | null>(null);
   const [loadingFollowing, setLoadingFollowing] = useState(false);
@@ -97,7 +98,7 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
   ];
 
   return (
-    <div className={clsx("h-screen scrollbar-none", isReelTab ? "overflow-y-auto snap-y-mandatory feed-scroll" : "overflow-y-auto")}>
+    <div ref={scrollRef} className={clsx("h-[100dvh] scrollbar-none", isReelTab ? "overflow-y-auto snap-y-mandatory feed-scroll" : "overflow-y-auto")}>
       <TourOverlay />
       <MorningMissionModal challengeText={challenge?.challenge_text ?? null} />
       {/* Header with tabs, search, and notifications */}
@@ -149,13 +150,13 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
         <>
           {/* Daily challenge (for you tab only) */}
           {tab === "foryou" && challenge && (
-            <div className="snap-start relative flex h-screen items-center justify-center overflow-hidden px-4 py-8">
+            <div className="snap-start relative flex h-[100dvh] items-center justify-center overflow-hidden px-4 py-8">
               <DailyChallengeBar challenge={challenge} fullPage />
             </div>
           )}
 
           {loadingFollowing ? (
-            <div className="snap-start flex h-screen items-center justify-center">
+            <div className="snap-start flex h-[100dvh] items-center justify-center">
               <motion.div
                 className="h-8 w-8 rounded-full border-2 border-white/40 border-t-white"
                 animate={{ rotate: 360 }}
@@ -175,14 +176,14 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
                     <ScrollNudgeCard
                       count={index + 1}
                       actionsLogged={loggedCount}
-                      onScrollBack={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                      onScrollBack={() => scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" })}
                     />
                   )}
                 </React.Fragment>
               ))}
 
               {activePosts.length === 0 && (
-                <div className="snap-start flex h-screen items-center justify-center">
+                <div className="snap-start flex h-[100dvh] items-center justify-center">
                   <div className="text-center px-8">
                     {tab === "following" ? (
                       <>

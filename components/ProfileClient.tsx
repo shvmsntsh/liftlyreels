@@ -18,6 +18,21 @@ import { StreakDefenseBanner } from "./StreakDefenseBanner";
 // Changelog entries — update this with each deploy
 const CHANGELOG = [
   {
+    version: "v1.18",
+    date: "Mar 28, 2026",
+    entries: [
+      "Instagram-style splash screen with animated logo on every app load",
+      "Fixed: 'I Did This' button fully visible above bottom nav on all iOS devices",
+      "Fixed: 'Go prove it' scroll-to-top now scrolls correctly in the feed",
+      "World Reel: actual news article images via og:image fallback",
+      "World Reel: safe area fixes for notch and home indicator",
+      "What's New popup auto-shows once on every new deployment",
+      "iOS viewport fix: dynamic viewport height (100dvh) on all full-screen cards",
+      "News API: improved HTML cleaning (CDATA, numeric entities, <p> tags stripped)",
+      "Changelog popup and action modal now positioned above bottom nav",
+    ],
+  },
+  {
     version: "v1.16",
     date: "Mar 28, 2026",
     entries: [

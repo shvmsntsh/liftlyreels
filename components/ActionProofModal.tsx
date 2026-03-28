@@ -110,7 +110,7 @@ export function ActionProofModal({ postTitle, postId, category, isOpen, onClose,
           <>
             {/* Backdrop */}
             <motion.div
-              className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm"
+              className="fixed inset-0 z-[110] bg-black/75 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -119,8 +119,9 @@ export function ActionProofModal({ postTitle, postId, category, isOpen, onClose,
 
             {/* Sheet */}
             <motion.div
-              className="fixed inset-x-3 bottom-24 z-50 mx-auto max-w-md overflow-hidden rounded-3xl"
+              className="fixed inset-x-3 z-[110] mx-auto max-w-md overflow-hidden rounded-3xl"
               style={{
+                bottom: "calc(var(--nav-height) + var(--safe-bottom) + 0.5rem)",
                 background: "linear-gradient(160deg, #052e16 0%, #0c1a2e 100%)",
                 border: "1px solid rgba(74,222,128,0.2)",
                 boxShadow: "0 -8px 40px rgba(16,185,129,0.15), 0 20px 60px rgba(0,0,0,0.5)",

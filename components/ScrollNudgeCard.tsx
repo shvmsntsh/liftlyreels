@@ -13,7 +13,7 @@ export function ScrollNudgeCard({ count, actionsLogged = 0, onScrollBack }: Prop
   const hasLogged = actionsLogged > 0;
 
   return (
-    <div className="snap-start flex h-screen flex-col items-center justify-center px-8"
+    <div className="snap-start flex h-[100dvh] flex-col items-center justify-center px-8"
       style={{ background: hasLogged
         ? "linear-gradient(160deg, #052e16 0%, #0f172a 100%)"
         : "linear-gradient(160deg, #1c0a00 0%, #0f172a 100%)" }}

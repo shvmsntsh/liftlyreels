@@ -62,9 +62,9 @@ export default async function SavedPage() {
   }
 
   return (
-    <main className="relative mx-auto h-screen max-w-md">
+    <main className="relative mx-auto h-[100dvh] max-w-md">
       {savedPosts.length === 0 ? (
-        <div className="flex h-screen items-center justify-center flex-col gap-4 px-8 text-center">
+        <div className="flex h-[100dvh] items-center justify-center flex-col gap-4 px-8 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full border border-sky-400/20 bg-sky-400/10">
             <Bookmark className="h-7 w-7 text-sky-400" />
           </div>
@@ -77,7 +77,7 @@ export default async function SavedPage() {
         </div>
       ) : (
         <>
-          <div className="snap-y-mandatory h-screen overflow-y-auto">
+          <div className="snap-y-mandatory h-[100dvh] overflow-y-auto">
             {savedPosts.map((post) => (
               <ReelCard key={post.id} post={post} userId={userId} />
             ))}

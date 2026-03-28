@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
 import { AudioProvider } from "@/components/AudioProvider";
 import { AppUpdateBanner } from "@/components/AppUpdateBanner";
+import { SplashScreen } from "@/components/SplashScreen";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -64,6 +65,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} bg-background text-foreground antialiased`}
       >
+        <SplashScreen />
         <AuthProvider>
           <AudioProvider>
             <AppUpdateBanner />

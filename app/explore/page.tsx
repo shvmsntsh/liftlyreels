@@ -162,7 +162,7 @@ export default async function ExplorePage({
       : allPosts.filter((p) => p.category === activeCategory);
 
   return (
-    <main className="relative mx-auto h-screen max-w-md overflow-hidden">
+    <main className="relative mx-auto h-[100dvh] max-w-md overflow-hidden">
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 bg-gradient-to-b from-black/70 via-black/40 to-transparent pb-8 pt-4">
         <div className="pointer-events-auto flex items-center justify-between px-4 pb-2">
           <div>
@@ -194,12 +194,12 @@ export default async function ExplorePage({
         </div>
       </div>
 
-      <div className="h-screen overflow-y-auto snap-y-mandatory scrollbar-none feed-scroll">
+      <div className="h-[100dvh] overflow-y-auto snap-y-mandatory scrollbar-none feed-scroll">
         {filtered.map((post) => (
           <ReelCard key={post.id} post={post} userId={userId} />
         ))}
         {filtered.length === 0 && (
-          <div className="snap-start flex h-screen items-center justify-center">
+          <div className="snap-start flex h-[100dvh] items-center justify-center">
             <p className="text-slate-500 text-sm">No reels in this category yet.</p>
           </div>
         )}

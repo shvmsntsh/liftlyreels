@@ -145,7 +145,7 @@ function NewsItemSlide({ item, index }: { item: NewsSlide; index: number }) {
       )}
 
       {/* Content — pinned to bottom */}
-      <div className="absolute inset-x-0 bottom-0 px-5 pb-10">
+      <div className="absolute inset-x-0 bottom-0 px-5" style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 3.5rem)" }}>
         {/* Story number + category */}
         <div className="mb-3 flex items-center gap-2">
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-[11px] font-black text-white">
@@ -164,7 +164,7 @@ function NewsItemSlide({ item, index }: { item: NewsSlide; index: number }) {
 
         {/* Description */}
         {item.description && (
-          <p className="mb-4 text-[13px] leading-relaxed text-white/60 line-clamp-2">
+          <p className="mb-4 text-[13px] leading-relaxed text-white/60 line-clamp-3">
             {item.description}
           </p>
         )}
@@ -239,7 +239,7 @@ export function WorldReelCard({ slides, onDismiss }: Props) {
       exit={{ opacity: 0 }}
     >
       {/* ── Progress bars ── */}
-      <div className="absolute left-0 right-0 top-0 z-20 flex gap-1 px-3 pt-12">
+      <div className="absolute left-0 right-0 top-0 z-20 flex gap-1 px-3" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}>
         {Array.from({ length: total }).map((_, i) => (
           <div key={i} className="h-[3px] flex-1 overflow-hidden rounded-full bg-white/20">
             {i < current ? (
@@ -260,7 +260,8 @@ export function WorldReelCard({ slides, onDismiss }: Props) {
       {/* ── Dismiss button ── */}
       <button
         onClick={onDismiss}
-        className="absolute right-4 top-14 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm"
+        className="absolute right-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm"
+        style={{ top: "calc(env(safe-area-inset-top, 0px) + 2.25rem)" }}
       >
         <X className="h-4 w-4 text-white" />
       </button>
@@ -292,7 +293,7 @@ export function WorldReelCard({ slides, onDismiss }: Props) {
       </div>
 
       {/* ── Slide counter ── */}
-      <div className="absolute bottom-8 left-1/2 z-20 -translate-x-1/2 flex items-center gap-2">
+      <div className="absolute left-1/2 z-20 -translate-x-1/2 flex items-center gap-2" style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)" }}>
         {current < total - 1 ? (
           <button
             onClick={goNext}

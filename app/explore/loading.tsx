@@ -2,7 +2,7 @@ import { BottomNav } from "@/components/BottomNav";
 
 export default function ExploreLoading() {
   return (
-    <main className="relative mx-auto h-screen max-w-md overflow-hidden">
+    <main className="relative mx-auto h-[100dvh] max-w-md overflow-hidden">
       {/* Header overlay */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 bg-gradient-to-b from-black/70 via-black/40 to-transparent pb-8 pt-4">
         <div className="px-4 pb-2">
@@ -26,8 +26,8 @@ export default function ExploreLoading() {
       </div>
 
       {/* Full-screen reel skeleton */}
-      <div className="h-screen">
-        <div className="relative flex h-screen flex-col justify-end overflow-hidden">
+      <div className="h-[100dvh]">
+        <div className="relative flex h-[100dvh] flex-col justify-end overflow-hidden">
           <div className="absolute inset-0 animate-pulse bg-[var(--surface-1)]" />
           <div className="relative z-10 px-5 pb-28">
             <div className="mb-3 h-5 w-20 animate-pulse rounded-full bg-white/10" />

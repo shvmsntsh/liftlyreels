@@ -2,8 +2,8 @@ import { BottomNav } from "@/components/BottomNav";
 
 export default function FeedLoading() {
   return (
-    <main className="relative mx-auto h-screen max-w-md overflow-hidden">
-      <div className="h-screen">
+    <main className="relative mx-auto h-[100dvh] max-w-md overflow-hidden">
+      <div className="h-[100dvh]">
         {/* Tab pills skeleton */}
         <div className="flex items-center justify-center pt-4 pb-2">
           <div className="flex gap-1 rounded-full border border-white/10 bg-black/40 px-1 py-1 backdrop-blur-md">

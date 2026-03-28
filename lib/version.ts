@@ -1,15 +1,15 @@
 // Build version — update this on every deployment
 // Format: v{major}.{minor} · DD Mon YYYY, HH:MM IST
-export const BUILD_VERSION = "v1.17 · 28 Mar 2026, 15:10 IST";
-export const BUILD_NUMBER = "v1.17";
-export const BUILD_DATE = "28 Mar 2026, 15:10 IST";
+export const BUILD_VERSION = "v1.18 · 28 Mar 2026, 18:00 IST";
+export const BUILD_NUMBER = "v1.18";
+export const BUILD_DATE = "28 Mar 2026, 18:00 IST";
 
 export const LATEST_CHANGES = [
-  "World Reel: category-relevant photos behind every news slide",
-  "In-app update banner — notifies mid-session when a new version ships",
-  "Changelog popup on refresh (auto-closes in 5 seconds)",
-  "Proof Vault: redesigned trophy-case layout with category accents",
-  "Social proof on share links — avatar stack + proof count",
-  "Streak Defense Banner: alert at 4pm when streak is at risk",
-  "World Reel: top 10 global news unlocked after 5 daily proofs",
+  "Instagram-style splash screen on every app load",
+  "Fixed: 'I Did This' button no longer hidden behind bottom nav on iOS",
+  "Fixed: 'Go prove it' scroll-to-top now works correctly",
+  "World Reel: actual article images via og:image fallback",
+  "World Reel: safe area fixes for notch and home indicator",
+  "What's New popup auto-shows on new deployments",
+  "iOS viewport fix: all full-screen cards use dynamic viewport height",
 ];
