@@ -62,7 +62,7 @@ function ActionButton({ icon, label, onClick, active, activeClass, glow }: Actio
 type Props = {
   post: PostRecord;
   userId?: string;
-  onActionLogged?: () => void;
+  onActionLogged?: (dailyCount: number) => void;
 };
 
 export function ReelCard({ post, userId, onActionLogged }: Props) {
@@ -378,10 +378,10 @@ export function ReelCard({ post, userId, onActionLogged }: Props) {
         category={post.category}
         isOpen={actionOpen}
         onClose={() => setActionOpen(false)}
-        onLogged={() => {
+        onLogged={(dailyCount) => {
           setActionLogged(true);
           setActionOpen(false);
-          onActionLogged?.();
+          onActionLogged?.(dailyCount);
         }}
       />
 

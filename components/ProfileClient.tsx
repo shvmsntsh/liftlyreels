@@ -18,6 +18,18 @@ import { StreakDefenseBanner } from "./StreakDefenseBanner";
 // Changelog entries — update this with each deploy
 const CHANGELOG = [
   {
+    version: "v1.16",
+    date: "Mar 28, 2026",
+    entries: [
+      "World Reel — unlocked after 5 proofs in a day: top 10 global news as a full-screen Instagram-style reel",
+      "11 slides: dramatic intro + 1 news story per category (Tech, Business, World, Science, Sport...)",
+      "News sourced from The Guardian (last 24 hours, auto-refreshed every 4 hours)",
+      "Category order personalized based on your most-logged proof categories",
+      "Reel disappears after viewing — won't show again until next milestone",
+      "Cached in Supabase — one generation shared across all users",
+    ],
+  },
+  {
     version: "v1.15",
     date: "Mar 27, 2026",
     entries: [

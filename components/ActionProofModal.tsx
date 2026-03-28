@@ -24,7 +24,7 @@ type Props = {
   category: string;
   isOpen: boolean;
   onClose: () => void;
-  onLogged: () => void;
+  onLogged: (dailyCount: number) => void;
 };
 
 export function ActionProofModal({ postTitle, postId, category, isOpen, onClose, onLogged }: Props) {
@@ -75,9 +75,10 @@ export function ActionProofModal({ postTitle, postId, category, isOpen, onClose,
       }
 
       // Auto-close after success animation
+      const dc = data?.daily_count ?? 0;
       setTimeout(() => {
         setShowConfetti(false);
-        onLogged();
+        onLogged(dc);
         setSuccess(false);
         setCustom("");
       }, 2000);

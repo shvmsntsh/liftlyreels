@@ -12,6 +12,8 @@ import { NotificationsSheet } from "./NotificationsSheet";
 import { ActionFeedTab } from "./ActionFeedTab";
 import { MorningMissionModal } from "./MorningMissionModal";
 import { PostRecord, DailyChallenge } from "@/lib/types";
+import { WorldReelCard, NewsSlide } from "./WorldReelCard";
+import { AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 
 type Tab = "foryou" | "following" | "proof";
@@ -29,6 +31,7 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loggedCount, setLoggedCount] = useState(0);
+  const [worldReel, setWorldReel] = useState<NewsSlide[] | null>(null);
 
   // Update streak once per day when user visits feed
   useEffect(() => {
@@ -58,6 +61,24 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
       setFollowingPosts([]);
     } finally {
       setLoadingFollowing(false);
+    }
+  }
+
+  async function handleActionLogged(dailyCount: number) {
+    setLoggedCount((n) => n + 1);
+    // Unlock world reel on 5th proof of the day (and every 5th after)
+    if (dailyCount > 0 && dailyCount % 5 === 0) {
+      const today = new Date().toISOString().slice(0, 10);
+      const seenKey = `liftly-world-reel-${today}-${dailyCount}`;
+      if (localStorage.getItem(seenKey)) return; // Already shown for this milestone today
+      localStorage.setItem(seenKey, "1");
+      try {
+        const res = await fetch("/api/news-reel");
+        const data = await res.json();
+        if (data.slides?.length > 0) setWorldReel(data.slides);
+      } catch {
+        /* fail silently */
+      }
     }
   }
 
@@ -148,7 +169,7 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
                   <ReelCard
                     post={post}
                     userId={userId}
-                    onActionLogged={() => setLoggedCount((n) => n + 1)}
+                    onActionLogged={handleActionLogged}
                   />
                   {(index + 1) % 5 === 0 && (index + 1) < activePosts.length && (
                     <ScrollNudgeCard
@@ -189,6 +210,16 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
         onClose={() => setNotifOpen(false)}
         onUnreadChange={setUnreadCount}
       />
+
+      {/* World Reel overlay — unlocked after 5 proofs in a day */}
+      <AnimatePresence>
+        {worldReel && (
+          <WorldReelCard
+            slides={worldReel}
+            onDismiss={() => setWorldReel(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

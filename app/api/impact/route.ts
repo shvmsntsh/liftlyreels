@@ -110,17 +110,22 @@ export async function POST(request: NextRequest) {
     ]).catch(() => null);
   }
 
-  // Return updated streak for milestone detection
-  const { data: updatedProfile } = await supabase
-    .from("profiles")
-    .select("streak_current,vibe_score")
-    .eq("id", user.id)
-    .single();
+  // Return updated streak + today's proof count (for World Reel unlock)
+  const today = new Date().toISOString().slice(0, 10);
+  const [{ data: updatedProfile }, { count: dailyCount }] = await Promise.all([
+    supabase.from("profiles").select("streak_current,vibe_score").eq("id", user.id).single(),
+    supabase
+      .from("impact_journal")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .gte("created_at", `${today}T00:00:00.000Z`),
+  ]);
 
   return NextResponse.json({
     entry: { id: isRealPost ? postId : "local" },
     success: true,
     streak: updatedProfile?.streak_current ?? null,
     vibe: updatedProfile?.vibe_score ?? null,
+    daily_count: dailyCount ?? 1,
   });
 }
