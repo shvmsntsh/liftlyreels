@@ -16,6 +16,28 @@ import clsx from "clsx";
 // Changelog entries — update this with each deploy
 const CHANGELOG = [
   {
+    version: "v1.10",
+    date: "Mar 27, 2026",
+    entries: [
+      "Public reel pages at /r/{id} — share any reel without needing an account",
+      "Share button now copies public link — works on iOS, Android, desktop",
+      "Open Graph meta tags on public reels for rich social media previews",
+      "7-Day Chain Tracker on challenge page — visual streak ring for current week",
+      "Non-users see full reel content + \"I Did This — Join Liftly\" CTA",
+    ],
+  },
+  {
+    version: "v1.9",
+    date: "Mar 27, 2026",
+    entries: [
+      "Proof tab in feed — see what people you follow have actually done",
+      "Morning Mission modal — set your daily intention when you open the app",
+      "Streak milestone celebrations — hit 3/7/14/30 days and get a celebration",
+      "Actions API returns streak info for real-time milestone detection",
+      "Fixed TypeScript type errors in landing page animations",
+    ],
+  },
+  {
     version: "v1.8",
     date: "Mar 27, 2026",
     entries: [

@@ -146,10 +146,10 @@ export function ReelCard({ post, userId }: Props) {
     const url =
       typeof window === "undefined"
         ? ""
-        : `${window.location.origin}/feed#${post.id}`;
+        : `${window.location.origin}/r/${post.id}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: post.title, text: post.content[0], url });
+        await navigator.share({ title: post.title, text: `${post.content[0] ?? ""} — Liftly`, url });
       } else {
         await navigator.clipboard.writeText(url);
       }

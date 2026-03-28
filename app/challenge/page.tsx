@@ -323,6 +323,61 @@ export default async function ChallengePage() {
           ))}
         </div>
 
+        {/* 7-Day Chain Tracker */}
+        {challenges.length > 0 && (
+          <div
+            className="rounded-2xl p-4 backdrop-blur-sm"
+            style={{
+              backgroundColor: "var(--glass-bg)",
+              border: "1px solid var(--glass-border)",
+            }}
+          >
+            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-orange-300 flex items-center gap-1.5">
+              🔗 Your 7-Day Chain
+            </p>
+            <div className="flex items-center gap-2">
+              {challenges.map((c, i) => {
+                const isToday = c.date === new Date().toISOString().split("T")[0];
+                return (
+                  <div key={c.id} className="flex flex-col items-center gap-1 flex-1">
+                    <div
+                      className={`h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
+                        c.user_completed
+                          ? "bg-emerald-400 text-black shadow-[0_0_12px_rgba(52,211,153,0.5)]"
+                          : isToday
+                          ? "border-2 border-orange-400 text-orange-300 bg-orange-400/10"
+                          : "border border-white/15 bg-white/5 text-slate-600"
+                      }`}
+                    >
+                      {c.user_completed ? "✓" : isToday ? "●" : "○"}
+                    </div>
+                    <span className="text-[9px] text-slate-600">
+                      {isToday ? "Today" : new Date(c.date).toLocaleDateString("en-US", { weekday: "short" }).slice(0, 1)}
+                    </span>
+                  </div>
+                );
+              })}
+              {/* Pad to 7 if fewer */}
+              {Array.from({ length: Math.max(0, 7 - challenges.length) }).map((_, i) => (
+                <div key={`pad-${i}`} className="flex flex-col items-center gap-1 flex-1">
+                  <div className="h-9 w-9 rounded-full border border-white/8 bg-white/3" />
+                  <span className="text-[9px] text-slate-700">—</span>
+                </div>
+              ))}
+            </div>
+            {streak >= 7 && (
+              <p className="mt-3 text-center text-xs font-bold text-emerald-400">
+                🔥 {streak}-day chain! Keep going.
+              </p>
+            )}
+            {streak === 0 && (
+              <p className="mt-3 text-center text-xs text-slate-600">
+                Complete today&apos;s challenge to start your chain.
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Today's challenge */}
         {today ? (
           <DailyChallengeBar challenge={today} fullPage />
