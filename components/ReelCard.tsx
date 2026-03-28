@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Bookmark, MessageCircle, Share2, Zap, Flame, NotebookPen, UserPlus, UserCheck, Hash } from "lucide-react";
+import { Bookmark, MessageCircle, Share2, Zap, Flame, CheckCircle, UserPlus, UserCheck, Hash } from "lucide-react";
 import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -10,7 +10,7 @@ import { PostRecord, ReactionType, REEL_GRADIENTS } from "@/lib/types";
 import { UserAvatar } from "./UserAvatar";
 import { CommentsSheet } from "./CommentsSheet";
 import { useAudio } from "./AudioProvider";
-import { ImpactModal } from "./ImpactModal";
+import { ActionProofModal } from "./ActionProofModal";
 
 type ActionButtonProps = {
   icon: React.ReactNode;
@@ -101,12 +101,13 @@ export function ReelCard({ post, userId }: Props) {
   );
   const [commentsCount, setCommentsCount] = useState(post.comments_count ?? 0);
   const [commentsOpen, setCommentsOpen] = useState(false);
-  const [impactOpen, setImpactOpen] = useState(false);
-  const [impactLogged, setImpactLogged] = useState(false);
+  const [actionOpen, setActionOpen] = useState(false);
+  const [actionLogged, setActionLogged] = useState(false);
   const [shareLabel, setShareLabel] = useState("Share");
   const [isFollowing, setIsFollowing] = useState(post.author_is_following ?? false);
 
   const gradient = REEL_GRADIENTS[post.gradient ?? "ocean"] ?? REEL_GRADIENTS.ocean;
+  const isFallback = post.id.startsWith("fallback-");
 
   const toggleReaction = useCallback(
     async (type: ReactionType) => {
@@ -187,7 +188,7 @@ export function ReelCard({ post, userId }: Props) {
         <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/40 to-transparent" />
 
         {/* Bottom content */}
-        <div className="relative z-10 flex items-end gap-3 px-4 pb-28 pt-8">
+        <div className="relative z-10 flex items-end gap-3 px-4 pb-4 pt-8">
           {/* Main content */}
           <div className="flex-1 min-w-0">
             {/* Category + community badges */}
@@ -326,18 +327,27 @@ export function ReelCard({ post, userId }: Props) {
               label={shareLabel}
               onClick={handleShare}
             />
-            {!post.id.startsWith("fallback-") && (
-              <ActionButton
-                icon={<NotebookPen className={clsx("h-5 w-5", impactLogged ? "fill-current" : "")} />}
-                label="Impact"
-                active={impactLogged}
-                activeClass="border-emerald-300/50 bg-emerald-400/20 text-emerald-300"
-                glow="shadow-emerald-500/30"
-                onClick={() => setImpactOpen(true)}
-              />
-            )}
           </div>
         </div>
+
+        {/* Hero CTA: "I Did This" */}
+        {!isFallback && (
+          <div className="relative z-10 px-4 pb-24">
+            <motion.button
+              onClick={() => setActionOpen(true)}
+              className={clsx(
+                "flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-[15px] font-bold transition-all active:scale-[0.97]",
+                actionLogged
+                  ? "border border-emerald-400/30 bg-emerald-500/15 text-emerald-300 shadow-[0_4px_20px_rgba(16,185,129,0.15)]"
+                  : "bg-emerald-500 text-white shadow-[0_4px_20px_rgba(16,185,129,0.35)]"
+              )}
+              whileTap={{ scale: 0.97 }}
+            >
+              <CheckCircle className={clsx("h-5 w-5", actionLogged && "fill-current")} />
+              {actionLogged ? "Proved It!" : "I Did This"}
+            </motion.button>
+          </div>
+        )}
       </article>
 
       <CommentsSheet
@@ -348,14 +358,15 @@ export function ReelCard({ post, userId }: Props) {
         onCountChange={setCommentsCount}
       />
 
-      <ImpactModal
+      <ActionProofModal
         postId={post.id}
         postTitle={post.title}
-        isOpen={impactOpen}
-        onClose={() => setImpactOpen(false)}
+        category={post.category}
+        isOpen={actionOpen}
+        onClose={() => setActionOpen(false)}
         onLogged={() => {
-          setImpactLogged(true);
-          setImpactOpen(false);
+          setActionLogged(true);
+          setActionOpen(false);
         }}
       />
     </>

@@ -11,7 +11,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("impact_journal")
-    .select("id,post_id,action_taken,created_at,posts(id,title,category,gradient)")
+    .select("id,post_id,action_taken,photo_url,created_at,posts(id,title,category,gradient)")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(20);
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { postId, actionTaken } = await request.json();
+  const { postId, actionTaken, photoUrl } = await request.json();
 
   if (!postId || !actionTaken?.trim()) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
   if (isRealPost) {
     const { error } = await supabase
       .from("impact_journal")
-      .insert({ user_id: user.id, post_id: postId, action_taken: actionTaken.trim() })
+      .insert({ user_id: user.id, post_id: postId, action_taken: actionTaken.trim(), photo_url: photoUrl || null })
       .select("id")
       .single();
 

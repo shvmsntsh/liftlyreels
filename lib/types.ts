@@ -69,8 +69,20 @@ export type ImpactEntry = {
   user_id: string;
   post_id: string;
   action_taken: string;
+  photo_url: string | null;
   created_at: string;
   post?: PostRecord | null;
+};
+
+// Quick-action templates for "I Did This" by category
+export const ACTION_TEMPLATES: Record<string, string[]> = {
+  Gym: ["Did 50 pushups", "Completed leg day", "Ran 3 miles", "Hit a new PR"],
+  Books: ["Read 20 pages", "Finished a chapter", "Started a new book"],
+  Diet: ["Meal prepped", "Skipped junk food", "Drank 8 glasses of water"],
+  Mindset: ["Meditated 10 min", "Journaled", "Cold shower", "Woke up at 5 AM"],
+  Wellness: ["Went for a walk", "Slept 8 hours", "Digital detox"],
+  Finance: ["Saved money today", "Tracked expenses", "Cancelled a subscription"],
+  Relationships: ["Called a friend", "Wrote a thank-you note", "Quality time"],
 };
 
 export const CATEGORIES = [

@@ -16,9 +16,9 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Liftly — Positive Reels for Positive Minds",
+  title: "Liftly — Stop Scrolling. Start Proving.",
   description:
-    "Invitation-only microlearning reels for books, gym, diet, and mindset. Build streaks, track your impact, grow with a community.",
+    "The app where watching isn't enough. See a reel, do the thing, snap your proof. Build streaks, earn your feed, prove you took action.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

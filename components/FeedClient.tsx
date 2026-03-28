@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Search, Bell } from "lucide-react";
 import Link from "next/link";
 import { ReelCard } from "./ReelCard";
 import { DailyChallengeBar } from "./DailyChallengeBar";
+import { ScrollNudgeCard } from "./ScrollNudgeCard";
 import { TourOverlay } from "./TourOverlay";
 import { NotificationsSheet } from "./NotificationsSheet";
 import { PostRecord, DailyChallenge } from "@/lib/types";
@@ -122,8 +123,16 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
         </div>
       ) : (
         <>
-          {activePosts.map((post) => (
-            <ReelCard key={post.id} post={post} userId={userId} />
+          {activePosts.map((post, index) => (
+            <React.Fragment key={post.id}>
+              <ReelCard post={post} userId={userId} />
+              {(index + 1) % 5 === 0 && (index + 1) < activePosts.length && (
+                <ScrollNudgeCard
+                  count={index + 1}
+                  onScrollBack={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                />
+              )}
+            </React.Fragment>
           ))}
 
           {activePosts.length === 0 && (

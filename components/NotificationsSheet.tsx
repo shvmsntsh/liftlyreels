@@ -36,7 +36,7 @@ function notificationText(n: Notification): string {
       if (n.reaction_type === "bookmarked") return `${name} saved your reel`;
       return `${name} reacted to your reel`;
     case "impact":
-      return `${name} logged an impact from your reel`;
+      return `${name} proved they did it on your reel`;
     case "follow":
       return `${name} started following you`;
   }

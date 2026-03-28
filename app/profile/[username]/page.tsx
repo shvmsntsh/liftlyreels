@@ -66,7 +66,7 @@ export default async function ProfilePage({
     isOwnProfile
       ? supabase
           .from("impact_journal")
-          .select("id,post_id,action_taken,created_at")
+          .select("id,post_id,action_taken,photo_url,created_at")
           .eq("user_id", profile.id)
           .order("created_at", { ascending: false })
           .limit(10)
@@ -132,7 +132,7 @@ export default async function ProfilePage({
         posts={typedPosts}
         isOwnProfile={isOwnProfile}
         currentUserId={currentUser?.id}
-        impactEntries={(impactEntries ?? []) as Array<{ id: string; post_id: string; action_taken: string; created_at: string }>}
+        impactEntries={(impactEntries ?? []) as Array<{ id: string; post_id: string; action_taken: string; photo_url?: string | null; created_at: string }>}
         inviteCodes={(inviteCodes ?? []) as Array<{ code: string; used_by: string | null; created_at: string }>}
       />
       <BottomNav />

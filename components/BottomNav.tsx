@@ -8,7 +8,7 @@ const items = [
   { href: "/feed", icon: Home, label: "Feed" },
   { href: "/search", icon: Search, label: "Search" },
   { href: "/create", icon: Plus, label: "Create", accent: true },
-  { href: "/challenge", icon: Zap, label: "Challenge" },
+  { href: "/challenge", icon: Zap, label: "Act" },
   { href: "/profile/me", icon: User, label: "Me" },
 ];
 
@@ -66,7 +66,7 @@ export function BottomNav({ streak }: { streak?: number }) {
                       style={{ color: isActive ? "var(--nav-text-active)" : "var(--nav-text)" }}
                       strokeWidth={isActive ? 2.5 : 1.8}
                     />
-                    {label === "Challenge" && streak != null && streak > 0 && (
+                    {label === "Act" && streak != null && streak > 0 && (
                       <span className="absolute -top-1.5 -right-3 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-orange-500 px-1 text-[9px] font-bold leading-none text-white">
                         {streak}
                       </span>

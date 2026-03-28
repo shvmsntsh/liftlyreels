@@ -96,7 +96,7 @@ type Props = {
   posts: PostRecord[];
   isOwnProfile: boolean;
   currentUserId?: string;
-  impactEntries: Array<{ id: string; post_id: string; action_taken: string; created_at: string }>;
+  impactEntries: Array<{ id: string; post_id: string; action_taken: string; photo_url?: string | null; created_at: string }>;
   inviteCodes: Array<{ code: string; used_by: string | null; created_at: string }>;
 };
 
@@ -115,7 +115,7 @@ export function ProfileClient({
   const [following, setFollowing] = useState(profile.is_following ?? false);
   const [followerCount, setFollowerCount] = useState(profile.followers_count ?? 0);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<Tab>("reels");
+  const [activeTab, setActiveTab] = useState<Tab>(isOwnProfile ? "impact" : "reels");
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [currentAvatar, setCurrentAvatar] = useState(profile.avatar_url);
   const [savingAvatar, setSavingAvatar] = useState(false);
@@ -507,9 +507,10 @@ export function ProfileClient({
         </AnimatePresence>
 
         {/* Stats row — clickable */}
-        <div className="mt-5 grid grid-cols-4 gap-2">
+        <div className="mt-5 grid grid-cols-5 gap-1.5">
           {[
-            { label: "Reels", value: profile.posts_count ?? 0, onClick: undefined },
+            { label: "Actions", value: impactEntries.length, onClick: () => setActiveTab("impact") },
+            { label: "Reels", value: profile.posts_count ?? 0, onClick: () => setActiveTab("reels") },
             { label: "Followers", value: followerCount, onClick: () => setFollowSheet("followers") },
             { label: "Following", value: profile.following_count ?? 0, onClick: () => setFollowSheet("following") },
             { label: "Vibe", value: profile.vibe_score, onClick: undefined },
@@ -575,7 +576,7 @@ export function ProfileClient({
               )}
             >
               {tab === "reels" && <><BookOpen className="inline h-3.5 w-3.5 mr-1" />Reels</>}
-              {tab === "impact" && <><Zap className="inline h-3.5 w-3.5 mr-1" />Impact</>}
+              {tab === "impact" && <><Camera className="inline h-3.5 w-3.5 mr-1" />Proof</>}
               {tab === "invite" && <><span className="mr-1">{"\u{1F39F}"}</span>Invite</>}
               {tab === "updates" && <><Sparkles className="inline h-3.5 w-3.5 mr-1" />New</>}
             </button>
@@ -745,29 +746,39 @@ export function ProfileClient({
           </>
         )}
 
-        {/* Impact tab */}
+        {/* Proof tab */}
         {activeTab === "impact" && (
           <div className="mt-4 space-y-3 pb-6">
             <p className="text-sm text-muted">
-              Actions you&apos;ve logged from reels — your real-world growth.
+              Your proof wall — every action you&apos;ve taken and proved.
             </p>
             {impactEntries.map((entry) => (
               <div
                 key={entry.id}
-                className="rounded-xl border border-amber-400/15 bg-amber-950/20 p-3"
+                className="overflow-hidden rounded-xl border border-emerald-400/15 bg-emerald-950/20"
               >
-                <p className="text-sm text-slate-200">{entry.action_taken}</p>
-                <p className="mt-1 text-[11px] text-slate-500">
-                  {new Date(entry.created_at).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </p>
+                {entry.photo_url && (
+                  <img
+                    src={entry.photo_url}
+                    alt="Proof"
+                    className="w-full max-h-48 object-cover"
+                    loading="lazy"
+                  />
+                )}
+                <div className="p-3">
+                  <p className="text-sm text-slate-200">{entry.action_taken}</p>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    {new Date(entry.created_at).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </p>
+                </div>
               </div>
             ))}
             {impactEntries.length === 0 && (
               <div className="py-8 text-center text-slate-500 text-sm">
-                No impact logged yet. Tap {"\u{1F4D3}"} on any reel to log your first action.
+                No proof yet. Tap &quot;I Did This&quot; on any reel to log your first action.
               </div>
             )}
           </div>
