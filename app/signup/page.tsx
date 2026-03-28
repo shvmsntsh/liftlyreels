@@ -7,6 +7,7 @@ import { ArrowRight, Check, Mail, Sparkles } from "lucide-react";
 import Link from "next/link";
 import clsx from "clsx";
 import { getSupabaseClient } from "@/lib/supabase";
+import { LiftlyLogo } from "@/components/LiftlyLogo";
 
 function SignupForm() {
   const searchParams = useSearchParams();
@@ -165,27 +166,35 @@ function SignupForm() {
   // ── Done ──
   if (step === "done") {
     return (
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="text-center"
-      >
-        <div className="mb-4 mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-400/20">
-          <Check className="h-8 w-8 text-emerald-400" />
-        </div>
-        <h2 className="text-2xl font-bold text-foreground">You&apos;re in!</h2>
-        <p className="mt-2 text-slate-400">Taking you to your feed...</p>
-      </motion.div>
+      <div className="flex h-[100dvh] flex-col items-center justify-center bg-[#060813]">
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="text-center"
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", damping: 15, stiffness: 300 }}
+            className="mb-5 mx-auto"
+          >
+            <LiftlyLogo size={72} />
+          </motion.div>
+          <h2 className="text-2xl font-black text-white">You&apos;re in!</h2>
+          <p className="mt-2 text-slate-400">Taking you to your feed...</p>
+        </motion.div>
+      </div>
     );
   }
 
   // ── Email verification pending ──
   if (step === "verify") {
     return (
+      <div className="flex h-[100dvh] flex-col items-center justify-center bg-[#060813] px-6">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center"
+        className="text-center w-full max-w-sm"
       >
         <div className="mb-5 mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-sky-400/15 border border-sky-400/30">
           <Mail className="h-7 w-7 text-sky-300" />
@@ -210,48 +219,50 @@ function SignupForm() {
           </p>
         </div>
       </motion.div>
+      </div>
     );
   }
 
   return (
-    <>
-      <div className="mb-4 text-center">
+    <div className="flex h-[100dvh] flex-col bg-[#060813] overflow-hidden">
+      {/* Ambient */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_40%_at_50%_0%,rgba(6,182,212,0.07),transparent)]" />
+
+      {/* Logo + heading */}
+      <div className="flex flex-col items-center pt-14 pb-6 relative z-10">
+        <Link href="/">
+          <LiftlyLogo size={56} animate />
+        </Link>
+        <h1 className="mt-3 text-xl font-black text-white tracking-tight">Liftly</h1>
+        <p className="mt-1 text-sm text-slate-500">
+          {step === "account" ? "Create your account" : "Set up your profile"}
+        </p>
         {codeVerified && step === "account" && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold text-emerald-400"
+            className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold text-emerald-400"
           >
             <Sparkles className="h-3 w-3" />
             You&apos;re invited
           </motion.div>
         )}
-        <Link href="/" className="text-[36px] font-black text-foreground hover:text-sky-400 transition block">
-          Liftly
-        </Link>
-        <p className="mt-1 text-[13px] text-slate-500">
-          {step === "account" ? "Create your account" : "Set up your profile"}
-        </p>
-      </div>
 
-      {/* Step dots */}
-      <div className="mb-4 flex items-center justify-center gap-2">
-        {["account", "profile"].map((s, i) => (
-          <div key={s} className="flex items-center gap-2">
-            <div className={clsx(
-              "flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-all",
-              step === s ? "bg-sky-500 text-white shadow-[0_0_12px_rgba(56,189,248,0.5)]"
-                : s === "account" && step === "profile" ? "bg-sky-500/80 text-white"
-                : "border border-[var(--border)] text-muted"
-            )}>
-              {s === "account" && step === "profile" ? <Check className="h-3.5 w-3.5" /> : i + 1}
+        {/* Step indicator */}
+        <div className="mt-4 flex items-center gap-1.5">
+          {["account", "profile"].map((s, i) => (
+            <div key={s} className="flex items-center gap-1.5">
+              <div className={clsx(
+                "h-1.5 rounded-full transition-all",
+                step === s ? "w-6 bg-sky-400" : s === "account" && step === "profile" ? "w-3 bg-sky-600" : "w-3 bg-white/15"
+              )} />
             </div>
-            {i === 0 && <div className={clsx("h-px w-8 transition-all", step === "profile" ? "bg-sky-500" : "bg-white/10")} />}
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-1)] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.3)] backdrop-blur-2xl">
+      {/* Form area - scrollable */}
+      <div className="relative z-10 flex-1 overflow-y-auto px-5">
         {/* ── Step 1: Account ── */}
         {step === "account" && (
           <form onSubmit={handleAccountStep} className="space-y-3.5" autoComplete="on">
@@ -472,25 +483,33 @@ function SignupForm() {
         )}
       </div>
 
-      <p className="mt-4 text-center text-[13px] text-slate-600">
-        Already have an account?{" "}
-        <Link href="/login" className="font-semibold text-sky-400 hover:text-sky-300 transition-colors">
-          Sign in
-        </Link>
-      </p>
-    </>
+      {/* Bottom links */}
+      <div className="relative z-10 px-5 pb-8 pt-4 text-center">
+        <p className="text-[13px] text-slate-600">
+          Already have an account?{" "}
+          <Link href="/login" className="font-semibold text-sky-400 hover:text-sky-300 transition-colors">
+            Sign in
+          </Link>
+        </p>
+        <p className="mt-2 text-[11px] text-slate-700">
+          By joining you agree to our{" "}
+          <Link href="/terms" className="underline hover:text-slate-500 transition-colors">Terms</Link>
+          {" "}and{" "}
+          <Link href="/privacy" className="underline hover:text-slate-500 transition-colors">Privacy Policy</Link>
+        </p>
+      </div>
+    </div>
   );
 }
 
 export default function SignupPage() {
   return (
-    <main className="relative flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-background px-5 py-8">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(56,189,248,0.1),transparent)]" />
-      <div className="w-full max-w-sm">
-        <Suspense fallback={<div className="text-slate-400 text-center">Loading...</div>}>
-          <SignupForm />
-        </Suspense>
+    <Suspense fallback={
+      <div className="flex h-[100dvh] items-center justify-center bg-[#060813]">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-sky-400" />
       </div>
-    </main>
+    }>
+      <SignupForm />
+    </Suspense>
   );
 }

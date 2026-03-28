@@ -19,71 +19,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import clsx from "clsx";
-import { motion, useAnimation, AnimatePresence } from "framer-motion";
-
-// ── Logo Mark SVG ──────────────────────────────────────────────
-// A checkmark whose upstroke becomes an upward arrow.
-// Reads as: "done ✓" + "rising ↑" = prove it and grow.
-function LiftlyMark({ size = 36, animated = false }: { size?: number; animated?: boolean }) {
-  const controls = useAnimation();
-
-  useEffect(() => {
-    if (!animated) return;
-    controls.start({
-      pathLength: 1,
-      opacity: 1,
-      transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] as [number, number, number, number], delay: 0.2 },
-    });
-  }, [animated, controls]);
-
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 36 36"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <linearGradient id="logoGrad" x1="0" y1="36" x2="36" y2="0" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#34d399" />
-          <stop offset="100%" stopColor="#38bdf8" />
-        </linearGradient>
-        <filter id="logoGlow">
-          <feGaussianBlur stdDeviation="2" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-      </defs>
-      {/* Main stroke: check valley → arrow tip */}
-      <motion.path
-        d="M 5 20 L 13 29 L 31 5"
-        stroke="url(#logoGrad)"
-        strokeWidth="3.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        filter="url(#logoGlow)"
-        initial={animated ? { pathLength: 0, opacity: 0 } : { pathLength: 1, opacity: 1 }}
-        animate={animated ? controls : { pathLength: 1, opacity: 1 }}
-      />
-      {/* Arrow head at tip */}
-      <motion.path
-        d="M 31 5 L 26 4 M 31 5 L 31 11"
-        stroke="url(#logoGrad)"
-        strokeWidth="3.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        filter="url(#logoGlow)"
-        initial={animated ? { pathLength: 0, opacity: 0 } : { pathLength: 1, opacity: 1 }}
-        animate={
-          animated
-            ? controls
-            : { pathLength: 1, opacity: 1 }
-        }
-        transition={animated ? { duration: 0.4, delay: 0.9, ease: "easeOut" } : undefined}
-      />
-    </svg>
-  );
-}
+import { motion, AnimatePresence } from "framer-motion";
+import { LiftlyLogo } from "@/components/LiftlyLogo";
 
 // ── Animation variants ─────────────────────────────────────────
 const container = {
@@ -242,16 +179,7 @@ export default function LandingPage() {
               animate={{ opacity: [0.4, 0.7, 0.4] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             />
-            <div
-              className="relative flex h-14 w-14 items-center justify-center rounded-2xl"
-              style={{
-                background: "linear-gradient(135deg, rgba(16,185,129,0.15), rgba(56,189,248,0.1))",
-                border: "1px solid rgba(16,185,129,0.3)",
-                backdropFilter: "blur(12px)",
-              }}
-            >
-              <LiftlyMark size={34} animated />
-            </div>
+            <LiftlyLogo size={64} animate />
           </motion.div>
 
           <motion.h1

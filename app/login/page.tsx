@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { getSupabaseClient } from "@/lib/supabase";
+import { LiftlyLogo } from "@/components/LiftlyLogo";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -53,24 +54,22 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-5">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(56,189,248,0.12),transparent)]" />
+    <main className="flex h-[100dvh] flex-col bg-[#060813] overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_40%_at_50%_0%,rgba(6,182,212,0.07),transparent)]" />
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-sm"
-      >
-        <div className="mb-8 text-center">
-          <Link href="/" className="text-4xl font-black text-foreground hover:text-sky-400 transition">
-            Liftly
-          </Link>
-          <p className="mt-2 text-sm text-slate-400">Welcome back. Keep the streak going.</p>
-        </div>
+      {/* Logo section */}
+      <div className="flex flex-col items-center pt-14 pb-8 relative z-10">
+        <Link href="/"><LiftlyLogo size={56} /></Link>
+        <h1 className="mt-3 text-xl font-black text-white tracking-tight">Liftly</h1>
+        <p className="mt-1 text-sm text-slate-500">Welcome back. Keep the streak going.</p>
+      </div>
 
-        <div
-          className="rounded-2xl p-6 backdrop-blur-2xl"
-          style={{ backgroundColor: "var(--surface-1)", border: "1px solid var(--border)" }}
+      {/* Form */}
+      <div className="relative z-10 flex-1 overflow-y-auto px-5">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-sm mx-auto"
         >
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
@@ -128,15 +127,18 @@ export default function LoginPage() {
               {loading ? "Signing in..." : <>Sign In <ArrowRight className="h-4 w-4" /></>}
             </button>
           </form>
-        </div>
+        </motion.div>
+      </div>
 
-        <p className="mt-5 text-center text-sm text-slate-500">
+      {/* Bottom links */}
+      <div className="relative z-10 px-5 pb-8 pt-4 text-center">
+        <p className="text-[13px] text-slate-600">
           Don&apos;t have an account?{" "}
           <Link href="/" className="font-semibold text-sky-400 hover:text-sky-300">
             Get an invite
           </Link>
         </p>
-      </motion.div>
+      </div>
     </main>
   );
 }
