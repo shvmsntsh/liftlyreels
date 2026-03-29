@@ -29,8 +29,8 @@ export async function GET(request: NextRequest) {
 
     const userTopCategories = (categoryData ?? []).map((c) => c.category);
 
-    // Fetch unproved posts, sorted by engagement score
-    const { data: posts, error } = await supabase
+    // Fetch all posts, then filter out proved ones
+    const { data: allPosts, error } = await supabase
       .from("posts")
       .select(
         `
@@ -47,14 +47,17 @@ export async function GET(request: NextRequest) {
         cached_engagement_score
         `
       )
-      .not("id", "in", `(${provedPostIds.map(() => "?").join(",")})`)
       .order("cached_engagement_score", { ascending: false })
       .order("created_at", { ascending: false })
-      .limit(30);
+      .limit(100); // Fetch more to account for filtering
 
-    if (error || !posts) {
+    if (error || !allPosts) {
       return NextResponse.json({ posts: [] });
     }
+
+    // Filter out proved posts in JavaScript
+    const provedSet = new Set(provedPostIds);
+    const posts = allPosts.filter((p) => !provedSet.has(p.id)).slice(0, 30);
 
     // Sort posts: first by user's top categories, then by engagement score
     const categoryRank: Record<string, number> = {};
