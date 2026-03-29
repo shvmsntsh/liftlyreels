@@ -18,6 +18,16 @@ import { StreakDefenseBanner } from "./StreakDefenseBanner";
 // Changelog entries — update this with each deploy
 const CHANGELOG = [
   {
+    version: "v1.21",
+    date: "Mar 29, 2026",
+    entries: [
+      "Proof modal: converted to native bottom sheet with slide-up animation",
+      "Feed scroll locked while proof modal is open — no accidental swipes",
+      "Sticky CTA button always visible at bottom of proof sheet",
+      "Proved/limit states correctly block modal from opening",
+    ],
+  },
+  {
     version: "v1.20",
     date: "Mar 29, 2026",
     entries: [

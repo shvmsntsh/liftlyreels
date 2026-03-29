@@ -74,7 +74,6 @@ export function ActionProofModal({ postTitle, postId, category, isOpen, onClose,
   const validation = validateProof(text, category);
   const canSubmit = cooldownDone && validation.valid && !saving && !success;
 
-  // Character count color
   const charColor =
     text.trim().length === 0
       ? "var(--muted)"
@@ -158,26 +157,29 @@ export function ActionProofModal({ postTitle, postId, category, isOpen, onClose,
       <AnimatePresence>
         {isOpen && (
           <>
+            {/* Very light backdrop — reel remains visible */}
             <motion.div
-              className="fixed inset-0 z-[110] bg-black/5 backdrop-blur-xs"
+              className="fixed inset-0 z-[110] bg-black/10"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={handleClose}
             />
 
+            {/* Bottom sheet */}
             <motion.div
-              className="fixed inset-x-3 z-[110] mx-auto max-w-md overflow-y-auto rounded-3xl max-h-[40vh]"
+              className="fixed inset-x-0 bottom-0 z-[120] flex flex-col rounded-t-2xl overflow-hidden"
               style={{
-                bottom: "calc(var(--nav-height) + var(--safe-bottom) + 0.5rem)",
                 background: "linear-gradient(160deg, #052e16 0%, #0c1a2e 100%)",
                 border: "1px solid rgba(74,222,128,0.2)",
-                boxShadow: "0 -8px 40px rgba(16,185,129,0.15), 0 20px 60px rgba(0,0,0,0.5)",
+                borderBottom: "none",
+                boxShadow: "0 -8px 40px rgba(16,185,129,0.15)",
+                maxHeight: "75vh",
               }}
-              initial={{ scale: 0.9, opacity: 0, y: 40 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 40 }}
-              transition={{ type: "spring" as const, damping: 26, stiffness: 380 }}
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring" as const, damping: 28, stiffness: 350 }}
             >
               {/* ── Success overlay ── */}
               <AnimatePresence>
@@ -271,15 +273,19 @@ export function ActionProofModal({ postTitle, postId, category, isOpen, onClose,
                 )}
               </AnimatePresence>
 
-              <div className="p-5">
-                {/* Close */}
+              {/* Drag handle + close button row */}
+              <div className="relative flex items-center justify-center pt-3 pb-2 shrink-0">
+                <div className="h-1 w-10 rounded-full bg-white/20" />
                 <button
                   onClick={handleClose}
-                  className="absolute right-4 top-4 z-10 rounded-full p-1 text-slate-400 hover:text-white transition"
+                  className="absolute right-4 rounded-full p-1.5 text-slate-400 hover:text-white transition"
                 >
                   <X className="h-4 w-4" />
                 </button>
+              </div>
 
+              {/* Scrollable form content */}
+              <div className="flex-1 overflow-y-auto px-5 pb-2">
                 {/* Header */}
                 <div className="mb-4 flex items-center gap-2.5">
                   <motion.div
@@ -345,8 +351,8 @@ export function ActionProofModal({ postTitle, postId, category, isOpen, onClose,
                 <textarea
                   value={text}
                   onChange={(e) => setText(e.target.value.slice(0, 300))}
-                  placeholder={`Describe exactly what you did...`}
-                  rows={3}
+                  placeholder="Describe exactly what you did..."
+                  rows={4}
                   disabled={saving || success}
                   className="w-full resize-none rounded-xl border border-white/8 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none focus:border-emerald-400/40 transition disabled:opacity-40"
                 />
@@ -368,7 +374,10 @@ export function ActionProofModal({ postTitle, postId, category, isOpen, onClose,
                     {error}
                   </p>
                 )}
+              </div>
 
+              {/* Sticky CTA — always visible at bottom */}
+              <div className="shrink-0 px-5 pt-3 pb-8 border-t border-white/5">
                 <motion.button
                   onClick={handleSubmit}
                   disabled={!canSubmit}

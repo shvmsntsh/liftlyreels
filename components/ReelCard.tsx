@@ -65,9 +65,10 @@ type Props = {
   userId?: string;
   onActionLogged?: (dailyCount: number) => void;
   dailyLimitReached?: boolean;
+  onModalOpen?: (open: boolean) => void;
 };
 
-export function ReelCard({ post, userId, onActionLogged, dailyLimitReached }: Props) {
+export function ReelCard({ post, userId, onActionLogged, dailyLimitReached, onModalOpen }: Props) {
   const cardRef = useRef<HTMLElement>(null);
   const { play } = useAudio();
   const router = useRouter();
@@ -124,6 +125,14 @@ export function ReelCard({ post, userId, onActionLogged, dailyLimitReached }: Pr
       .then((d) => { if (d.proved) setActionLogged(true); })
       .catch(() => {});
   }, [userId, post.id, isFallback]);
+
+  // Lock feed scroll when proof modal is open
+  useEffect(() => {
+    onModalOpen?.(actionOpen);
+    return () => {
+      if (actionOpen) onModalOpen?.(false);
+    };
+  }, [actionOpen, onModalOpen]);
 
   const toggleReaction = useCallback(
     async (type: ReactionType) => {

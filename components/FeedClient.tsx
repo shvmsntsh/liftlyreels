@@ -37,6 +37,7 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
   const [loggedCount, setLoggedCount] = useState(0);
   const [worldReel, setWorldReel] = useState<NewsSlide[] | null>(null);
   const [dailyLimitReached, setDailyLimitReached] = useState(false);
+  const [anyModalOpen, setAnyModalOpen] = useState(false);
 
   // Update streak once per day when user visits feed
   useEffect(() => {
@@ -139,7 +140,7 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
   ];
 
   return (
-    <div ref={scrollRef} className={clsx("h-[100dvh] scrollbar-none", isReelTab ? "overflow-y-auto snap-y-mandatory feed-scroll" : "overflow-y-auto")}>
+    <div ref={scrollRef} className={clsx("h-[100dvh] scrollbar-none", anyModalOpen ? "overflow-hidden" : isReelTab ? "overflow-y-auto snap-y-mandatory feed-scroll" : "overflow-y-auto")}>
       <TourOverlay />
       <MorningMissionModal challengeText={challenge?.challenge_text ?? null} />
       {/* Header with tabs, search, and notifications */}
@@ -213,6 +214,7 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
                     userId={userId}
                     onActionLogged={handleActionLogged}
                     dailyLimitReached={dailyLimitReached}
+                    onModalOpen={setAnyModalOpen}
                   />
                   {(index + 1) % 5 === 0 && (index + 1) < activePosts.length && (
                     <ScrollNudgeCard
