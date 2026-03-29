@@ -181,7 +181,12 @@ export function ReelCard({ post, userId, onActionLogged, dailyLimitReached }: Pr
       <article
         ref={cardRef}
         id={post.id}
-        className="snap-start relative flex h-[100dvh] flex-col justify-end overflow-hidden"
+        className={clsx(
+          "relative flex flex-col overflow-hidden transition-all duration-300",
+          actionOpen
+            ? "h-[50vh] rounded-t-3xl border-t border-white/10"
+            : "snap-start h-[100dvh] justify-end"
+        )}
       >
         {/* Background */}
         {post.image_url ? (
@@ -204,7 +209,10 @@ export function ReelCard({ post, userId, onActionLogged, dailyLimitReached }: Pr
         <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/40 to-transparent" />
 
         {/* Bottom content */}
-        <div className="relative z-10 flex items-end gap-3 px-4 pb-4 pt-8">
+        <div className={clsx(
+          "relative z-10 flex items-end gap-3 px-4 pt-8",
+          actionOpen ? "pb-2 mt-auto" : "pb-4"
+        )}>
           {/* Main content */}
           <div className="flex-1 min-w-0">
             {/* Category + community badges */}
