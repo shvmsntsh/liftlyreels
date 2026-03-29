@@ -8,7 +8,7 @@ type CollectionLog = {
   run_at: string;
   items_collected: number;
   items_deleted: number;
-  sources_summary: Record<string, number>;
+  sources_summary: Record<string, number | Record<string, number>>;
   errors: string[] | null;
   triggered_by: string;
 };

@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
 async function runCollection(triggeredBy: "cron" | "admin") {
   const errors: string[] = [];
-  const sourcesSummary: Record<string, number> = {};
+  const sourcesSummary: Record<string, number | Record<string, number>> = {};
   let itemsCollected = 0;
   let itemsDeleted = 0;
 

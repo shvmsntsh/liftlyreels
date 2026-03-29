@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
     // Proved categories distribution
     const provedCatMap: Record<string, number> = {};
     for (const entry of provedCategoryDist ?? []) {
-      const cat = entry.posts?.category ?? "Unknown";
+      const cat = (entry as any).posts?.category ?? "Unknown";
       provedCatMap[cat] = (provedCatMap[cat] ?? 0) + 1;
     }
 
