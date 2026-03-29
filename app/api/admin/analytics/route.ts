@@ -54,10 +54,11 @@ export async function GET(request: NextRequest) {
         .from("posts")
         .select("category")
         .not("category", "is", null),
-      // Most proved categories
+      // Most proved categories (fetch impact entries with post IDs)
       supabase
         .from("impact_journal")
-        .select("posts(category)"),
+        .select("post_id")
+        .gte("created_at", last30Days.toISOString()),
       // Top 20 posts by views
       supabase
         .from("posts")
@@ -113,9 +114,20 @@ export async function GET(request: NextRequest) {
 
     // Proved categories distribution
     const provedCatMap: Record<string, number> = {};
-    for (const entry of provedCategoryDist ?? []) {
-      const cat = (entry as any).posts?.category ?? "Unknown";
-      provedCatMap[cat] = (provedCatMap[cat] ?? 0) + 1;
+    const provedPostIds = (provedCategoryDist ?? [])
+      .map((p) => p.post_id)
+      .filter(Boolean);
+
+    if (provedPostIds.length > 0) {
+      const { data: provedPosts } = await supabase
+        .from("posts")
+        .select("id,category")
+        .in("id", provedPostIds);
+
+      for (const p of provedPosts ?? []) {
+        const cat = p.category ?? "Unknown";
+        provedCatMap[cat] = (provedCatMap[cat] ?? 0) + 1;
+      }
     }
 
     // Aggregate reaction counts
