@@ -13,10 +13,21 @@ export default async function FeedPage() {
 
   const userId = user?.id ?? "";
 
-  const [posts, challenge] = await Promise.all([
-    getPostsWithReactions(userId, 30),
+  const [allPosts, challenge, provedToday] = await Promise.all([
+    getPostsWithReactions(userId, 50), // Fetch more to account for filtering
     getTodaysChallenge(userId),
+    userId
+      ? supabase
+          .from("impact_journal")
+          .select("post_id")
+          .eq("user_id", userId)
+          .gte("created_at", new Date(new Date().setHours(0, 0, 0, 0)).toISOString())
+      : Promise.resolve({ data: null }),
   ]);
+
+  // Filter out proved reels from today
+  const provedIds = new Set((provedToday.data ?? []).map((p: any) => p.post_id).filter(Boolean));
+  const posts = allPosts.filter((p) => !provedIds.has(p.id)).slice(0, 30);
 
   // Get streak from profile
   let streak = 0;

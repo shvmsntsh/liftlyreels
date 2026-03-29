@@ -70,16 +70,21 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
     fetch("/api/feed/personalized")
       .then((r) => r.json())
       .then((data) => {
-        // Fall back to initialPosts if personalized feed returns < 5 posts
-        if (data.posts?.length >= 5) {
+        // Always use personalized feed if it has posts, otherwise use initialPosts
+        // (initialPosts already filtered for proved reels on server)
+        if (data.posts?.length > 0) {
           setPersonalizedPosts(data.posts);
         } else {
-          setPersonalizedPosts(null);
+          // Only use initialPosts as fallback if personalized returns nothing
+          setPersonalizedPosts(initialPosts);
         }
       })
-      .catch(() => setPersonalizedPosts(null))
+      .catch(() => {
+        // On error, use initialPosts as fallback
+        setPersonalizedPosts(initialPosts);
+      })
       .finally(() => setLoadingPersonalized(false));
-  }, [tab, personalizedPosts, loadingPersonalized]);
+  }, [tab, personalizedPosts, loadingPersonalized, initialPosts]);
 
   async function loadFollowing() {
     if (followingPosts !== null) return;
