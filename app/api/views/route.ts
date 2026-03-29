@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { recomputeEngagementScore } from "@/lib/engagement-score";
 
 export async function POST(request: NextRequest) {
   const supabase = createSupabaseServerClient();
@@ -36,6 +37,9 @@ export async function POST(request: NextRequest) {
         .eq("id", postId);
     }
   }
+
+  // Recompute engagement score (non-blocking)
+  void recomputeEngagementScore(postId);
 
   return NextResponse.json({ ok: true });
 }

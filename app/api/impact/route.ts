@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase-server";
 import { validateProof } from "@/lib/proof-validation";
+import { recomputeEngagementScore } from "@/lib/engagement-score";
 
 export async function GET(request: NextRequest) {
   const supabase = createSupabaseServerClient();
@@ -22,12 +23,29 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ proved: (count ?? 0) > 0 });
   }
 
+  // Get today's proof count (for daily limit check)
+  const dailyCountOnly = searchParams.get("dailyCount") === "true";
+  const today = new Date().toISOString().slice(0, 10);
+  const { count: dailyCount } = await supabase
+    .from("impact_journal")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .gte("created_at", `${today}T00:00:00.000Z`);
+
+  if (dailyCountOnly) {
+    return NextResponse.json({ count: dailyCount ?? 0 });
+  }
+
+  // Determine limit based on range parameter
+  const range = searchParams.get("range");
+  const limit = range === "30d" ? 150 : 20;
+
   const { data, error } = await supabase
     .from("impact_journal")
     .select("id,post_id,action_taken,created_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
-    .limit(20);
+    .limit(limit);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -66,6 +84,17 @@ export async function POST(request: NextRequest) {
 
   if (!postId || !actionTaken?.trim()) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  // Daily limit: max 5 proofs per day
+  const today = new Date().toISOString().slice(0, 10);
+  const { count: dailyCount } = await supabase
+    .from("impact_journal")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .gte("created_at", `${today}T00:00:00.000Z`);
+  if ((dailyCount ?? 0) >= 5) {
+    return NextResponse.json({ error: "Daily limit reached: max 5 proofs per day.", daily_limit_reached: true }, { status: 429 });
   }
 
   // Rate limit: max 10 proofs per hour
@@ -111,8 +140,7 @@ export async function POST(request: NextRequest) {
 
     if ((existing ?? 0) > 0) {
       // Already proved — return success without awarding points again
-      const today = new Date().toISOString().slice(0, 10);
-      const { count: dailyCount } = await supabase
+      const { count: alreadyProvedDailyCount } = await supabase
         .from("impact_journal")
         .select("id", { count: "exact", head: true })
         .eq("user_id", user.id)
@@ -121,7 +149,8 @@ export async function POST(request: NextRequest) {
         entry: { id: postId },
         success: true,
         already_proved: true,
-        daily_count: dailyCount ?? 1,
+        daily_count: alreadyProvedDailyCount ?? 1,
+        daily_limit_reached: (alreadyProvedDailyCount ?? 0) >= 5,
       });
     }
 
@@ -152,12 +181,12 @@ export async function POST(request: NextRequest) {
   // Update actor's streak
   void supabase.rpc("update_user_streak", { user_uuid: user.id });
 
-  // Side effects: notify post owner + award vibe to post owner (non-blocking)
+  // Side effects: notify post owner + award vibe + track category engagement (non-blocking)
   if (isRealPost) {
     const db = process.env.SUPABASE_SERVICE_ROLE_KEY ? createSupabaseServiceClient() : supabase;
     Promise.all([
       (async () => {
-        const { data: post } = await db.from("posts").select("author_id").eq("id", postId).single();
+        const { data: post } = await db.from("posts").select("author_id,category").eq("id", postId).single();
         if (!post?.author_id || post.author_id === user.id) return;
         await db.from("notifications").insert({
           user_id: post.author_id,
@@ -172,12 +201,22 @@ export async function POST(request: NextRequest) {
             .eq("id", post.author_id);
         }
       })(),
+      // Track category engagement for personalization
+      (async () => {
+        if (category) {
+          await db.from("user_category_engagement").upsert({
+            user_id: user.id,
+            category,
+            engagement_count: 1,
+            last_engaged_at: new Date().toISOString(),
+          }, { onConflict: "user_id,category" }).eq("user_id", user.id).eq("category", category);
+        }
+      })(),
     ]).catch(() => null);
   }
 
   // Return updated streak + today's proof count (for World Reel unlock)
-  const today = new Date().toISOString().slice(0, 10);
-  const [{ data: updatedProfile }, { count: dailyCount }] = await Promise.all([
+  const [{ data: updatedProfile }, { count: newDailyCount }] = await Promise.all([
     supabase.from("profiles").select("streak_current,vibe_score").eq("id", user.id).single(),
     supabase
       .from("impact_journal")
@@ -186,11 +225,19 @@ export async function POST(request: NextRequest) {
       .gte("created_at", `${today}T00:00:00.000Z`),
   ]);
 
+  const finalDailyCount = newDailyCount ?? 1;
+
+  // Recompute engagement score (non-blocking)
+  if (isRealPost) {
+    void recomputeEngagementScore(postId);
+  }
+
   return NextResponse.json({
     entry: { id: isRealPost ? postId : "local" },
     success: true,
     streak: updatedProfile?.streak_current ?? null,
     vibe: updatedProfile?.vibe_score ?? null,
-    daily_count: dailyCount ?? 1,
+    daily_count: finalDailyCount,
+    daily_limit_reached: finalDailyCount >= 5,
   });
 }

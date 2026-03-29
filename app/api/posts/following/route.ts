@@ -24,19 +24,32 @@ export async function GET() {
     return NextResponse.json({ posts: [] });
   }
 
+  // Get today's proved post IDs to exclude them
+  const today = new Date().toISOString().slice(0, 10);
+  const { data: provedToday } = await supabase
+    .from("impact_journal")
+    .select("post_id")
+    .eq("user_id", user.id)
+    .gte("created_at", `${today}T00:00:00.000Z`);
+
+  const provedPostIds = new Set((provedToday ?? []).map((p) => p.post_id).filter(Boolean));
+
   const { data: posts, error } = await supabase
     .from("posts")
     .select(POST_FIELDS)
     .in("author_id", followingIds)
     .order("created_at", { ascending: false })
-    .limit(30);
+    .limit(50); // Fetch 50 to account for filtering
 
-  if (error || !posts?.length) {
+  // Filter out proved reels client-side
+  const unprovedPosts = (posts ?? []).filter((p) => !provedPostIds.has(p.id as string)).slice(0, 30);
+
+  if (error || !unprovedPosts?.length) {
     return NextResponse.json({ posts: [] });
   }
 
   // Fetch author profiles separately
-  const authorIds = Array.from(new Set(posts.map((p) => p.author_id as string).filter(Boolean)));
+  const authorIds = Array.from(new Set(unprovedPosts.map((p) => p.author_id as string).filter(Boolean)));
   const { data: profiles } = await supabase
     .from("profiles")
     .select("id,username,display_name,avatar_url,vibe_score")
@@ -47,7 +60,7 @@ export async function GET() {
     profileMap[p.id] = p;
   }
 
-  const postIds = posts.map((p) => p.id);
+  const postIds = unprovedPosts.map((p) => p.id);
   const [{ data: userReactions }, { data: commentCounts }] = await Promise.all([
     supabase
       .from("reactions")
@@ -68,7 +81,7 @@ export async function GET() {
     ccMap[c.post_id] = (ccMap[c.post_id] ?? 0) + 1;
   }
 
-  const normalized = posts.map((row) => {
+  const normalized = unprovedPosts.map((row) => {
     const r = row as Record<string, unknown>;
     const authorId = r.author_id as string | null;
     return {

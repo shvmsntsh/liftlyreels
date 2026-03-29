@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase-server";
 import { fetchGuardianArticles, GUARDIAN_SECTIONS } from "@/lib/content-sources/guardian";
 import { fetchRedditArticles } from "@/lib/content-sources/reddit";
-import { mapGuardianToPost, mapRedditToPost } from "@/lib/content-sources/action-mapper";
+import { mapGuardianToPost, mapRedditToPost, generateCategoryReel } from "@/lib/content-sources/action-mapper";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -105,6 +105,57 @@ async function runCollection(triggeredBy: "cron" | "admin") {
     }
   } catch (e) {
     errors.push(`Cleanup error: ${String(e)}`);
+  }
+
+  // Fill category gaps with synthetic reels
+  try {
+    const CATEGORIES = ["Mindset", "Gym", "Diet", "Books", "Wellness", "Finance", "Relationships"];
+    const categoryCount: Record<string, number> = {};
+    for (const cat of CATEGORIES) {
+      categoryCount[cat] = 0;
+    }
+
+    // Count collected posts per category
+    for (const post of allPosts) {
+      categoryCount[post.category] = (categoryCount[post.category] ?? 0) + 1;
+    }
+
+    // Generate synthetic reels for underrepresented categories
+    const syntheticReels = [];
+    for (const category of CATEGORIES) {
+      if ((categoryCount[category] ?? 0) < 2) {
+        // Generate 2 reels for missing/underrepresented categories
+        for (let i = 0; i < 2; i++) {
+          const syntheticPost = generateCategoryReel(category);
+          syntheticReels.push(syntheticPost);
+          categoryCount[category]++;
+        }
+      }
+    }
+
+    // Insert synthetic reels
+    for (const post of syntheticReels) {
+      try {
+        const { count } = await db
+          .from("posts")
+          .select("id", { count: "exact", head: true })
+          .eq("title", post.title);
+
+        if ((count ?? 0) === 0) {
+          const { error } = await db.from("posts").insert(post);
+          if (!error) {
+            itemsCollected++;
+          }
+        }
+      } catch (e) {
+        // Skip on error, continue with next
+      }
+    }
+
+    // Add category breakdown to sources summary
+    sourcesSummary.category_counts = categoryCount;
+  } catch (e) {
+    errors.push(`Category gap-fill error: ${String(e)}`);
   }
 
   // Log to content_collection_log

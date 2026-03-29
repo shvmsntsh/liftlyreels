@@ -1,0 +1,86 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
+
+export async function GET(request: NextRequest) {
+  const supabase = createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    // Get today's proved post IDs
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: proveData } = await supabase
+      .from("impact_journal")
+      .select("post_id")
+      .eq("user_id", user.id)
+      .gte("created_at", `${today}T00:00:00.000Z`);
+
+    const provedPostIds = (proveData ?? []).map((p) => p.post_id).filter(Boolean);
+
+    // Get user's top categories (sorted by engagement count descending)
+    const { data: categoryData } = await supabase
+      .from("user_category_engagement")
+      .select("category,engagement_count")
+      .eq("user_id", user.id)
+      .order("engagement_count", { ascending: false });
+
+    const userTopCategories = (categoryData ?? []).map((c) => c.category);
+
+    // Fetch unproved posts, sorted by engagement score
+    const { data: posts, error } = await supabase
+      .from("posts")
+      .select(
+        `
+        id,
+        title,
+        content,
+        category,
+        gradient,
+        source,
+        is_user_created,
+        author_id,
+        created_at,
+        views_count,
+        cached_engagement_score
+        `
+      )
+      .not("id", "in", `(${provedPostIds.map(() => "?").join(",")})`)
+      .order("cached_engagement_score", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(30);
+
+    if (error || !posts) {
+      return NextResponse.json({ posts: [] });
+    }
+
+    // Sort posts: first by user's top categories, then by engagement score
+    const categoryRank: Record<string, number> = {};
+    userTopCategories.forEach((cat, idx) => {
+      categoryRank[cat] = idx;
+    });
+
+    const sortedPosts = posts.sort((a, b) => {
+      const aRank = categoryRank[a.category] ?? 999;
+      const bRank = categoryRank[b.category] ?? 999;
+
+      // Primary sort: category rank (user's top categories first)
+      if (aRank !== bRank) return aRank - bRank;
+
+      // Secondary sort: engagement score (highest first)
+      const aScore = a.cached_engagement_score ?? 0;
+      const bScore = b.cached_engagement_score ?? 0;
+      if (aScore !== bScore) return bScore - aScore;
+
+      // Tertiary sort: freshness (newest first)
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+
+    return NextResponse.json({ posts: sortedPosts });
+  } catch (error) {
+    console.error("[feed/personalized] Error:", error);
+    return NextResponse.json({ posts: [] });
+  }
+}

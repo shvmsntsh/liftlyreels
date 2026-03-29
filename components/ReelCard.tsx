@@ -64,9 +64,10 @@ type Props = {
   post: PostRecord;
   userId?: string;
   onActionLogged?: (dailyCount: number) => void;
+  dailyLimitReached?: boolean;
 };
 
-export function ReelCard({ post, userId, onActionLogged }: Props) {
+export function ReelCard({ post, userId, onActionLogged, dailyLimitReached }: Props) {
   const cardRef = useRef<HTMLElement>(null);
   const { play } = useAudio();
   const router = useRouter();
@@ -358,21 +359,29 @@ export function ReelCard({ post, userId, onActionLogged }: Props) {
         {/* Hero CTA: "I Did This" */}
         {!isFallback && (
           <div className="relative z-10 px-4 pb-nav">
-            <motion.button
-              onClick={() => { haptic("medium"); setActionOpen(true); }}
-              className={clsx(
-                "flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-[15px] font-bold transition-all active:scale-[0.97]",
-                actionLogged
-                  ? "border border-emerald-400/30 bg-emerald-500/15 text-emerald-300 shadow-[0_4px_20px_rgba(16,185,129,0.15)]"
-                  : "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-[0_4px_24px_rgba(16,185,129,0.45)]"
-              )}
-              whileTap={{ scale: 0.96 }}
-              animate={!actionLogged ? { boxShadow: ["0 4px 24px rgba(16,185,129,0.45)", "0 4px 32px rgba(16,185,129,0.65)", "0 4px 24px rgba(16,185,129,0.45)"] } : {}}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            >
-              <CheckCircle className={clsx("h-5 w-5", actionLogged && "fill-current")} />
-              {actionLogged ? "Proved It!" : "I Did This"}
-            </motion.button>
+            {dailyLimitReached && !actionLogged ? (
+              <div className="flex w-full items-center justify-center rounded-2xl py-3.5 px-4 text-[15px] font-bold text-center"
+                style={{ backgroundColor: "rgba(156, 163, 175, 0.1)", color: "var(--muted)" }}>
+                Daily limit reached (5/5)
+              </div>
+            ) : (
+              <motion.button
+                onClick={() => { if (!actionLogged) { haptic("medium"); setActionOpen(true); } }}
+                disabled={actionLogged}
+                className={clsx(
+                  "flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-[15px] font-bold transition-all active:scale-[0.97]",
+                  actionLogged
+                    ? "border border-emerald-400/30 bg-emerald-500/15 text-emerald-300 shadow-[0_4px_20px_rgba(16,185,129,0.15)] cursor-not-allowed opacity-75"
+                    : "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-[0_4px_24px_rgba(16,185,129,0.45)]"
+                )}
+                whileTap={!actionLogged ? { scale: 0.96 } : {}}
+                animate={!actionLogged ? { boxShadow: ["0 4px 24px rgba(16,185,129,0.45)", "0 4px 32px rgba(16,185,129,0.65)", "0 4px 24px rgba(16,185,129,0.45)"] } : {}}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <CheckCircle className={clsx("h-5 w-5", actionLogged && "fill-current")} />
+                {actionLogged ? "Proved It!" : "I Did This"}
+              </motion.button>
+            )}
           </div>
         )}
       </article>

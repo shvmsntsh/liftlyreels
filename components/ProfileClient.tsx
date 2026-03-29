@@ -293,7 +293,7 @@ export function ProfileClient({
   useEffect(() => {
     if (activeTab !== "impact" || lazyImpact !== null || impactLoading) return;
     setImpactLoading(true);
-    fetch("/api/impact")
+    fetch("/api/impact?range=30d")
       .then((r) => r.json())
       .then((d) => { setLazyImpact(d.entries ?? []); })
       .catch(() => { setLazyImpact([]); })
@@ -365,13 +365,20 @@ export function ProfileClient({
   async function deletePost(id: string) {
     setDeletingId(id);
     try {
-      await fetch("/api/posts", {
+      const res = await fetch("/api/posts", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
       });
+      if (!res.ok) {
+        alert("Failed to delete post");
+        return;
+      }
       setLocalPosts((prev) => prev.filter((p) => p.id !== id));
       setDeleteConfirmId(null);
+      router.refresh();
+    } catch (err) {
+      alert("Error deleting post");
     } finally {
       setDeletingId(null);
     }
@@ -980,8 +987,38 @@ export function ProfileClient({
           for (const e of entries) { if (e.post?.category) catFreq[e.post.category] = (catFreq[e.post.category] ?? 0) + 1; }
           const favCat = Object.entries(catFreq).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
 
+          // Get today's proofs
+          const today = new Date().toISOString().slice(0, 10);
+          const todayProofs = entries.filter((e) => e.created_at.slice(0, 10) === today);
+
           return (
             <div className="mt-4 pb-8">
+              {/* Today's Proves section — own profile only */}
+              {isOwnProfile && todayProofs.length > 0 && (
+                <div className="mb-4 rounded-2xl border bg-surface-1 p-4">
+                  <p className="text-sm font-bold text-foreground mb-3">Today's Proves ({todayProofs.length}/5)</p>
+                  <div className="w-full bg-white/10 rounded-full h-2 mb-3">
+                    <div className="bg-emerald-500 h-2 rounded-full transition-all" style={{ width: `${(todayProofs.length / 5) * 100}%` }} />
+                  </div>
+                  <div className="space-y-2">
+                    {todayProofs.map((entry) => {
+                      const cat = entry.post?.category ?? "";
+                      const color = CATEGORY_COLORS[cat] ?? "#64748b";
+                      return (
+                        <div key={entry.id} className="flex gap-2 items-start p-2 rounded-lg bg-white/5">
+                          <div className="w-1 h-full rounded mt-0.5" style={{ background: color, minHeight: "24px" }} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[11px] font-semibold text-muted truncate">{entry.post?.title ?? "Action"}</p>
+                            <p className="text-[10px] text-white/60 line-clamp-1 mt-0.5">{entry.action_taken}</p>
+                            <span className="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/10 text-white/70 mt-1">{cat}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Stats bar — own profile only */}
               {isOwnProfile && (
                 <div className="mb-5 grid grid-cols-3 gap-2">
@@ -995,6 +1032,43 @@ export function ProfileClient({
                       <span className="mt-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted">{label}</span>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* 30-day heatmap — own profile only */}
+              {isOwnProfile && (
+                <div className="mb-5 rounded-2xl border bg-surface-1 p-4">
+                  <p className="text-sm font-bold text-foreground mb-3">Proof Activity (30 days)</p>
+                  {(() => {
+                    const today = new Date();
+                    const days = Array.from({ length: 30 }, (_, i) => {
+                      const d = new Date(today);
+                      d.setDate(today.getDate() - 29 + i);
+                      return d.toISOString().slice(0, 10);
+                    });
+                    const proofsByDay: Record<string, number> = {};
+                    for (const e of entries) {
+                      const day = e.created_at.slice(0, 10);
+                      proofsByDay[day] = (proofsByDay[day] ?? 0) + 1;
+                    }
+                    const intensityClass = (count: number) => {
+                      if (count === 0) return "bg-white/5 border border-white/10";
+                      if (count === 1) return "bg-emerald-900/60";
+                      if (count <= 2) return "bg-emerald-700/70";
+                      if (count <= 4) return "bg-emerald-600/80";
+                      return "bg-emerald-500";
+                    };
+                    return (
+                      <div className="grid grid-cols-5 gap-1.5">
+                        {days.map((day, idx) => (
+                          <div key={day} className="flex flex-col items-center">
+                            {idx % 5 === 0 && <span className="text-[8px] text-muted mb-1">{new Date(day).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>}
+                            <div className={clsx("w-6 h-6 rounded-sm transition-all cursor-default", intensityClass(proofsByDay[day] ?? 0))} title={`${proofsByDay[day] ?? 0} proofs on ${day}`} />
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 

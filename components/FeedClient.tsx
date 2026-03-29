@@ -22,6 +22,7 @@ type Props = {
   initialPosts: PostRecord[];
   userId: string;
   challenge?: DailyChallenge | null;
+  streak?: number;
 };
 
 export function FeedClient({ initialPosts, userId, challenge }: Props) {
@@ -29,10 +30,13 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
   const [tab, setTab] = useState<Tab>("foryou");
   const [followingPosts, setFollowingPosts] = useState<PostRecord[] | null>(null);
   const [loadingFollowing, setLoadingFollowing] = useState(false);
+  const [personalizedPosts, setPersonalizedPosts] = useState<PostRecord[] | null>(null);
+  const [loadingPersonalized, setLoadingPersonalized] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loggedCount, setLoggedCount] = useState(0);
   const [worldReel, setWorldReel] = useState<NewsSlide[] | null>(null);
+  const [dailyLimitReached, setDailyLimitReached] = useState(false);
 
   // Update streak once per day when user visits feed
   useEffect(() => {
@@ -51,6 +55,32 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
       .catch(() => null);
   }, []);
 
+  // Check daily proof limit on mount
+  useEffect(() => {
+    fetch("/api/impact?dailyCount=true")
+      .then((r) => r.json())
+      .then((data) => setDailyLimitReached((data.count ?? 0) >= 5))
+      .catch(() => null);
+  }, []);
+
+  // Fetch personalized feed when For You tab is active
+  useEffect(() => {
+    if (tab !== "foryou" || personalizedPosts !== null || loadingPersonalized) return;
+    setLoadingPersonalized(true);
+    fetch("/api/feed/personalized")
+      .then((r) => r.json())
+      .then((data) => {
+        // Fall back to initialPosts if personalized feed returns < 5 posts
+        if (data.posts?.length >= 5) {
+          setPersonalizedPosts(data.posts);
+        } else {
+          setPersonalizedPosts(null);
+        }
+      })
+      .catch(() => setPersonalizedPosts(null))
+      .finally(() => setLoadingPersonalized(false));
+  }, [tab, personalizedPosts, loadingPersonalized]);
+
   async function loadFollowing() {
     if (followingPosts !== null) return;
     setLoadingFollowing(true);
@@ -67,6 +97,10 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
 
   async function handleActionLogged(dailyCount: number) {
     setLoggedCount((n) => n + 1);
+    // Set daily limit reached when at 5 proofs
+    if (dailyCount >= 5) {
+      setDailyLimitReached(true);
+    }
     // Unlock world reel on 5th proof of the day (and every 5th after)
     if (dailyCount > 0 && dailyCount % 5 === 0) {
       const today = new Date().toISOString().slice(0, 10);
@@ -88,7 +122,9 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
     if (t === "following") loadFollowing();
   }
 
-  const activePosts = tab === "foryou" ? initialPosts : (followingPosts ?? []);
+  const activePosts = tab === "foryou"
+    ? (personalizedPosts ?? initialPosts)
+    : (followingPosts ?? []);
   const isReelTab = tab === "foryou" || tab === "following";
 
   const tabLabels: { key: Tab; label: string }[] = [
@@ -171,6 +207,7 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
                     post={post}
                     userId={userId}
                     onActionLogged={handleActionLogged}
+                    dailyLimitReached={dailyLimitReached}
                   />
                   {(index + 1) % 5 === 0 && (index + 1) < activePosts.length && (
                     <ScrollNudgeCard

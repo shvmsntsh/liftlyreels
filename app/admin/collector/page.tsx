@@ -97,6 +97,25 @@ export default function AdminCollectorPage() {
                 +{log.items_collected} collected, -{log.items_deleted} deleted
                 {log.sources_summary && ` · Guardian: ${log.sources_summary.guardian ?? 0}, Reddit: ${log.sources_summary.reddit ?? 0}`}
               </p>
+
+              {/* Category breakdown */}
+              {log.sources_summary?.category_counts && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {Object.entries(log.sources_summary.category_counts as Record<string, number>).map(([cat, count]) => (
+                    <span
+                      key={cat}
+                      className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                      style={{
+                        backgroundColor: count < 2 ? "rgba(239, 68, 68, 0.2)" : "rgba(16, 185, 129, 0.2)",
+                        color: count < 2 ? "#f87171" : "#6ee7b7",
+                      }}
+                    >
+                      {cat}: {count}
+                    </span>
+                  ))}
+                </div>
+              )}
+
               {log.errors && log.errors.length > 0 && (
                 <p className="text-[11px] text-red-400 mt-1">{log.errors.length} error(s)</p>
               )}

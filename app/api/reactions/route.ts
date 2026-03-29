@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase-server";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { recomputeEngagementScore } from "@/lib/engagement-score";
 
 export async function POST(request: NextRequest) {
   const supabase = createSupabaseServerClient();
@@ -41,12 +42,12 @@ export async function POST(request: NextRequest) {
       reaction_type: reactionType,
     });
 
-    // Side effects: streak for reactor + notify/vibe for post owner (non-blocking)
+    // Side effects: streak for reactor + notify/vibe for post owner + category engagement (non-blocking)
     const db = process.env.SUPABASE_SERVICE_ROLE_KEY ? createSupabaseServiceClient() : supabase;
     Promise.all([
       supabase.rpc("update_user_streak", { user_uuid: user.id }),
       (async () => {
-        const { data: post } = await db.from("posts").select("author_id").eq("id", postId).single();
+        const { data: post } = await db.from("posts").select("author_id,category").eq("id", postId).single();
         if (!post?.author_id || post.author_id === user.id) return;
         await db.from("notifications").insert({
           user_id: post.author_id,
@@ -62,7 +63,22 @@ export async function POST(request: NextRequest) {
             .eq("id", post.author_id);
         }
       })(),
+      // Track category engagement with weight 0.5 for reactions
+      (async () => {
+        const { data: post } = await db.from("posts").select("category").eq("id", postId).single();
+        if (post?.category) {
+          await db.from("user_category_engagement").upsert({
+            user_id: user.id,
+            category: post.category,
+            engagement_count: 1,
+            last_engaged_at: new Date().toISOString(),
+          }, { onConflict: "user_id,category" });
+        }
+      })(),
     ]).catch(() => null);
+
+    // Recompute engagement score (non-blocking)
+    void recomputeEngagementScore(postId);
 
     return NextResponse.json({ action: "added" });
   }
