@@ -181,12 +181,7 @@ export function ReelCard({ post, userId, onActionLogged, dailyLimitReached }: Pr
       <article
         ref={cardRef}
         id={post.id}
-        className={clsx(
-          "relative flex flex-col overflow-hidden transition-all duration-300",
-          actionOpen
-            ? "h-[50vh] rounded-t-3xl border-t border-white/10"
-            : "snap-start h-[100dvh] justify-end"
-        )}
+        className="snap-start relative flex h-[100dvh] flex-col justify-end overflow-hidden"
       >
         {/* Background */}
         {post.image_url ? (
@@ -209,10 +204,7 @@ export function ReelCard({ post, userId, onActionLogged, dailyLimitReached }: Pr
         <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/40 to-transparent" />
 
         {/* Bottom content */}
-        <div className={clsx(
-          "relative z-10 flex items-end gap-3 px-4 pt-8",
-          actionOpen ? "pb-2 mt-auto" : "pb-4"
-        )}>
+        <div className="relative z-10 flex items-end gap-3 px-4 pb-4 pt-8">
           {/* Main content */}
           <div className="flex-1 min-w-0">
             {/* Category + community badges */}
@@ -367,27 +359,27 @@ export function ReelCard({ post, userId, onActionLogged, dailyLimitReached }: Pr
         {/* Hero CTA: "I Did This" */}
         {!isFallback && (
           <div className="relative z-10 px-4 pb-nav">
-            {dailyLimitReached && !actionLogged ? (
+            {actionLogged ? (
+              <div className="flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 px-4 text-[15px] font-bold"
+                style={{ backgroundColor: "rgba(16, 185, 129, 0.15)", color: "#10b981" }}>
+                <CheckCircle className="h-5 w-5 fill-current" />
+                Proved It! ✓
+              </div>
+            ) : dailyLimitReached ? (
               <div className="flex w-full items-center justify-center rounded-2xl py-3.5 px-4 text-[15px] font-bold text-center"
                 style={{ backgroundColor: "rgba(156, 163, 175, 0.1)", color: "var(--muted)" }}>
                 Daily limit reached (5/5)
               </div>
             ) : (
               <motion.button
-                onClick={() => { if (!actionLogged) { haptic("medium"); setActionOpen(true); } }}
-                disabled={actionLogged}
-                className={clsx(
-                  "flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-[15px] font-bold transition-all active:scale-[0.97]",
-                  actionLogged
-                    ? "border border-emerald-400/30 bg-emerald-500/15 text-emerald-300 shadow-[0_4px_20px_rgba(16,185,129,0.15)] cursor-not-allowed opacity-75"
-                    : "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-[0_4px_24px_rgba(16,185,129,0.45)]"
-                )}
-                whileTap={!actionLogged ? { scale: 0.96 } : {}}
-                animate={!actionLogged ? { boxShadow: ["0 4px 24px rgba(16,185,129,0.45)", "0 4px 32px rgba(16,185,129,0.65)", "0 4px 24px rgba(16,185,129,0.45)"] } : {}}
+                onClick={() => { haptic("medium"); setActionOpen(true); }}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-[15px] font-bold transition-all active:scale-[0.97] bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-[0_4px_24px_rgba(16,185,129,0.45)]"
+                whileTap={{ scale: 0.96 }}
+                animate={{ boxShadow: ["0 4px 24px rgba(16,185,129,0.45)", "0 4px 32px rgba(16,185,129,0.65)", "0 4px 24px rgba(16,185,129,0.45)"] }}
                 transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               >
-                <CheckCircle className={clsx("h-5 w-5", actionLogged && "fill-current")} />
-                {actionLogged ? "Proved It!" : "I Did This"}
+                <CheckCircle className="h-5 w-5" />
+                I Did This
               </motion.button>
             )}
           </div>

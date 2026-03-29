@@ -18,8 +18,9 @@ export default async function FeedPage() {
   const todayUTC = now.toISOString().split('T')[0];
   const todayStart = `${todayUTC}T00:00:00.000Z`;
 
-  const [allPosts, challenge, provedToday] = await Promise.all([
-    getPostsWithReactions(userId, 60), // Fetch more to account for filtering
+  // Always fetch enough posts to ensure we have 30 unproved after filtering
+  const [allPosts, challenge, provedData] = await Promise.all([
+    getPostsWithReactions(userId, 100), // Fetch 100 to account for filtering
     getTodaysChallenge(userId),
     userId
       ? supabase
@@ -27,19 +28,25 @@ export default async function FeedPage() {
           .select("post_id")
           .eq("user_id", userId)
           .gte("created_at", todayStart)
-      : Promise.resolve({ data: null }),
+      : Promise.resolve({ data: [] }),
   ]);
 
-  // Filter out proved reels from today (create Set for O(1) lookup)
-  const provedIds = new Set<string>();
-  (provedToday.data ?? []).forEach((entry: any) => {
-    if (entry.post_id) {
-      provedIds.add(entry.post_id);
-    }
+  // Build Set of proved post IDs for this user today
+  const provedPostIds = new Set<string>();
+  if (provedData.data) {
+    provedData.data.forEach((entry: any) => {
+      if (entry?.post_id) {
+        provedPostIds.add(String(entry.post_id));
+      }
+    });
+  }
+
+  // Filter: Keep ONLY unproved posts, return first 30
+  const unprovedPosts = allPosts.filter((post) => {
+    const postId = String(post.id);
+    return !provedPostIds.has(postId);
   });
 
-  // Remove proved reels and return only unproved
-  const unprovedPosts = allPosts.filter((p) => !provedIds.has(p.id));
   const posts = unprovedPosts.slice(0, 30);
 
   // Get streak from profile
