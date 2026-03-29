@@ -159,7 +159,7 @@ export function ActionProofModal({ postTitle, postId, category, isOpen, onClose,
         {isOpen && (
           <>
             <motion.div
-              className="fixed inset-0 z-[110] bg-black/75 backdrop-blur-sm"
+              className="fixed inset-0 z-[110] bg-black/30 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -167,7 +167,7 @@ export function ActionProofModal({ postTitle, postId, category, isOpen, onClose,
             />
 
             <motion.div
-              className="fixed inset-x-3 z-[110] mx-auto max-w-md overflow-hidden rounded-3xl"
+              className="fixed inset-x-3 z-[110] mx-auto max-w-md overflow-y-auto rounded-3xl max-h-[60vh]"
               style={{
                 bottom: "calc(var(--nav-height) + var(--safe-bottom) + 0.5rem)",
                 background: "linear-gradient(160deg, #052e16 0%, #0c1a2e 100%)",
