@@ -167,7 +167,7 @@ export function ActionProofModal({ postTitle, postId, category, isOpen, onClose,
             />
 
             <motion.div
-              className="fixed inset-x-3 z-[110] mx-auto max-w-md overflow-y-auto rounded-3xl max-h-[45vh]"
+              className="fixed inset-x-3 z-[110] mx-auto max-w-md overflow-y-auto rounded-3xl max-h-[35vh]"
               style={{
                 bottom: "calc(var(--nav-height) + var(--safe-bottom) + 0.5rem)",
                 background: "linear-gradient(160deg, #052e16 0%, #0c1a2e 100%)",
