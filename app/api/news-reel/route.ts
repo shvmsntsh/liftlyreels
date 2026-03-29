@@ -1,23 +1,15 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import {
+  GUARDIAN_SECTIONS,
+  decode,
+  fetchSectionArticles,
+  type GuardianSection,
+} from "@/lib/content-sources/guardian";
 
 export const dynamic = "force-dynamic";
 
-// ── Guardian RSS sections (no API key needed) ─────────────────────────────
-const SECTIONS = [
-  { label: "Technology & AI", id: "technology", emoji: "🤖", guardianSlug: "technology" },
-  { label: "Business", id: "business", emoji: "📈", guardianSlug: "business" },
-  { label: "World News", id: "world", emoji: "🌍", guardianSlug: "world" },
-  { label: "Science", id: "science", emoji: "🔬", guardianSlug: "science" },
-  { label: "Sport", id: "sport", emoji: "🏆", guardianSlug: "sport" },
-  { label: "Environment", id: "environment", emoji: "🌱", guardianSlug: "environment" },
-  { label: "Health & Life", id: "lifeandstyle", emoji: "💪", guardianSlug: "lifeandstyle" },
-  { label: "Money & Finance", id: "money", emoji: "💰", guardianSlug: "money" },
-  { label: "Culture", id: "culture", emoji: "🎭", guardianSlug: "culture" },
-  { label: "Education", id: "education", emoji: "📚", guardianSlug: "education" },
-];
-
-// Map Liftly proof categories → Guardian sections for personalization
+// Map Liftly proof categories to Guardian sections for personalization
 const CATEGORY_MAP: Record<string, string> = {
   Gym: "sport",
   Books: "education",
@@ -28,113 +20,13 @@ const CATEGORY_MAP: Record<string, string> = {
   Relationships: "culture",
 };
 
-// ── HTML/entity decoder — used by parser and cache cleaner ────────────────
-function decode(s: string): string {
-  return s
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
-    .replace(/<[^>]*>/g, "")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&#039;/g, "'")
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&#(\d+);/g, (_m, d) => String.fromCharCode(parseInt(d)))
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-// ── RSS item parser ───────────────────────────────────────────────────────
-function parseRSSItem(xml: string, section: (typeof SECTIONS)[0]) {
-  const get = (tag: string) =>
-    xml.match(new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\\/${tag}>`))?.[1] ??
-    xml.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`))?.[1] ?? "";
-
-  const title = get("title").trim();
-  const rawDesc = get("description").trim();
-  const url = get("link").trim() || get("guid").trim() || "#";
-  const pubDate = get("pubDate").trim();
-  const imageUrl =
-    xml.match(/media:content[^>]*url="([^"]+)"/)?.[1] ??
-    xml.match(/enclosure[^>]*url="([^"]+)"/)?.[1] ??
-    null;
-
-  if (!title) return null;
-
-  return {
-    title: decode(title).slice(0, 120),
-    description: decode(rawDesc).slice(0, 200),
-    image_url: imageUrl,
-    source: "The Guardian",
-    category: section.label,
-    emoji: section.emoji,
-    url,
-    pub_date: pubDate,
-  };
-}
-
-async function fetchOgImage(articleUrl: string): Promise<string | null> {
-  if (!articleUrl || articleUrl === "#") return null;
-  try {
-    const res = await fetch(articleUrl, {
-      signal: AbortSignal.timeout(3000),
-      headers: { "User-Agent": "Liftly/1.0" },
-    });
-    if (!res.ok) return null;
-    const html = await res.text();
-    const match =
-      html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i) ??
-      html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i);
-    return match?.[1] ?? null;
-  } catch {
-    return null;
-  }
-}
-
-async function fetchSectionArticle(section: (typeof SECTIONS)[0]) {
-  const url = `https://www.theguardian.com/${section.guardianSlug}/rss`;
-  try {
-    const res = await fetch(url, { next: { revalidate: 0 }, signal: AbortSignal.timeout(5000) });
-    if (!res.ok) return null;
-    const xml = await res.text();
-
-    const items = xml.match(/<item>([\s\S]*?)<\/item>/g) ?? [];
-    const since = Date.now() - 24 * 60 * 60 * 1000;
-
-    for (const item of items) {
-      const parsed = parseRSSItem(item, section);
-      if (!parsed) continue;
-
-      // Filter to last 24 hours (if date parseable)
-      if (parsed.pub_date) {
-        const dt = new Date(parsed.pub_date).getTime();
-        if (!isNaN(dt) && dt < since) continue;
-      }
-
-      // If no image from RSS, try og:image from article page
-      if (!parsed.image_url) {
-        parsed.image_url = await fetchOgImage(parsed.url);
-      }
-      return parsed;
-    }
-    // No 24h article — return latest anyway as fallback
-    const fallback = items[0] ? parseRSSItem(items[0], section) : null;
-    if (fallback && !fallback.image_url) {
-      fallback.image_url = await fetchOgImage(fallback.url);
-    }
-    return fallback;
-  } catch {
-    return null;
-  }
-}
-
-// ── Personalization: reorder sections by user's proof categories ──────────
+// Personalization: reorder sections by user's proof categories
 function reorderSections(userCategories: string[]) {
   const preferredIds = userCategories
     .map((c) => CATEGORY_MAP[c])
     .filter(Boolean);
 
-  const sorted = [...SECTIONS].sort((a, b) => {
+  const sorted = [...GUARDIAN_SECTIONS].sort((a, b) => {
     const ai = preferredIds.indexOf(a.id);
     const bi = preferredIds.indexOf(b.id);
     if (ai === -1 && bi === -1) return 0;
@@ -145,7 +37,7 @@ function reorderSections(userCategories: string[]) {
   return sorted;
 }
 
-// ── GET /api/news-reel ────────────────────────────────────────────────────
+// GET /api/news-reel
 export async function GET(request: Request) {
   const supabase = createSupabaseServerClient();
   const {
@@ -167,7 +59,6 @@ export async function GET(request: Request) {
       .maybeSingle();
 
     if (cached?.slides && Array.isArray(cached.slides) && cached.slides.length > 0) {
-      // Clean cached data in case it has residual HTML from pre-fix era
       const cleanSlides = (cached.slides as Record<string, string>[]).map((s) => ({
         ...s,
         title: decode(s.title ?? ""),
@@ -181,8 +72,10 @@ export async function GET(request: Request) {
 
   // Generate fresh reel by fetching all sections in parallel
   const sections = reorderSections(userCategories);
-  const results = await Promise.all(sections.map(fetchSectionArticle));
-  const slides = results.filter(Boolean) as NonNullable<(typeof results)[0]>[];
+  const results = await Promise.all(
+    sections.map((s) => fetchSectionArticles(s as GuardianSection, 1))
+  );
+  const slides = results.flat();
 
   // Try to cache result in Supabase (4-hour TTL)
   try {
@@ -196,7 +89,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ reel_id: saved?.id ?? null, slides });
     }
   } catch {
-    // Ignore cache write failure (table may not exist)
+    // Ignore cache write failure
   }
 
   return NextResponse.json({ reel_id: null, slides });

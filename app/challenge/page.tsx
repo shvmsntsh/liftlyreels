@@ -264,10 +264,10 @@ export default async function ChallengePage() {
               <span className="text-2xl">{badge.icon}</span>
               <div>
                 <p className="text-sm font-bold text-foreground">{badge.name} Badge</p>
-                <p className="text-[11px] text-slate-500">{totalCompletions} total completions</p>
+                <p className="text-[11px]" style={{ color: "var(--muted)" }}>{totalCompletions} total completions</p>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 rounded-lg bg-white/5 px-2.5 py-1">
+            <div className="flex items-center gap-1.5 rounded-lg px-2.5 py-1" style={{ backgroundColor: "var(--glass-bg)" }}>
               <span className="text-sm">{streakRank.icon}</span>
               <span className="text-xs font-semibold" style={{ color: streakRank.color }}>{streakRank.name}</span>
             </div>
@@ -275,10 +275,10 @@ export default async function ChallengePage() {
           {nextBadge && (
             <div>
               <div className="flex items-center justify-between mb-1">
-                <p className="text-[11px] text-slate-500">Next: {nextBadge.icon} {nextBadge.name}</p>
-                <p className="text-[11px] text-slate-500">{totalCompletions}/{nextBadge.min}</p>
+                <p className="text-[11px]" style={{ color: "var(--muted)" }}>Next: {nextBadge.icon} {nextBadge.name}</p>
+                <p className="text-[11px]" style={{ color: "var(--muted)" }}>{totalCompletions}/{nextBadge.min}</p>
               </div>
-              <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+              <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: "var(--glass-bg)" }}>
                 <div
                   className="h-full rounded-full transition-all"
                   style={{
@@ -292,10 +292,10 @@ export default async function ChallengePage() {
           {nextStreakRank && (
             <div className="mt-2">
               <div className="flex items-center justify-between mb-1">
-                <p className="text-[11px] text-slate-500">Streak rank: {nextStreakRank.icon} {nextStreakRank.name} at {nextStreakRank.min} days</p>
-                <p className="text-[11px] text-slate-500">{streak}/{nextStreakRank.min}</p>
+                <p className="text-[11px]" style={{ color: "var(--muted)" }}>Streak rank: {nextStreakRank.icon} {nextStreakRank.name} at {nextStreakRank.min} days</p>
+                <p className="text-[11px]" style={{ color: "var(--muted)" }}>{streak}/{nextStreakRank.min}</p>
               </div>
-              <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+              <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: "var(--glass-bg)" }}>
                 <div
                   className="h-full rounded-full transition-all"
                   style={{
@@ -311,9 +311,9 @@ export default async function ChallengePage() {
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { icon: Flame, label: "Streak", value: streak, color: "text-orange-300" },
-            { icon: Trophy, label: "This Week", value: completedThisWeek, color: "text-amber-300" },
-            { icon: Award, label: "All Time", value: totalCompletions, color: "text-sky-300" },
+            { icon: Flame, label: "Streak", value: streak, color: "dark:text-orange-300 text-orange-600" },
+            { icon: Trophy, label: "This Week", value: completedThisWeek, color: "dark:text-amber-300 text-amber-600" },
+            { icon: Award, label: "All Time", value: totalCompletions, color: "dark:text-sky-300 text-sky-600" },
           ].map(({ icon: Icon, label, value, color }) => (
             <div
               key={label}
@@ -339,7 +339,7 @@ export default async function ChallengePage() {
               border: "1px solid var(--glass-border)",
             }}
           >
-            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-orange-300 flex items-center gap-1.5">
+            <p className="mb-3 text-xs font-bold uppercase tracking-wider dark:text-orange-300 text-orange-600 flex items-center gap-1.5">
               🔗 Your 7-Day Chain
             </p>
             <div className="flex items-center gap-2">
@@ -352,13 +352,18 @@ export default async function ChallengePage() {
                         c.user_completed
                           ? "bg-emerald-400 text-black shadow-[0_0_12px_rgba(52,211,153,0.5)]"
                           : isToday
-                          ? "border-2 border-orange-400 text-orange-300 bg-orange-400/10"
-                          : "border border-white/15 bg-white/5 text-slate-600"
+                          ? "border-2 border-orange-400 dark:text-orange-300 text-orange-600 bg-orange-400/10"
+                          : ""
                       }`}
+                      style={
+                        !c.user_completed && !isToday
+                          ? { border: "1px solid var(--glass-border)", backgroundColor: "var(--glass-bg)", color: "var(--muted)" }
+                          : undefined
+                      }
                     >
                       {c.user_completed ? "✓" : isToday ? "●" : "○"}
                     </div>
-                    <span className="text-[9px] text-slate-600">
+                    <span className="text-[9px]" style={{ color: "var(--muted)" }}>
                       {isToday ? "Today" : new Date(c.date).toLocaleDateString("en-US", { weekday: "short" }).slice(0, 1)}
                     </span>
                   </div>
@@ -367,18 +372,18 @@ export default async function ChallengePage() {
               {/* Pad to 7 if fewer */}
               {Array.from({ length: Math.max(0, 7 - challenges.length) }).map((_, i) => (
                 <div key={`pad-${i}`} className="flex flex-col items-center gap-1 flex-1">
-                  <div className="h-9 w-9 rounded-full border border-white/8 bg-white/3" />
-                  <span className="text-[9px] text-slate-700">—</span>
+                  <div className="h-9 w-9 rounded-full" style={{ border: "1px solid var(--glass-border)", backgroundColor: "var(--glass-bg)" }} />
+                  <span className="text-[9px]" style={{ color: "var(--muted)" }}>—</span>
                 </div>
               ))}
             </div>
             {streak >= 7 && (
-              <p className="mt-3 text-center text-xs font-bold text-emerald-400">
+              <p className="mt-3 text-center text-xs font-bold dark:text-emerald-400 text-emerald-600">
                 🔥 {streak}-day chain! Keep going.
               </p>
             )}
             {streak === 0 && (
-              <p className="mt-3 text-center text-xs text-slate-600">
+              <p className="mt-3 text-center text-xs" style={{ color: "var(--muted)" }}>
                 Complete today&apos;s challenge to start your chain.
               </p>
             )}
@@ -428,10 +433,10 @@ export default async function ChallengePage() {
                       u.username[0]?.toUpperCase()
                     )}
                   </div>
-                  <p className="mt-1 text-xs text-slate-300 truncate max-w-[80px]">
+                  <p className="mt-1 text-xs text-foreground/80 truncate max-w-[80px]">
                     {u.display_name ?? u.username}
                   </p>
-                  <p className="text-[10px] text-orange-300 font-bold">{u.count} done</p>
+                  <p className="text-[10px] dark:text-orange-300 text-orange-600 font-bold">{u.count} done</p>
                 </div>
               ))}
             </div>
@@ -447,7 +452,7 @@ export default async function ChallengePage() {
               border: "1px solid var(--glass-border)",
             }}
           >
-            <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
+            <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--muted)" }}>
               <Crown className="h-3.5 w-3.5 text-amber-400" />
               All-Time Leaderboard
             </p>
@@ -455,7 +460,7 @@ export default async function ChallengePage() {
               const userBadge = getBadge(u.totalCompletions);
               return (
                 <div key={u.username} className="flex items-center gap-3 py-2">
-                  <span className="w-5 text-sm font-bold text-slate-500">{i + 1}</span>
+                  <span className="w-5 text-sm font-bold" style={{ color: "var(--muted)" }}>{i + 1}</span>
                   <div
                     className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold text-foreground overflow-hidden"
                     style={{ backgroundColor: "var(--surface-3)" }}
@@ -467,12 +472,12 @@ export default async function ChallengePage() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="text-sm text-slate-200 truncate block">
+                    <span className="text-sm text-foreground truncate block">
                       {u.display_name ?? u.username}
                     </span>
                   </div>
                   <span className="text-sm" title={userBadge.name}>{userBadge.icon}</span>
-                  <span className="text-xs font-bold text-orange-300 tabular-nums">{u.count}</span>
+                  <span className="text-xs font-bold dark:text-orange-300 text-orange-600 tabular-nums">{u.count}</span>
                 </div>
               );
             })}
@@ -492,7 +497,7 @@ export default async function ChallengePage() {
                   key={c.id}
                   className={`rounded-xl px-4 py-3 backdrop-blur-sm ${
                     c.user_completed
-                      ? "border border-emerald-400/20 bg-emerald-950/30"
+                      ? "border border-emerald-400/20 dark:bg-emerald-950/30 bg-emerald-50"
                       : ""
                   }`}
                   style={
@@ -507,11 +512,11 @@ export default async function ChallengePage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
                       <p className="text-[11px]" style={{ color: "var(--muted)" }}>{dateLabel(c.date)}</p>
-                      <p className="mt-0.5 text-sm text-slate-200 line-clamp-2">
+                      <p className="mt-0.5 text-sm text-foreground line-clamp-2">
                         {c.challenge_text}
                       </p>
                       {c.user_note && (
-                        <p className="mt-1 text-xs text-slate-400 italic">
+                        <p className="mt-1 text-xs italic" style={{ color: "var(--muted)" }}>
                           &ldquo;{c.user_note}&rdquo;
                         </p>
                       )}
@@ -524,11 +529,11 @@ export default async function ChallengePage() {
                           </svg>
                         </div>
                       ) : (
-                        <div className="h-5 w-5 rounded-full border border-slate-700" />
+                        <div className="h-5 w-5 rounded-full" style={{ border: "1px solid var(--border)" }} />
                       )}
                     </div>
                   </div>
-                  <div className="mt-1 text-[10px] text-slate-600">
+                  <div className="mt-1 text-[10px]" style={{ color: "var(--muted)" }}>
                     {c.completions_count} completions
                   </div>
                 </div>

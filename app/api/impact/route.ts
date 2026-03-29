@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase-server";
+import { validateProof } from "@/lib/proof-validation";
 
 export async function GET(request: NextRequest) {
   const supabase = createSupabaseServerClient();
@@ -61,10 +62,39 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { postId, actionTaken } = await request.json();
+  const { postId, actionTaken, category: clientCategory } = await request.json();
 
   if (!postId || !actionTaken?.trim()) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  // Rate limit: max 10 proofs per hour
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const { count: hourlyCount } = await supabase
+    .from("impact_journal")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .gte("created_at", oneHourAgo);
+  if ((hourlyCount ?? 0) >= 10) {
+    return NextResponse.json({ error: "Rate limit: max 10 proofs per hour. Try again later." }, { status: 429 });
+  }
+
+  // Determine category for validation
+  let category = clientCategory;
+  if (!category) {
+    const UUID_RE_CHECK = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (UUID_RE_CHECK.test(postId)) {
+      const { data: postData } = await supabase.from("posts").select("category").eq("id", postId).single();
+      category = postData?.category;
+    }
+  }
+
+  // Server-side proof validation
+  if (category) {
+    const result = validateProof(actionTaken, category);
+    if (!result.valid) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
   }
 
   // Validate UUID format — fallback posts use string IDs like "fallback-10"

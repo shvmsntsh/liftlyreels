@@ -49,17 +49,17 @@ export function DailyChallengeBar({ challenge, fullPage }: Props) {
     return (
       <div
         className="mx-4 mt-2 rounded-2xl border border-orange-400/20 px-4 py-3"
-        style={{ backgroundColor: "rgba(124, 45, 18, 0.4)" }}
+        style={{ backgroundColor: "var(--glass-bg)" }}
       >
         <div className="flex items-start gap-3">
           <Flame className="mt-0.5 h-4 w-4 shrink-0 text-orange-400" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold uppercase tracking-wider text-orange-300">
+            <p className="text-xs font-bold uppercase tracking-wider dark:text-orange-300 text-orange-600">
               Today&apos;s Challenge
             </p>
-            <p className="mt-0.5 text-sm text-slate-200 line-clamp-2">{challenge.challenge_text}</p>
+            <p className="mt-0.5 text-sm text-foreground line-clamp-2">{challenge.challenge_text}</p>
           </div>
-          <div className="flex items-center gap-1 text-xs text-orange-300">
+          <div className="flex items-center gap-1 text-xs dark:text-orange-300 text-orange-600">
             <Users className="h-3 w-3" />
             <span>{count}</span>
           </div>
@@ -84,7 +84,7 @@ export function DailyChallengeBar({ challenge, fullPage }: Props) {
             <Flame className="h-4 w-4 text-orange-400 fill-current" />
           </div>
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-orange-300">
+            <p className="text-xs font-bold uppercase tracking-widest dark:text-orange-300 text-orange-600">
               Daily Challenge
             </p>
             <p className="text-[11px]" style={{ color: "var(--muted)" }}>
@@ -100,7 +100,7 @@ export function DailyChallengeBar({ challenge, fullPage }: Props) {
         <div className="mt-4 flex items-center gap-2 text-sm" style={{ color: "var(--muted)" }}>
           <Users className="h-4 w-4" />
           <span>
-            <strong className="text-orange-300">{count}</strong>{" "}
+            <strong className="dark:text-orange-300 text-orange-600">{count}</strong>{" "}
             {count === 1 ? "person has" : "people have"} completed this today
           </span>
         </div>
@@ -114,7 +114,7 @@ export function DailyChallengeBar({ challenge, fullPage }: Props) {
               className="flex items-center gap-2 rounded-xl bg-emerald-400/10 border border-emerald-400/20 px-4 py-3"
             >
               <Check className="h-4 w-4 text-emerald-400" />
-              <span className="text-sm font-semibold text-emerald-300">
+              <span className="text-sm font-semibold dark:text-emerald-300 text-emerald-600">
                 You completed today&apos;s challenge!
               </span>
             </motion.div>
@@ -137,7 +137,7 @@ export function DailyChallengeBar({ challenge, fullPage }: Props) {
                       border: "1px solid var(--border)",
                     }}
                   />
-                  <div className="text-right text-[10px] text-slate-600">{note.length}/140</div>
+                  <div className="text-right text-[10px]" style={{ color: "var(--muted)" }}>{note.length}/140</div>
                 </motion.div>
               )}
               <button
@@ -156,7 +156,7 @@ export function DailyChallengeBar({ challenge, fullPage }: Props) {
       </motion.div>
 
       {/* Swipe hint */}
-      <div className="mt-6 text-center text-xs text-slate-600">
+      <div className="mt-6 text-center text-xs" style={{ color: "var(--muted)" }}>
         Scroll down for your reels
       </div>
     </div>

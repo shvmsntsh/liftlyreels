@@ -18,6 +18,18 @@ import { StreakDefenseBanner } from "./StreakDefenseBanner";
 // Changelog entries — update this with each deploy
 const CHANGELOG = [
   {
+    version: "v1.20",
+    date: "Mar 29, 2026",
+    entries: [
+      "Content Collector: daily auto-collection from Guardian + Reddit with images",
+      "Admin Dashboard: user management, content moderation, manual collection trigger",
+      "Proof Hardening: 90s cooldown, category-specific validation, anti-gibberish",
+      "Fixed: update popup no longer loops on every deploy",
+      "How to Play card: now collapsible (expand/collapse/dismiss)",
+      "Light mode: fixed all broken colors across challenge page and leaderboard",
+    ],
+  },
+  {
     version: "v1.19",
     date: "Mar 28, 2026",
     entries: [
