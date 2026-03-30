@@ -3,6 +3,7 @@
 import { REEL_GRADIENTS } from "@/lib/types";
 import type { GuardianArticle } from "./guardian";
 import type { RedditArticle } from "./reddit";
+import { normalizeCollectedContent, normalizeCollectedSource, normalizeCollectedTitle } from "./normalize";
 
 const CATEGORY_GRADIENTS: Record<string, string> = {
   Mindset: "sunset",
@@ -68,14 +69,17 @@ function pickGradient(category: string): string {
 
 export function mapGuardianToPost(article: GuardianArticle): CollectedPost {
   const liftlyCategory = GUARDIAN_TO_LIFTLY[article.category] ?? "Mindset";
-  const content: string[] = [];
-  if (article.description) content.push(article.description);
-
-  return {
+  const content = normalizeCollectedContent(article.description, {
     title: article.title,
-    content,
     category: liftlyCategory,
     source: `The Guardian · ${article.category}`,
+  });
+
+  return {
+    title: normalizeCollectedTitle(article.title),
+    content,
+    category: liftlyCategory,
+    source: normalizeCollectedSource(`The Guardian · ${article.category}`),
     image_url: article.image_url,
     suggested_action: SUGGESTED_ACTIONS[liftlyCategory] ?? SUGGESTED_ACTIONS.Mindset,
     gradient: pickGradient(article.category),
@@ -86,14 +90,17 @@ export function mapGuardianToPost(article: GuardianArticle): CollectedPost {
 }
 
 export function mapRedditToPost(article: RedditArticle): CollectedPost {
-  const content: string[] = [];
-  if (article.description) content.push(article.description);
-
-  return {
+  const content = normalizeCollectedContent(article.description, {
     title: article.title,
-    content,
     category: article.category,
     source: `Reddit · ${article.source}`,
+  });
+
+  return {
+    title: normalizeCollectedTitle(article.title),
+    content,
+    category: article.category,
+    source: normalizeCollectedSource(`Reddit · ${article.source}`),
     image_url: article.image_url,
     suggested_action: SUGGESTED_ACTIONS[article.category] ?? SUGGESTED_ACTIONS.Mindset,
     gradient: pickGradient(article.category),
@@ -230,10 +237,14 @@ export function generateCategoryReel(category: string): CollectedPost {
   const contentIdx = Math.floor(Math.random() * templates.contents.length);
 
   return {
-    title: templates.titles[titleIdx],
-    content: [templates.contents[contentIdx]],
+    title: normalizeCollectedTitle(templates.titles[titleIdx]),
+    content: normalizeCollectedContent(templates.contents[contentIdx], {
+      title: templates.titles[titleIdx],
+      category,
+      source: "Liftly Curator",
+    }),
     category,
-    source: "Liftly Curator",
+    source: normalizeCollectedSource("Liftly Curator"),
     image_url: null,
     suggested_action: SUGGESTED_ACTIONS[category] ?? SUGGESTED_ACTIONS.Mindset,
     gradient: pickGradient(category),

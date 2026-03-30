@@ -1,4 +1,5 @@
 import { PostRecord } from "@/lib/types";
+import { normalizeCollectedContent, normalizeCollectedSource, normalizeCollectedTitle } from "@/lib/content-sources/normalize";
 
 type OpenLibrarySearchDoc = {
   key?: string;
@@ -114,14 +115,19 @@ function buildReadIf(author: string, subjects: string[]) {
 function buildContent(title: string, author: string, description: string, subjects: string[]) {
   const summary = firstSentence(description);
 
-  return [
-    summary
-      ? `Summary: ${summary}`
-      : `Summary: ${title} is a classic by ${author} that still reads like practical advice.`,
-    buildBestPart(subjects, title),
-    buildActionTakeaway(subjects, title),
-    buildReadIf(author, subjects),
-  ];
+  return normalizeCollectedContent(
+    [
+      summary || `${title} is a classic by ${author} that still reads like practical advice.`,
+      buildBestPart(subjects, title),
+      buildActionTakeaway(subjects, title),
+      buildReadIf(author, subjects),
+    ],
+    {
+      title,
+      category: "Books",
+      source: `Open Library · ${author}`,
+    }
+  );
 }
 
 async function fetchSearchResult(query: string) {
@@ -187,10 +193,10 @@ export async function fetchCuratedBookReels(limit = 12): Promise<ExternalBookRee
         : null;
 
       reels.push({
-        title: `${book.title} in 4 reel notes`,
+        title: normalizeCollectedTitle(`${book.title} in 3 reel notes`),
         content: buildContent(book.title, author, description, subjects),
         category: "Books",
-        source: `Open Library · ${toTitleCase(author)}`,
+        source: normalizeCollectedSource(`Open Library · ${toTitleCase(author)}`),
         image_url: coverUrl,
         author_id: null,
         is_user_created: false,

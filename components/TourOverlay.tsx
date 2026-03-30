@@ -43,7 +43,8 @@ export function TourOverlay() {
 
   useEffect(() => {
     const completed = localStorage.getItem("liftly-tour-complete");
-    if (!completed) {
+    const missionShowing = localStorage.getItem("liftly-mission-open") === "1";
+    if (!completed && !missionShowing) {
       // Small delay to let the page render first
       const timer = setTimeout(() => setVisible(true), 800);
       return () => clearTimeout(timer);
@@ -90,10 +91,10 @@ export function TourOverlay() {
             className="w-full max-w-sm rounded-3xl border border-white/10 bg-slate-950/90 p-6 backdrop-blur-2xl shadow-[0_20px_80px_rgba(0,0,0,0.6)]"
           >
             {/* Skip button */}
-            <div className="flex justify-end mb-2">
+            <div className="relative z-20 mb-2 flex justify-end">
               <button
                 onClick={skip}
-                className="text-xs text-slate-500 hover:text-white transition flex items-center gap-1"
+                className="relative z-20 flex items-center gap-1 text-xs text-slate-500 transition hover:text-white"
               >
                 Skip tour <X className="h-3 w-3" />
               </button>
@@ -129,7 +130,7 @@ export function TourOverlay() {
             {/* Navigation */}
             <button
               onClick={handleNext}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 py-3.5 text-sm font-bold text-white shadow-[0_4px_20px_rgba(56,189,248,0.25)] transition hover:brightness-110"
+              className="relative z-10 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 py-3.5 text-sm font-bold text-white shadow-[0_4px_20px_rgba(56,189,248,0.25)] transition hover:brightness-110"
             >
               {step < TOUR_STEPS.length - 1 ? (
                 <>Next <ArrowRight className="h-4 w-4" /></>

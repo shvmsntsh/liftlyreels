@@ -5,6 +5,9 @@ const PUBLIC_ROUTES = ["/", "/login", "/signup", "/signup/profile", "/blocked"];
 const PUBLIC_PREFIXES = ["/api/auth/", "/auth/callback", "/api/version", "/api/cron/"];
 
 function checkIsAdmin(email: string | undefined): boolean {
+  if (process.env.NODE_ENV !== "production" && process.env.LOCAL_ADMIN_BYPASS === "true") {
+    return true;
+  }
   if (!email) return false;
   const adminEmails = (process.env.ADMIN_EMAILS ?? "")
     .split(",")

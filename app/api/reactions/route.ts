@@ -67,10 +67,17 @@ export async function POST(request: NextRequest) {
       (async () => {
         const { data: post } = await db.from("posts").select("category").eq("id", postId).single();
         if (post?.category) {
+          const { data: existingEngagement } = await db
+            .from("user_category_engagement")
+            .select("engagement_count")
+            .eq("user_id", user.id)
+            .eq("category", post.category)
+            .maybeSingle();
+
           await db.from("user_category_engagement").upsert({
             user_id: user.id,
             category: post.category,
-            engagement_count: 1,
+            engagement_count: (existingEngagement?.engagement_count ?? 0) + 1,
             last_engaged_at: new Date().toISOString(),
           }, { onConflict: "user_id,category" });
         }

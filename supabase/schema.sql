@@ -153,6 +153,8 @@ create policy "Users can create posts"
   on public.posts for insert with check (auth.uid() = author_id or author_id is null);
 create policy "Users can update own posts"
   on public.posts for update using (auth.uid() = author_id);
+create policy "Users can delete own posts"
+  on public.posts for delete using (auth.uid() = author_id and is_user_created = true);
 
 -- PROFILES POLICIES
 create policy "Profiles viewable by authenticated users"

@@ -73,30 +73,9 @@ export function ReelCard({ post, userId, onActionLogged, dailyLimitReached, onMo
   const { play } = useAudio();
   const router = useRouter();
   const viewedRef = useRef(false);
-
-  useEffect(() => {
-    const el = cardRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          play(post.category, post.audio_track);
-          // Record view once per mount, debounced
-          if (!viewedRef.current && userId && !post.id.startsWith("fallback-")) {
-            viewedRef.current = true;
-            fetch("/api/views", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ postId: post.id }),
-            }).catch(() => {});
-          }
-        }
-      },
-      { threshold: 0.6 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [play, post.category, post.id, userId]);
+  const wasVisibleRef = useRef(false);
+  const actionOpenRef = useRef(false);
+  const sessionCounterRef = useRef(0);
 
   const [reactions, setReactions] = useState({
     sparked: post.reactions_summary?.sparked ?? 0,
@@ -110,6 +89,7 @@ export function ReelCard({ post, userId, onActionLogged, dailyLimitReached, onMo
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [actionOpen, setActionOpen] = useState(false);
   const [actionLogged, setActionLogged] = useState(false);
+  const [viewSessionId, setViewSessionId] = useState(0);
   const [shareLabel, setShareLabel] = useState("Share");
   const [isFollowing, setIsFollowing] = useState(post.author_is_following ?? false);
   const [reportOpen, setReportOpen] = useState(false);
@@ -117,14 +97,48 @@ export function ReelCard({ post, userId, onActionLogged, dailyLimitReached, onMo
   const gradient = REEL_GRADIENTS[post.gradient ?? "ocean"] ?? REEL_GRADIENTS.ocean;
   const isFallback = post.id.startsWith("fallback-");
 
-  // Fetch proof status on mount — persist across reloads
   useEffect(() => {
-    if (!userId || isFallback) return;
-    fetch(`/api/impact?postId=${post.id}`)
-      .then((r) => r.json())
-      .then((d) => { if (d.proved) setActionLogged(true); })
-      .catch(() => {});
-  }, [userId, post.id, isFallback]);
+    actionOpenRef.current = actionOpen;
+  }, [actionOpen]);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Keep the current reel session stable while the proof flow is open.
+        // The full-screen proof UI can momentarily affect intersection state.
+        if (actionOpenRef.current) {
+          return;
+        }
+
+        if (entry.isIntersecting && !wasVisibleRef.current) {
+          wasVisibleRef.current = true;
+          sessionCounterRef.current += 1;
+          setViewSessionId(sessionCounterRef.current);
+          play(post.category, post.audio_track);
+          // Record view once per mount, debounced
+          if (!viewedRef.current && userId && !post.id.startsWith("fallback-")) {
+            viewedRef.current = true;
+            fetch("/api/views", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ postId: post.id }),
+            }).catch(() => {});
+          }
+        } else if (wasVisibleRef.current) {
+          wasVisibleRef.current = false;
+          setViewSessionId(0);
+          if (actionOpenRef.current) {
+            setActionOpen(false);
+          }
+        }
+      },
+      { threshold: 0.6 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [play, post.category, post.id, userId]);
 
   // Lock feed scroll when proof modal is open
   useEffect(() => {
@@ -138,6 +152,7 @@ export function ReelCard({ post, userId, onActionLogged, dailyLimitReached, onMo
     async (type: ReactionType) => {
       if (!userId) return;
       const hadIt = myReactions.has(type);
+      const delta = hadIt ? -1 : 1;
       setMyReactions((prev) => {
         const next = new Set(prev);
         if (hadIt) { next.delete(type); } else { next.add(type); }
@@ -145,13 +160,34 @@ export function ReelCard({ post, userId, onActionLogged, dailyLimitReached, onMo
       });
       setReactions((prev) => ({
         ...prev,
-        [type]: Math.max(0, prev[type] + (hadIt ? -1 : 1)),
+        [type]: Math.max(0, prev[type] + delta),
       }));
-      await fetch("/api/reactions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId: post.id, reactionType: type }),
-      });
+      try {
+        const res = await fetch("/api/reactions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ postId: post.id, reactionType: type }),
+          keepalive: true,
+        });
+
+        if (!res.ok) {
+          throw new Error(`Reaction request failed with ${res.status}`);
+        }
+      } catch {
+        setMyReactions((prev) => {
+          const next = new Set(prev);
+          if (hadIt) {
+            next.add(type);
+          } else {
+            next.delete(type);
+          }
+          return next;
+        });
+        setReactions((prev) => ({
+          ...prev,
+          [type]: Math.max(0, prev[type] - delta),
+        }));
+      }
     },
     [post.id, userId, myReactions]
   );
@@ -407,6 +443,11 @@ export function ReelCard({ post, userId, onActionLogged, dailyLimitReached, onMo
         postId={post.id}
         postTitle={post.title}
         category={post.category}
+        content={post.content}
+        imageUrl={post.image_url}
+        gradient={post.gradient}
+        source={post.source}
+        viewSessionId={viewSessionId}
         isOpen={actionOpen}
         onClose={() => setActionOpen(false)}
         onLogged={(dailyCount) => {

@@ -10,13 +10,16 @@ import { ScrollNudgeCard } from "./ScrollNudgeCard";
 import { TourOverlay } from "./TourOverlay";
 import { NotificationsSheet } from "./NotificationsSheet";
 import { ActionFeedTab } from "./ActionFeedTab";
+import { QuestionsTab } from "./QuestionsTab";
 import { MorningMissionModal } from "./MorningMissionModal";
 import { PostRecord, DailyChallenge } from "@/lib/types";
 import { WorldReelCard, NewsSlide } from "./WorldReelCard";
 import { AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 
-type Tab = "foryou" | "following" | "proof";
+const WORLD_REEL_SEEN_VERSION = "v2";
+
+type Tab = "foryou" | "following" | "proof" | "questions";
 
 type Props = {
   initialPosts: PostRecord[];
@@ -37,7 +40,9 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
   const [loggedCount, setLoggedCount] = useState(0);
   const [worldReel, setWorldReel] = useState<NewsSlide[] | null>(null);
   const [dailyLimitReached, setDailyLimitReached] = useState(false);
+  const [dailyProofCount, setDailyProofCount] = useState(0);
   const [anyModalOpen, setAnyModalOpen] = useState(false);
+  const [loadingWorldReel, setLoadingWorldReel] = useState(false);
 
   // Update streak once per day when user visits feed
   useEffect(() => {
@@ -60,9 +65,42 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
   useEffect(() => {
     fetch("/api/impact?dailyCount=true")
       .then((r) => r.json())
-      .then((data) => setDailyLimitReached((data.count ?? 0) >= 5))
+      .then((data) => {
+        const count = data.count ?? 0;
+        setDailyProofCount(count);
+        setDailyLimitReached(count >= 5);
+      })
       .catch(() => null);
   }, []);
+
+  async function tryShowWorldReel(milestoneCount: number) {
+    if (milestoneCount <= 0 || milestoneCount % 5 !== 0 || worldReel || loadingWorldReel) return;
+
+    const today = new Date().toISOString().slice(0, 10);
+    const seenKey = `liftly-world-reel-${WORLD_REEL_SEEN_VERSION}-${today}-${milestoneCount}`;
+    if (localStorage.getItem(seenKey)) return;
+
+    try {
+      setLoadingWorldReel(true);
+      const res = await fetch("/api/news-reel");
+      if (!res.ok) {
+        return;
+      }
+      const data = await res.json();
+      if (data.slides?.length > 0) {
+        localStorage.setItem(seenKey, "1");
+        setWorldReel(data.slides);
+      }
+    } catch {
+      // Leave unseen so we can retry later
+    } finally {
+      setLoadingWorldReel(false);
+    }
+  }
+
+  useEffect(() => {
+    void tryShowWorldReel(dailyProofCount);
+  }, [dailyProofCount]);
 
   // Fetch personalized feed when For You tab is active
   useEffect(() => {
@@ -103,24 +141,12 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
 
   async function handleActionLogged(dailyCount: number) {
     setLoggedCount((n) => n + 1);
+    setDailyProofCount(dailyCount);
     // Set daily limit reached when at 5 proofs
     if (dailyCount >= 5) {
       setDailyLimitReached(true);
     }
-    // Unlock world reel on 5th proof of the day (and every 5th after)
-    if (dailyCount > 0 && dailyCount % 5 === 0) {
-      const today = new Date().toISOString().slice(0, 10);
-      const seenKey = `liftly-world-reel-${today}-${dailyCount}`;
-      if (localStorage.getItem(seenKey)) return; // Already shown for this milestone today
-      localStorage.setItem(seenKey, "1");
-      try {
-        const res = await fetch("/api/news-reel");
-        const data = await res.json();
-        if (data.slides?.length > 0) setWorldReel(data.slides);
-      } catch {
-        /* fail silently */
-      }
-    }
+    await tryShowWorldReel(dailyCount);
   }
 
   function handleTabChange(t: Tab) {
@@ -136,6 +162,7 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
   const tabLabels: { key: Tab; label: string }[] = [
     { key: "foryou", label: "For You" },
     { key: "following", label: "Following" },
+    { key: "questions", label: "Questions" },
     { key: "proof", label: "Proof" },
   ];
 
@@ -179,6 +206,11 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
           )}
         </button>
       </div>
+
+      {/* Questions feed tab */}
+      {tab === "questions" && (
+        <QuestionsTab />
+      )}
 
       {/* Proof feed tab */}
       {tab === "proof" && (

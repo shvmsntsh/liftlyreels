@@ -28,18 +28,28 @@ export function MorningMissionModal({ challengeText }: Props) {
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10);
     const seen = localStorage.getItem("liftly-mission-date");
+    const tourCompleted = localStorage.getItem("liftly-tour-complete");
+    const seenThisSession = sessionStorage.getItem("liftly-mission-session");
     const hour = new Date().getHours();
     // Show between 5am–11am OR if never seen today
-    if (seen !== today && hour >= 5) {
+    if (tourCompleted && seen !== today && !seenThisSession && hour >= 5) {
       // Slight delay so feed loads first
-      const t = setTimeout(() => setShow(true), 1200);
-      return () => clearTimeout(t);
+      const t = setTimeout(() => {
+        localStorage.setItem("liftly-mission-open", "1");
+        sessionStorage.setItem("liftly-mission-session", "1");
+        setShow(true);
+      }, 1200);
+      return () => {
+        localStorage.removeItem("liftly-mission-open");
+        clearTimeout(t);
+      };
     }
   }, []);
 
   function dismiss() {
     const today = new Date().toISOString().slice(0, 10);
     localStorage.setItem("liftly-mission-date", today);
+    localStorage.removeItem("liftly-mission-open");
     setShow(false);
   }
 
@@ -50,6 +60,7 @@ export function MorningMissionModal({ challengeText }: Props) {
     const today = new Date().toISOString().slice(0, 10);
     localStorage.setItem("liftly-mission-date", today);
     localStorage.setItem("liftly-mission-intention", intention);
+    localStorage.removeItem("liftly-mission-open");
     setCommitted(true);
     setTimeout(() => setShow(false), 1400);
   }
@@ -81,7 +92,7 @@ export function MorningMissionModal({ challengeText }: Props) {
             {/* Dismiss */}
             <button
               onClick={dismiss}
-              className="absolute right-4 top-4 z-10 text-slate-500 hover:text-slate-300"
+              className="absolute right-4 top-4 z-20 text-slate-500 hover:text-slate-300"
             >
               <X className="h-4 w-4" />
             </button>
@@ -168,7 +179,7 @@ export function MorningMissionModal({ challengeText }: Props) {
 
                   <button
                     onClick={dismiss}
-                    className="mt-2 w-full py-2 text-xs text-slate-600 hover:text-slate-400"
+                    className="relative z-10 mt-2 w-full py-2 text-xs text-slate-600 hover:text-slate-400"
                   >
                     Skip for today
                   </button>

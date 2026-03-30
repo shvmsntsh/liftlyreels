@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase-server";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
@@ -133,15 +133,26 @@ export async function DELETE(request: NextRequest) {
   // Verify ownership
   const { data: existing } = await supabase
     .from("posts")
-    .select("author_id")
+    .select("author_id,is_user_created")
     .eq("id", id)
     .single();
 
-  if (!existing || existing.author_id !== user.id) {
+  if (!existing || existing.author_id !== user.id || !existing.is_user_created) {
     return NextResponse.json({ error: "Not found or not authorized" }, { status: 403 });
   }
 
-  const { error } = await supabase.from("posts").delete().eq("id", id);
+  const db = process.env.SUPABASE_SERVICE_ROLE_KEY ? createSupabaseServiceClient() : supabase;
+
+  const { error: challengeError } = await db
+    .from("daily_challenges")
+    .update({ post_id: null })
+    .eq("post_id", id);
+
+  if (challengeError) {
+    return NextResponse.json({ error: challengeError.message }, { status: 500 });
+  }
+
+  const { error } = await db.from("posts").delete().eq("id", id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

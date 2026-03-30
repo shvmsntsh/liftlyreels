@@ -1,6 +1,7 @@
 // Reddit public RSS content source — no API key needed
 
 import { decode } from "./guardian";
+import { normalizeCollectedContent, normalizeCollectedTitle } from "./normalize";
 
 type SubredditConfig = {
   sub: string;
@@ -40,12 +41,16 @@ function parseRedditRSS(xml: string, config: SubredditConfig): RedditArticle[] {
 
   for (const item of items.slice(0, 3)) {
     const titleMatch = item.match(/<title[^>]*>([\s\S]*?)<\/title>/);
-    const title = titleMatch ? decode(titleMatch[1]).slice(0, 120) : "";
+    const title = titleMatch ? normalizeCollectedTitle(titleMatch[1]) : "";
     if (!title) continue;
 
     const contentMatch = item.match(/<content[^>]*>([\s\S]*?)<\/content>/);
     const rawContent = contentMatch ? decode(contentMatch[1]) : "";
-    const description = rawContent.slice(0, 200);
+    const description = normalizeCollectedContent(rawContent, {
+      title,
+      category: config.category,
+      source: `r/${config.sub}`,
+    }).join(" ");
 
     const linkMatch = item.match(/<link[^>]*href="([^"]+)"/);
     const url = linkMatch?.[1] ?? "#";

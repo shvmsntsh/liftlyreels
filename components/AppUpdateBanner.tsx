@@ -8,6 +8,7 @@ import { BUILD_VERSION, BUILD_NUMBER } from "@/lib/version";
 const POLL_INTERVAL = 60_000;
 const AUTO_CLOSE_MS = 10_000;
 const TICK_MS = 100;
+const isProduction = process.env.NODE_ENV === "production";
 
 type VersionData = {
   version: string;
@@ -44,6 +45,7 @@ export function AppUpdateBanner() {
 
   // On mount — check if we just updated (sessionStorage flag)
   useEffect(() => {
+    if (!isProduction) return;
     const justUpdated = sessionStorage.getItem("liftly-just-updated");
     if (justUpdated) {
       sessionStorage.removeItem("liftly-just-updated");
@@ -60,6 +62,7 @@ export function AppUpdateBanner() {
 
   // On mount — detect if BUILD_NUMBER changed since last visit
   useEffect(() => {
+    if (!isProduction) return;
     const STORAGE_KEY = "liftly-last-seen-version";
     const lastSeen = localStorage.getItem(STORAGE_KEY);
 
@@ -86,6 +89,7 @@ export function AppUpdateBanner() {
 
   // Poll for version changes
   useEffect(() => {
+    if (!isProduction) return;
     function poll() {
       fetch("/api/version")
         .then((r) => r.json())

@@ -6,6 +6,8 @@ import { AudioProvider } from "@/components/AudioProvider";
 import { AppUpdateBanner } from "@/components/AppUpdateBanner";
 import { SplashScreen } from "@/components/SplashScreen";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
@@ -31,7 +33,7 @@ export const metadata: Metadata = {
   title: "Liftly — Stop Scrolling. Start Proving.",
   description:
     "The app where watching isn't enough. See a reel, do the thing, snap your proof. Build streaks, earn your feed, prove you took action.",
-  manifest: "/manifest.json",
+  ...(isProduction ? { manifest: "/manifest.json" } : {}),
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -49,10 +51,11 @@ export default function RootLayout({
       <head>
         <meta name="color-scheme" content="light dark" />
         <meta name="mobile-web-app-capable" content="yes" />
-        {/* Register service worker */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});})}`,
+            __html: isProduction
+              ? `if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}`
+              : `if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.getRegistrations().then(function(registrations){registrations.forEach(function(registration){registration.unregister();});});if(window.caches&&typeof window.caches.keys==='function'){window.caches.keys().then(function(keys){keys.forEach(function(key){window.caches.delete(key);});});}});}`,
           }}
         />
         {/* Polyfill crypto.randomUUID for Safari on HTTP (needed by Supabase Auth) */}

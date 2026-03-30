@@ -18,6 +18,18 @@ import { StreakDefenseBanner } from "./StreakDefenseBanner";
 // Changelog entries — update this with each deploy
 const CHANGELOG = [
   {
+    version: "v1.23",
+    date: "Mar 30, 2026",
+    entries: [
+      "New: Questions & Advice system — ask problems, get solutions, earn points",
+      "Questions tab: 4th tab in feed for browsing Q&A by category and trending",
+      "Ask questions: +1 vibe, advice that gets 5+ upvotes gives author +2 vibe",
+      "Admin questions creator: batch-add trending questions for content collection",
+      "Landing page: updated with 'Get answers. Share solutions.' messaging",
+      "Q&A activity counts toward daily streaks (same as proof logging)",
+    ],
+  },
+  {
     version: "v1.22",
     date: "Mar 30, 2026",
     entries: [

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Zap, Flame, Trophy } from "lucide-react";
+import { ArrowRight, Zap, Flame, Trophy, Lightbulb } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { LiftlyLogo } from "@/components/LiftlyLogo";
@@ -11,6 +11,7 @@ import { BUILD_VERSION } from "@/lib/version";
 const pillars = [
   { icon: Zap, label: "Watch & Act", desc: "See it. Do it. Log it.", color: "#10b981" },
   { icon: Flame, label: "Build Streaks", desc: "Daily action keeps your streak alive.", color: "#f59e0b" },
+  { icon: Lightbulb, label: "Get Advice", desc: "Ask questions. Get solutions.", color: "#f59e0b" },
   { icon: Trophy, label: "Earn Ranks", desc: "Rise from Rookie to Legend.", color: "#a855f7" },
 ];
 
@@ -82,13 +83,14 @@ export default function LandingPage() {
           <span className="text-foreground">Stop scrolling.</span>
           <br />
           <span className="bg-gradient-to-r dark:from-emerald-400 dark:via-teal-300 dark:to-sky-400 from-emerald-600 via-teal-500 to-sky-600 bg-clip-text text-transparent">
-            Start proving.
+            Start proving. Get answers.
           </span>
         </h2>
 
         <p className="mt-2 max-w-[280px] text-[13px] leading-relaxed text-muted">
-          Watch a reel, take real action, log the proof.
-          Build streaks, earn ranks, and show the world.
+          Watch reels, take action, log proof.
+          Ask questions, share advice, earn points.
+          Build streaks, earn ranks, show the world.
         </p>
       </motion.div>
 

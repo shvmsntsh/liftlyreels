@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase-server";
 import { isAdmin } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
@@ -47,7 +47,19 @@ export async function DELETE(request: NextRequest) {
   const { postId } = await request.json();
   if (!postId) return NextResponse.json({ error: "Missing postId" }, { status: 400 });
 
-  const { error } = await supabase.from("posts").delete().eq("id", postId);
+  const db = process.env.SUPABASE_SERVICE_ROLE_KEY ? createSupabaseServiceClient() : supabase;
+
+  // A post can be referenced by today's challenge without cascade delete.
+  const { error: challengeError } = await db
+    .from("daily_challenges")
+    .update({ post_id: null })
+    .eq("post_id", postId);
+
+  if (challengeError) {
+    return NextResponse.json({ error: challengeError.message }, { status: 500 });
+  }
+
+  const { error } = await db.from("posts").delete().eq("id", postId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return NextResponse.json({ success: true });
