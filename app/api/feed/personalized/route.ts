@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
-import { POST_FIELDS, hydratePostsWithContext } from "@/lib/api";
 
 export async function GET(request: NextRequest) {
   const supabase = createSupabaseServerClient();
@@ -11,11 +10,13 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Get all proved post IDs (not just today's)
+    // Get today's proved post IDs
+    const today = new Date().toISOString().slice(0, 10);
     const { data: proveData } = await supabase
       .from("impact_journal")
       .select("post_id")
-      .eq("user_id", user.id);
+      .eq("user_id", user.id)
+      .gte("created_at", `${today}T00:00:00.000Z`);
 
     const provedPostIds = (proveData ?? []).map((p) => p.post_id).filter(Boolean);
 
@@ -28,13 +29,27 @@ export async function GET(request: NextRequest) {
 
     const userTopCategories = (categoryData ?? []).map((c) => c.category);
 
-    // Fetch a broad candidate set, then rank before trimming so category preference can matter.
+    // Fetch all posts, then filter out proved ones
     const { data: allPosts, error } = await supabase
       .from("posts")
-      .select(`${POST_FIELDS},cached_engagement_score`)
+      .select(
+        `
+        id,
+        title,
+        content,
+        category,
+        gradient,
+        source,
+        is_user_created,
+        author_id,
+        created_at,
+        views_count,
+        cached_engagement_score
+        `
+      )
       .order("cached_engagement_score", { ascending: false })
       .order("created_at", { ascending: false })
-      .limit(150);
+      .limit(100); // Fetch more to account for filtering
 
     if (error || !allPosts) {
       return NextResponse.json({ posts: [] });
@@ -42,7 +57,7 @@ export async function GET(request: NextRequest) {
 
     // Filter out proved posts in JavaScript
     const provedSet = new Set(provedPostIds);
-    const candidatePosts = allPosts.filter((post) => !provedSet.has(post.id));
+    const posts = allPosts.filter((p) => !provedSet.has(p.id)).slice(0, 30);
 
     // Sort posts: first by user's top categories, then by engagement score
     const categoryRank: Record<string, number> = {};
@@ -50,7 +65,7 @@ export async function GET(request: NextRequest) {
       categoryRank[cat] = idx;
     });
 
-    const sortedCandidates = candidatePosts.sort((a, b) => {
+    const sortedPosts = posts.sort((a, b) => {
       const aRank = categoryRank[a.category] ?? 999;
       const bRank = categoryRank[b.category] ?? 999;
 
@@ -66,15 +81,7 @@ export async function GET(request: NextRequest) {
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
 
-    const hydratedPosts = await hydratePostsWithContext(
-      supabase,
-      sortedCandidates
-        .slice(0, 30)
-        .map((post) => post as unknown as Record<string, unknown>),
-      user.id
-    );
-
-    return NextResponse.json({ posts: hydratedPosts });
+    return NextResponse.json({ posts: sortedPosts });
   } catch (error) {
     console.error("[feed/personalized] Error:", error);
     return NextResponse.json({ posts: [] });

@@ -27,6 +27,7 @@ export default async function FeedPage() {
           .from("impact_journal")
           .select("post_id")
           .eq("user_id", userId)
+          .gte("created_at", todayStart)
       : Promise.resolve({ data: [] }),
   ]);
 
