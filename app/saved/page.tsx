@@ -19,25 +19,79 @@ export default async function SavedPage() {
   if (userId && isSupabaseConfigured()) {
     const { data: bookmarks } = await supabase
       .from("reactions")
-      .select(
-        `post_id,
-        posts!inner(id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,created_at,
-          profiles!posts_author_id_fkey(id,username,display_name,avatar_url,vibe_score))`
-      )
+      .select("post_id,created_at")
       .eq("user_id", userId)
       .eq("reaction_type", "bookmarked")
       .order("created_at", { ascending: false });
 
     if (bookmarks?.length) {
-      savedPosts = bookmarks
-        .map((b) => {
-          const row = b.posts as unknown as Record<string, unknown>;
+      const postIds = bookmarks
+        .map((bookmark) => bookmark.post_id)
+        .filter((postId): postId is string => typeof postId === "string");
+
+      const { data: posts } = await supabase
+        .from("posts")
+        .select("id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,audio_track,created_at")
+        .in("id", postIds);
+
+      const authorIds = Array.from(new Set(
+        (posts ?? [])
+          .map((post) => post.author_id)
+          .filter((authorId): authorId is string => typeof authorId === "string" && authorId.length > 0)
+      ));
+
+      const { data: profiles } = authorIds.length > 0
+        ? await supabase
+            .from("profiles")
+            .select("id,username,display_name,avatar_url,vibe_score")
+            .in("id", authorIds)
+        : { data: [] };
+
+      const profileMap = new Map(
+        (profiles ?? []).map((profile) => [profile.id, profile])
+      );
+
+      const postMap = new Map(
+        (posts ?? []).map((post) => [post.id, post])
+      );
+
+      // Fetch actual reaction counts
+      const { data: reactionCounts } = await supabase
+        .from("reactions")
+        .select("post_id,reaction_type")
+        .in("post_id", postIds);
+
+      const reactionMap = new Map<string, { sparked: number; fired_up: number; bookmarked: number }>();
+      for (const postId of postIds) {
+        reactionMap.set(postId, { sparked: 0, fired_up: 0, bookmarked: 0 });
+      }
+      for (const reaction of reactionCounts ?? []) {
+        const summary = reactionMap.get(String(reaction.post_id));
+        if (summary && reaction.reaction_type === "sparked") summary.sparked += 1;
+        if (summary && reaction.reaction_type === "fired_up") summary.fired_up += 1;
+        if (summary && reaction.reaction_type === "bookmarked") summary.bookmarked += 1;
+      }
+
+      // Fetch actual comment counts
+      const { data: commentCounts } = await supabase
+        .from("comments")
+        .select("post_id")
+        .in("post_id", postIds);
+
+      const commentMap = new Map<string, number>();
+      for (const postId of postIds) {
+        commentMap.set(postId, 0);
+      }
+      for (const comment of commentCounts ?? []) {
+        const count = commentMap.get(String(comment.post_id)) ?? 0;
+        commentMap.set(String(comment.post_id), count + 1);
+      }
+
+      savedPosts = postIds
+        .map((postId) => {
+          const row = postMap.get(postId);
           if (!row) return null;
-          const profileArr = row.profiles;
-          const author =
-            Array.isArray(profileArr) && profileArr.length > 0
-              ? profileArr[0]
-              : profileArr ?? null;
+
           return {
             id: String(row.id),
             title: String(row.title),
@@ -46,18 +100,19 @@ export default async function SavedPage() {
             source: String(row.source),
             image_url: typeof row.image_url === "string" ? row.image_url : null,
             author_id: typeof row.author_id === "string" ? row.author_id : null,
-            author: author as PostRecord["author"],
+            author: row.author_id ? (profileMap.get(row.author_id) as PostRecord["author"] ?? null) : null,
             is_user_created: Boolean(row.is_user_created),
             tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
             views_count: Number(row.views_count ?? 0),
             gradient: typeof row.gradient === "string" ? row.gradient : "ocean",
+            audio_track: typeof row.audio_track === "string" ? row.audio_track : null,
             created_at: String(row.created_at),
-            reactions_summary: { sparked: 0, fired_up: 0, bookmarked: 0 },
+            reactions_summary: reactionMap.get(postId) ?? { sparked: 0, fired_up: 0, bookmarked: 0 },
             user_reactions: ["bookmarked"],
-            comments_count: 0,
+            comments_count: commentMap.get(postId) ?? 0,
           } as PostRecord;
         })
-        .filter(Boolean) as PostRecord[];
+        .filter((post): post is PostRecord => post !== null);
     }
   }
 

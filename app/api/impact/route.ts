@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
   // Side effects: notify post owner + award vibe + track category engagement (non-blocking)
   if (isRealPost) {
     const db = process.env.SUPABASE_SERVICE_ROLE_KEY ? createSupabaseServiceClient() : supabase;
-    Promise.all([
+    void Promise.all([
       (async () => {
         const { data: post } = await db.from("posts").select("author_id,category").eq("id", postId).single();
         if (!post?.author_id || post.author_id === user.id) return;
@@ -204,12 +204,19 @@ export async function POST(request: NextRequest) {
       // Track category engagement for personalization
       (async () => {
         if (category) {
+          const { data: existingEngagement } = await db
+            .from("user_category_engagement")
+            .select("engagement_count")
+            .eq("user_id", user.id)
+            .eq("category", category)
+            .maybeSingle();
+
           await db.from("user_category_engagement").upsert({
             user_id: user.id,
             category,
-            engagement_count: 1,
+            engagement_count: (existingEngagement?.engagement_count ?? 0) + 3,
             last_engaged_at: new Date().toISOString(),
-          }, { onConflict: "user_id,category" }).eq("user_id", user.id).eq("category", category);
+          }, { onConflict: "user_id,category" });
         }
       })(),
     ]).catch(() => null);

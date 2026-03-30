@@ -18,6 +18,15 @@ import { StreakDefenseBanner } from "./StreakDefenseBanner";
 // Changelog entries — update this with each deploy
 const CHANGELOG = [
   {
+    version: "v1.22",
+    date: "Mar 30, 2026",
+    entries: [
+      "Saved page: reaction counts now reflect actual sparks/fires instead of showing zeros",
+      "News reel API: graceful fallback if Guardian API is unavailable",
+      "Impact API: side effects marked as non-blocking with void operator",
+    ],
+  },
+  {
     version: "v1.21",
     date: "Mar 29, 2026",
     entries: [

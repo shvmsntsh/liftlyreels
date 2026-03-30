@@ -48,6 +48,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const userCategories = searchParams.get("categories")?.split(",").filter(Boolean) ?? [];
 
+  let staleCachedSlides: { id: string | null; slides: Array<Record<string, string | null>> } | null = null;
+
   // Check Supabase cache (valid if expires_at > now)
   try {
     const { data: cached } = await supabase
@@ -59,12 +61,30 @@ export async function GET(request: Request) {
       .maybeSingle();
 
     if (cached?.slides && Array.isArray(cached.slides) && cached.slides.length > 0) {
-      const cleanSlides = (cached.slides as Record<string, string>[]).map((s) => ({
+      const cleanSlides = (cached.slides as Array<Record<string, string | null>>).map((s) => ({
         ...s,
         title: decode(s.title ?? ""),
         description: decode(s.description ?? ""),
-      }));
+      })) as Array<Record<string, string | null>>;
       return NextResponse.json({ reel_id: cached.id, slides: cleanSlides });
+    }
+
+    const { data: staleCached } = await supabase
+      .from("news_reels")
+      .select("id, slides")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (staleCached?.slides && Array.isArray(staleCached.slides) && staleCached.slides.length > 0) {
+      staleCachedSlides = {
+        id: staleCached.id ?? null,
+        slides: (staleCached.slides as Array<Record<string, string | null>>).map((s) => ({
+          ...s,
+          title: decode(s.title ?? ""),
+          description: decode(s.description ?? ""),
+        })) as Array<Record<string, string | null>>,
+      };
     }
   } catch {
     // Table may not exist yet — continue to generate fresh
@@ -72,10 +92,15 @@ export async function GET(request: Request) {
 
   // Generate fresh reel by fetching all sections in parallel
   const sections = reorderSections(userCategories);
-  const results = await Promise.all(
-    sections.map((s) => fetchSectionArticles(s as GuardianSection, 1))
-  );
-  const slides = results.flat();
+  let slides: Array<Record<string, string | null>> = [];
+  try {
+    const results = await Promise.all(
+      sections.map((s) => fetchSectionArticles(s as GuardianSection, 1))
+    );
+    slides = results.flat();
+  } catch {
+    // Guardian API unavailable — fall through to stale cache
+  }
 
   // Try to cache result in Supabase (4-hour TTL)
   try {
@@ -90,6 +115,10 @@ export async function GET(request: Request) {
     }
   } catch {
     // Ignore cache write failure
+  }
+
+  if (staleCachedSlides?.slides.length) {
+    return NextResponse.json({ reel_id: staleCachedSlides.id, slides: staleCachedSlides.slides });
   }
 
   return NextResponse.json({ reel_id: null, slides });
