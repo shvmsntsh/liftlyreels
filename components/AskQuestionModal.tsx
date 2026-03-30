@@ -191,7 +191,7 @@ export function AskQuestionModal({ onClose, onSubmit }: Props) {
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-white/10 bg-black/40 backdrop-blur-md">
+          <div className="shrink-0 px-4 py-3 pb-safe border-t border-white/10 bg-black/40 backdrop-blur-md">
             <button
               onClick={handleSubmit}
               disabled={!isValid || submitting}
