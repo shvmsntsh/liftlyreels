@@ -30,8 +30,7 @@ export async function GET(request: NextRequest) {
         (select count(*) from advice where question_id = posts.id)::int as advice_count
         `
       )
-      .eq("type", "question")
-      .eq("is_user_created", false); // Only show official questions for now
+      .eq("type", "question");
 
     if (category) {
       query = query.eq("category", category);

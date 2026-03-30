@@ -86,7 +86,7 @@ export function QuestionsDetailModal({ question, onClose }: Props) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50"
+        className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm"
         onClick={onClose}
       >
         <motion.div
@@ -94,7 +94,7 @@ export function QuestionsDetailModal({ question, onClose }: Props) {
           animate={{ y: 0 }}
           exit={{ y: "100%" }}
           transition={{ type: "spring", damping: 30, stiffness: 300 }}
-          className="fixed bottom-0 left-0 right-0 mx-auto w-full max-w-md max-h-[85vh] bg-black border-t border-white/10 rounded-t-3xl flex flex-col"
+          className="fixed bottom-0 left-0 right-0 z-[125] mx-auto flex max-h-[calc(100dvh-1rem)] w-full max-w-md flex-col rounded-t-3xl border-t border-white/10 bg-black"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -111,7 +111,7 @@ export function QuestionsDetailModal({ question, onClose }: Props) {
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+          <div className="flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4">
             {/* Question info */}
             <div className="pb-3 border-b border-white/5">
               <span className="inline-block text-xs px-2 py-1 rounded bg-white/10 text-white/70">
@@ -169,7 +169,7 @@ export function QuestionsDetailModal({ question, onClose }: Props) {
           </div>
 
           {/* Footer CTA */}
-          <div className="sticky bottom-0 px-4 py-3 border-t border-white/10 bg-black/40 backdrop-blur-md">
+          <div className="sticky bottom-0 border-t border-white/10 bg-black/40 px-4 py-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] backdrop-blur-md">
             <button
               onClick={() => setShowAdviceInput(true)}
               className="w-full py-2.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold text-sm transition hover:opacity-90"

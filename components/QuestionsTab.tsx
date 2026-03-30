@@ -92,7 +92,7 @@ export function QuestionsTab() {
   return (
     <div className="mx-auto max-w-md min-h-screen pb-28">
       {/* Header with CTA */}
-      <div className="sticky top-24 z-20 px-4 py-3 bg-black/40 backdrop-blur-md border-b border-white/5 space-y-3">
+      <div className="px-4 pb-3 pt-2 space-y-3 bg-[linear-gradient(180deg,rgba(8,15,30,0.98)_0%,rgba(8,15,30,0.92)_82%,rgba(8,15,30,0)_100%)]">
         {/* Ask Question Button */}
         <button
           onClick={() => setShowAskModal(true)}
@@ -168,7 +168,7 @@ export function QuestionsTab() {
       </div>
 
       {/* Questions list */}
-      <div className="space-y-3 px-4 py-4">
+      <div className="space-y-3 px-4 pt-1 pb-4">
         {questions.length === 0 && !loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">

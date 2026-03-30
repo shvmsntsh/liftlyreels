@@ -29,7 +29,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const supabase = getSupabaseClient();
-
   async function fetchProfile(userId: string) {
     if (!supabase) return;
     const { data } = await supabase
@@ -50,14 +49,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    supabase.auth.getSession().then(({ data: { session } }: { data: { session: import("@supabase/supabase-js").Session | null } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id).finally(() => setLoading(false));
-      } else {
-        setLoading(false);
-      }
-    });
+    let cancelled = false;
+
+    Promise.race([
+      supabase.auth.getSession(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("auth_session_timeout")), 2500)
+      ),
+    ])
+      .then(async ({ data: { session } }: { data: { session: import("@supabase/supabase-js").Session | null } }) => {
+        if (cancelled) return;
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await fetchProfile(session.user.id);
+        } else {
+          setProfile(null);
+        }
+      })
+      .catch(async () => {
+        if (cancelled) return;
+        setUser(null);
+        setProfile(null);
+        try {
+          await supabase.auth.signOut();
+        } catch {
+          // Ignore stale-session cleanup failures
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event: import("@supabase/supabase-js").AuthChangeEvent, session: import("@supabase/supabase-js").Session | null) => {
@@ -70,7 +93,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
   return (

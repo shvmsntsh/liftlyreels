@@ -16,7 +16,32 @@ function checkIsAdmin(email: string | undefined): boolean {
   return adminEmails.includes(email.toLowerCase());
 }
 
+function clearSupabaseAuthCookies(request: NextRequest, response: NextResponse) {
+  for (const cookie of request.cookies.getAll()) {
+    if (
+      cookie.name.startsWith("sb-") ||
+      cookie.name.includes("supabase") ||
+      cookie.name.includes("auth-token")
+    ) {
+      response.cookies.set(cookie.name, "", {
+        path: "/",
+        maxAge: 0,
+      });
+    }
+  }
+}
+
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const isPublic =
+    PUBLIC_ROUTES.includes(pathname) ||
+    PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
+  const hasAuthCookies = request.cookies.getAll().some((cookie) =>
+    cookie.name.startsWith("sb-") ||
+    cookie.name.includes("supabase") ||
+    cookie.name.includes("auth-token")
+  );
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -40,14 +65,18 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const pathname = request.nextUrl.pathname;
-  const isPublic =
-    PUBLIC_ROUTES.includes(pathname) ||
-    PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
+  let user = null;
+  if (hasAuthCookies || !isPublic) {
+    try {
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
+      user = authUser;
+    } catch {
+      clearSupabaseAuthCookies(request, supabaseResponse);
+      user = null;
+    }
+  }
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

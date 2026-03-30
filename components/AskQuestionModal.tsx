@@ -93,7 +93,7 @@ export function AskQuestionModal({ onClose, onSubmit }: Props) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+        className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       >
         <motion.div
@@ -101,7 +101,7 @@ export function AskQuestionModal({ onClose, onSubmit }: Props) {
           animate={{ y: 0 }}
           exit={{ y: "100%" }}
           transition={{ type: "spring", damping: 30, stiffness: 300 }}
-          className="fixed bottom-0 left-0 right-0 mx-auto w-full max-w-md bg-black border-t border-white/10 rounded-t-3xl flex flex-col max-h-[90vh]"
+          className="fixed bottom-0 left-0 right-0 z-[130] mx-auto flex max-h-[calc(100dvh-1rem)] w-full max-w-md flex-col rounded-t-3xl border-t border-white/10 bg-black"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -116,7 +116,7 @@ export function AskQuestionModal({ onClose, onSubmit }: Props) {
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 min-h-0">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4">
             {error && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -191,7 +191,7 @@ export function AskQuestionModal({ onClose, onSubmit }: Props) {
           </div>
 
           {/* Footer */}
-          <div className="shrink-0 px-4 py-3 pb-safe border-t border-white/10 bg-black/40 backdrop-blur-md">
+          <div className="shrink-0 border-t border-white/10 bg-black/40 px-4 py-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] backdrop-blur-md">
             <button
               onClick={handleSubmit}
               disabled={!isValid || submitting}
