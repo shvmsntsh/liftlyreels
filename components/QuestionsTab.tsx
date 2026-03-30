@@ -3,8 +3,9 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import clsx from "clsx";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 import { QuestionsDetailModal } from "./QuestionsDetailModal";
+import { AskQuestionModal } from "./AskQuestionModal";
 
 type Question = {
   id: string;
@@ -35,6 +36,7 @@ export function QuestionsTab() {
   const [hasMore, setHasMore] = useState(true);
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const [categoryOpen, setCategoryOpen] = useState(false);
+  const [showAskModal, setShowAskModal] = useState(false);
 
   async function fetchQuestions(newOffset: number = 0) {
     if (loading) return;
@@ -82,10 +84,25 @@ export function QuestionsTab() {
     }
   }
 
+  function handleQuestionSubmitted(newQuestion: Question) {
+    setQuestions((prev) => [newQuestion, ...prev]);
+    setShowAskModal(false);
+  }
+
   return (
     <div className="mx-auto max-w-md min-h-screen pb-28">
-      {/* Category filter */}
-      <div className="sticky top-24 z-20 px-4 py-3 bg-black/40 backdrop-blur-md border-b border-white/5">
+      {/* Header with CTA */}
+      <div className="sticky top-24 z-20 px-4 py-3 bg-black/40 backdrop-blur-md border-b border-white/5 space-y-3">
+        {/* Ask Question Button */}
+        <button
+          onClick={() => setShowAskModal(true)}
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold text-sm transition hover:opacity-90"
+        >
+          <Plus className="h-4 w-4" />
+          Ask a Question
+        </button>
+
+        {/* Category filter */}
         <div className="flex gap-2 items-center">
           <div className="relative flex-1">
             <button
@@ -215,6 +232,14 @@ export function QuestionsTab() {
         <QuestionsDetailModal
           question={selectedQuestion}
           onClose={() => setSelectedQuestion(null)}
+        />
+      )}
+
+      {/* Ask question modal */}
+      {showAskModal && (
+        <AskQuestionModal
+          onClose={() => setShowAskModal(false)}
+          onSubmit={handleQuestionSubmitted}
         />
       )}
     </div>
