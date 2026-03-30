@@ -27,11 +27,10 @@ export default async function FeedPage() {
           .from("impact_journal")
           .select("post_id")
           .eq("user_id", userId)
-          .gte("created_at", todayStart)
       : Promise.resolve({ data: [] }),
   ]);
 
-  // Build Set of proved post IDs for this user today
+  // Build Set of proved post IDs for this user (all time)
   const provedPostIds = new Set<string>();
   if (provedData.data) {
     provedData.data.forEach((entry: any) => {

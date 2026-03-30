@@ -10,13 +10,11 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Get today's proved post IDs
-    const today = new Date().toISOString().slice(0, 10);
+    // Get all proved post IDs (all time, not just today's)
     const { data: proveData } = await supabase
       .from("impact_journal")
       .select("post_id")
-      .eq("user_id", user.id)
-      .gte("created_at", `${today}T00:00:00.000Z`);
+      .eq("user_id", user.id);
 
     const provedPostIds = (proveData ?? []).map((p) => p.post_id).filter(Boolean);
 
