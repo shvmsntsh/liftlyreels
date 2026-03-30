@@ -94,7 +94,21 @@ export function AppUpdateBanner() {
       fetch("/api/version")
         .then((r) => r.json())
         .then((data: VersionData) => {
-          if (data.version && data.version !== BUILD_VERSION) {
+          // Extract version numbers only (e.g., "v1.23" from "v1.23 · 28 Mar 2026 IST")
+          const fetchedVersion = data.version?.split(" ")[0];
+          const currentVersion = BUILD_NUMBER;
+
+          if (fetchedVersion && fetchedVersion !== currentVersion) {
+            // Check if user has already seen this version's update
+            const versionShownKey = `liftly-shown-update-${fetchedVersion}`;
+            if (localStorage.getItem(versionShownKey)) {
+              // User has already seen this version's update, don't show again
+              return;
+            }
+
+            // Mark this version as shown
+            localStorage.setItem(versionShownKey, "true");
+
             setChangelog(data);
             setUpdateAvailable(true);
             if (pollingRef.current) clearInterval(pollingRef.current);
