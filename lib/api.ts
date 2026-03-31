@@ -3,21 +3,22 @@ import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { PostRecord, ProfileRecord, DailyChallenge } from "@/lib/types";
 import { getFallbackPosts } from "@/utils/fallback-posts";
 import {
-  normalizeCollectedContent,
-  normalizeCollectedSource,
-  normalizeCollectedTitle,
+  normalizeCollectedPostFields,
 } from "@/lib/content-sources/normalize";
 
 export const POST_FIELDS = `id,title,content,category,source,image_url,author_id,is_user_created,tags,views_count,gradient,audio_track,created_at`;
 
 export function normalizePost(row: Record<string, unknown>): PostRecord {
-  const rawContent = Array.isArray(row.content)
-    ? row.content.filter((item): item is string => typeof item === "string")
-    : [];
-  const title = normalizeCollectedTitle(String(row.title ?? "Untitled"));
-  const category = String(row.category ?? "General");
-  const source = normalizeCollectedSource(String(row.source ?? "Liftly"));
-  const content = normalizeCollectedContent(rawContent, { title, category, source });
+  const { title, category, source, content } = normalizeCollectedPostFields({
+    title: String(row.title ?? "Untitled"),
+    content: Array.isArray(row.content)
+      ? row.content.filter((item): item is string => typeof item === "string")
+      : typeof row.content === "string"
+        ? row.content
+        : [],
+    category: String(row.category ?? "General"),
+    source: String(row.source ?? "Liftly"),
+  });
 
   return {
     id: String(row.id),

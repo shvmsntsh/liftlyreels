@@ -122,7 +122,7 @@ export function AdminReportsClient() {
                     <option value="open">Open</option>
                     <option value="triaging">Triaging</option>
                     <option value="fixed">Fixed</option>
-                    <option value="wontfix">Won't Fix</option>
+                    <option value="wontfix">Won&apos;t Fix</option>
                   </select>
                 </div>
               </div>

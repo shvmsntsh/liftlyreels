@@ -29,21 +29,30 @@ type Advice = {
 type Props = {
   question: Question;
   onClose: () => void;
+  onAdviceAdded?: (questionId: string) => void;
 };
 
-export function QuestionsDetailModal({ question, onClose }: Props) {
+export function QuestionsDetailModal({ question, onClose, onAdviceAdded }: Props) {
   const [advice, setAdvice] = useState<Advice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showAdviceInput, setShowAdviceInput] = useState(false);
 
   useEffect(() => {
     async function fetchAdvice() {
+      setLoading(true);
+      setError(null);
       try {
         const res = await fetch(`/api/questions/${question.id}`);
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error ?? "Failed to load advice");
+        }
         const data = await res.json();
         setAdvice(data.advice ?? []);
       } catch (err) {
         console.error("Error fetching advice:", err);
+        setError(err instanceof Error ? err.message : "Failed to load advice");
       } finally {
         setLoading(false);
       }
@@ -57,6 +66,9 @@ export function QuestionsDetailModal({ question, onClose }: Props) {
       const res = await fetch(`/api/advice/${adviceId}/upvote`, {
         method: "POST",
       });
+      if (!res.ok) {
+        return;
+      }
       const data = await res.json();
 
       setAdvice((prev) =>
@@ -78,6 +90,7 @@ export function QuestionsDetailModal({ question, onClose }: Props) {
   async function handleAdviceSubmitted(newAdvice: Advice) {
     setAdvice((prev) => [newAdvice, ...prev]);
     setShowAdviceInput(false);
+    onAdviceAdded?.(question.id);
   }
 
   return (
@@ -127,6 +140,10 @@ export function QuestionsDetailModal({ question, onClose }: Props) {
                   animate={{ rotate: 360 }}
                   transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
                 />
+              </div>
+            ) : error ? (
+              <div className="text-center py-8">
+                <p className="text-sm text-red-300">{error}</p>
               </div>
             ) : advice.length === 0 ? (
               <div className="text-center py-8">

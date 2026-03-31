@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Search, Bell } from "lucide-react";
 import Link from "next/link";
@@ -73,7 +73,7 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
       .catch(() => null);
   }, []);
 
-  async function tryShowWorldReel(milestoneCount: number) {
+  const tryShowWorldReel = useCallback(async (milestoneCount: number) => {
     if (milestoneCount <= 0 || milestoneCount % 5 !== 0 || worldReel || loadingWorldReel) return;
 
     const today = new Date().toISOString().slice(0, 10);
@@ -96,11 +96,11 @@ export function FeedClient({ initialPosts, userId, challenge }: Props) {
     } finally {
       setLoadingWorldReel(false);
     }
-  }
+  }, [loadingWorldReel, worldReel]);
 
   useEffect(() => {
     void tryShowWorldReel(dailyProofCount);
-  }, [dailyProofCount]);
+  }, [dailyProofCount, tryShowWorldReel]);
 
   // Fetch personalized feed when For You tab is active
   useEffect(() => {

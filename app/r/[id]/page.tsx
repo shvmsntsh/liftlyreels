@@ -1,10 +1,13 @@
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { REEL_GRADIENTS } from "@/lib/types";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ReelProveButton } from "@/components/ReelProveButton";
+import { normalizeCollectedPostFields } from "@/lib/content-sources/normalize";
+import { PublicReelContent } from "@/components/PublicReelContent";
 
 export const dynamic = "force-dynamic";
 
@@ -27,16 +30,22 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     .eq("post_id", params.id);
 
   const proofCount = count ?? 0;
+  const normalized = normalizeCollectedPostFields({
+    title: post.title,
+    content: Array.isArray(post.content) ? post.content : [],
+    category: post.category,
+    source: "Liftly",
+  });
   const ogDesc =
     proofCount > 0
       ? `${proofCount} ${proofCount === 1 ? "person has" : "people have"} proved they did this. Can you? Join Liftly →`
-      : `${post.content?.[0] ?? ""} | Liftly — Stop Scrolling. Start Proving.`;
+      : `${normalized.content[0] ?? ""} | Liftly — Stop Scrolling. Start Proving.`;
 
   return {
-    title: `${post.title} — Liftly`,
+    title: `${normalized.title} — Liftly`,
     description: ogDesc,
     openGraph: {
-      title: post.title,
+      title: normalized.title,
       description: ogDesc,
       siteName: "Liftly",
     },
@@ -94,7 +103,13 @@ export default async function PublicReelPage({ params }: { params: Params }) {
   void supabase.rpc("increment_views", { post_id: params.id });
 
   const gradient = REEL_GRADIENTS[post.gradient] ?? REEL_GRADIENTS.ocean;
-  const content = Array.isArray(post.content) ? post.content as string[] : [];
+  const normalized = normalizeCollectedPostFields({
+    title: post.title,
+    content: Array.isArray(post.content) ? (post.content as string[]) : [],
+    category: post.category,
+    source: typeof post.source === "string" ? post.source : "Liftly",
+  });
+  const content = normalized.content;
   const tags = Array.isArray(post.tags) ? post.tags as string[] : [];
   const totalProofs = proofCount ?? 0;
 
@@ -141,25 +156,10 @@ export default async function PublicReelPage({ params }: { params: Params }) {
 
         {/* Title */}
         <h1 className="mb-6 text-center text-3xl font-black leading-tight text-white">
-          {post.title}
+          {normalized.title}
         </h1>
 
-        {/* Content bullets */}
-        {content.length > 0 && (
-          <div className="mb-6 w-full space-y-3">
-            {content.map((item, i) => (
-              <div
-                key={i}
-                className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/8 px-4 py-3 backdrop-blur-sm"
-              >
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/15 text-[10px] font-bold text-white">
-                  {i + 1}
-                </span>
-                <p className="text-sm leading-relaxed text-white/90">{item}</p>
-              </div>
-            ))}
-          </div>
-        )}
+        <PublicReelContent title={normalized.title} content={content} />
 
         {/* Tags */}
         {tags.length > 0 && (
@@ -185,7 +185,14 @@ export default async function PublicReelPage({ params }: { params: Params }) {
           <div className="mb-6 flex items-center gap-2 text-sm text-white/60">
             <div className="h-6 w-6 rounded-full bg-white/15 flex items-center justify-center text-[10px] font-bold text-white overflow-hidden">
               {author.avatar_url ? (
-                <img src={author.avatar_url} alt="" className="h-full w-full object-cover" />
+                <Image
+                  src={author.avatar_url}
+                  alt=""
+                  width={24}
+                  height={24}
+                  className="h-full w-full object-cover"
+                  sizes="24px"
+                />
               ) : (
                 (author.display_name ?? author.username)[0]?.toUpperCase()
               )}
@@ -207,7 +214,14 @@ export default async function PublicReelPage({ params }: { params: Params }) {
                     style={{ marginLeft: i === 0 ? 0 : -10, zIndex: 5 - i }}
                   >
                     {p.avatar_url ? (
-                      <img src={p.avatar_url} alt="" className="h-full w-full object-cover" />
+                      <Image
+                        src={p.avatar_url}
+                        alt=""
+                        width={32}
+                        height={32}
+                        className="h-full w-full object-cover"
+                        sizes="32px"
+                      />
                     ) : (
                       p.username[0]?.toUpperCase()
                     )}

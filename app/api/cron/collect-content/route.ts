@@ -3,6 +3,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase-server";
 import { fetchGuardianArticles, GUARDIAN_SECTIONS } from "@/lib/content-sources/guardian";
 import { fetchRedditArticles } from "@/lib/content-sources/reddit";
 import { mapGuardianToPost, mapRedditToPost, generateCategoryReel } from "@/lib/content-sources/action-mapper";
+import { normalizeCollectedPostFields } from "@/lib/content-sources/normalize";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -36,6 +37,7 @@ async function runCollection(triggeredBy: "cron" | "admin") {
   const sourcesSummary: Record<string, number | Record<string, number>> = {};
   let itemsCollected = 0;
   let itemsDeleted = 0;
+  let itemsNormalized = 0;
 
   const db = createSupabaseServiceClient();
 
@@ -107,6 +109,73 @@ async function runCollection(triggeredBy: "cron" | "admin") {
     errors.push(`Cleanup error: ${String(e)}`);
   }
 
+  // Normalize existing outside-collected reels in place so all current reels stay clean.
+  try {
+    const pageSize = 200;
+    let from = 0;
+
+    while (true) {
+      const { data: rows, error } = await db
+        .from("posts")
+        .select("id,title,content,category,source")
+        .is("author_id", null)
+        .eq("is_user_created", false)
+        .order("created_at", { ascending: false })
+        .range(from, from + pageSize - 1);
+
+      if (error) {
+        errors.push(`Backfill read: ${error.message}`);
+        break;
+      }
+
+      if (!rows?.length) break;
+
+      for (const row of rows) {
+        const normalized = normalizeCollectedPostFields({
+          title: typeof row.title === "string" ? row.title : "Untitled",
+          content: Array.isArray(row.content)
+            ? row.content.filter((item): item is string => typeof item === "string")
+            : typeof row.content === "string"
+              ? row.content
+              : [],
+          category: typeof row.category === "string" ? row.category : "General",
+          source: typeof row.source === "string" ? row.source : "Liftly",
+        });
+
+        const currentContent = Array.isArray(row.content)
+          ? row.content.filter((item): item is string => typeof item === "string")
+          : [];
+
+        const needsUpdate =
+          normalized.title !== row.title ||
+          normalized.source !== row.source ||
+          JSON.stringify(normalized.content) !== JSON.stringify(currentContent);
+
+        if (!needsUpdate) continue;
+
+        const { error: updateError } = await db
+          .from("posts")
+          .update({
+            title: normalized.title,
+            source: normalized.source,
+            content: normalized.content,
+          })
+          .eq("id", row.id);
+
+        if (updateError) {
+          errors.push(`Backfill "${String(row.id).slice(0, 8)}": ${updateError.message}`);
+        } else {
+          itemsNormalized++;
+        }
+      }
+
+      if (rows.length < pageSize) break;
+      from += pageSize;
+    }
+  } catch (e) {
+    errors.push(`Backfill error: ${String(e)}`);
+  }
+
   // Fill category gaps with synthetic reels
   try {
     const CATEGORIES = ["Mindset", "Gym", "Diet", "Books", "Wellness", "Finance", "Relationships"];
@@ -158,6 +227,8 @@ async function runCollection(triggeredBy: "cron" | "admin") {
     errors.push(`Category gap-fill error: ${String(e)}`);
   }
 
+  sourcesSummary.normalized_existing = itemsNormalized;
+
   // Log to content_collection_log
   try {
     await db.from("content_collection_log").insert({
@@ -175,6 +246,7 @@ async function runCollection(triggeredBy: "cron" | "admin") {
     success: true,
     items_collected: itemsCollected,
     items_deleted: itemsDeleted,
+    items_normalized: itemsNormalized,
     sources: sourcesSummary,
     errors: errors.length > 0 ? errors : undefined,
   });

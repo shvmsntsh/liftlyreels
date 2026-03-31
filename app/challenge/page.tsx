@@ -6,6 +6,7 @@ import { HowToPlayCard } from "@/components/HowToPlayCard";
 import { DailyChallenge, getBadge, getNextBadge, getStreakRank, getNextStreakRank } from "@/lib/types";
 import { Flame, Trophy, Crown, Target, Award, Sparkles, TrendingUp } from "lucide-react";
 import { StreakDefenseBanner } from "@/components/StreakDefenseBanner";
+import Image from "next/image";
 
 export const dynamic = "force-dynamic";
 
@@ -424,11 +425,18 @@ export default async function ChallengePage() {
                 <div key={u.username} className="text-center">
                   <div className={`text-lg font-bold ${podiumColors[i]}`}>{podiumLabels[i]}</div>
                   <div
-                    className="mx-auto mt-1 h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold text-foreground"
+                    className="mx-auto mt-1 h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold text-foreground overflow-hidden"
                     style={{ backgroundColor: "var(--surface-3)" }}
                   >
                     {u.avatar_url ? (
-                      <img src={u.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
+                      <Image
+                        src={u.avatar_url}
+                        alt=""
+                        width={40}
+                        height={40}
+                        className="h-full w-full rounded-full object-cover"
+                        sizes="40px"
+                      />
                     ) : (
                       u.username[0]?.toUpperCase()
                     )}
@@ -466,7 +474,14 @@ export default async function ChallengePage() {
                     style={{ backgroundColor: "var(--surface-3)" }}
                   >
                     {u.avatar_url ? (
-                      <img src={u.avatar_url} alt="" className="h-full w-full object-cover" />
+                      <Image
+                        src={u.avatar_url}
+                        alt=""
+                        width={32}
+                        height={32}
+                        className="h-full w-full object-cover"
+                        sizes="32px"
+                      />
                     ) : (
                       u.username[0]?.toUpperCase()
                     )}

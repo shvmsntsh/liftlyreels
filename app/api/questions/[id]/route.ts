@@ -39,12 +39,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const adviceWithUpvotes = await Promise.all(
       (advice ?? []).map(async (item: any) => {
         // Get upvote count
-        const { data: upvotes, error: upvoteCountError } = await supabase
+        const { count: upvotesCount } = await supabase
           .from("advice_upvotes")
           .select("id", { count: "exact", head: true })
           .eq("advice_id", item.id);
-
-        const upvotesCount = upvotes?.length ?? 0;
 
         // Check if user upvoted
         const { data: userUpvote } = await supabase
@@ -60,7 +58,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           text: item.text,
           is_anonymous: item.is_anonymous,
           created_at: item.created_at,
-          upvotes_count: upvotesCount,
+          upvotes_count: upvotesCount ?? 0,
           user_upvoted: !!userUpvote,
         };
       })

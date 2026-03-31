@@ -1,7 +1,6 @@
-// Reddit public RSS content source — no API key needed
+// Reddit public JSON content source — no API key needed
 
-import { decode } from "./guardian";
-import { normalizeCollectedContent, normalizeCollectedTitle } from "./normalize";
+import { normalizeCollectedTitle } from "./normalize";
 
 type SubredditConfig = {
   sub: string;
@@ -35,55 +34,90 @@ export type RedditArticle = {
   sub: string;
 };
 
-function parseRedditRSS(xml: string, config: SubredditConfig): RedditArticle[] {
-  const items = xml.match(/<entry>([\s\S]*?)<\/entry>/g) ?? [];
-  const results: RedditArticle[] = [];
+type RedditListing = {
+  data?: {
+    children?: Array<{
+      data?: {
+        title?: string;
+        selftext?: string;
+        permalink?: string;
+        thumbnail?: string;
+        preview?: {
+          images?: Array<{
+            source?: {
+              url?: string;
+            };
+          }>;
+        };
+      };
+    }>;
+  };
+};
 
-  for (const item of items.slice(0, 3)) {
-    const titleMatch = item.match(/<title[^>]*>([\s\S]*?)<\/title>/);
-    const title = titleMatch ? normalizeCollectedTitle(titleMatch[1]) : "";
-    if (!title) continue;
+type RedditPostData = NonNullable<NonNullable<RedditListing["data"]>["children"]>[number]["data"];
 
-    const contentMatch = item.match(/<content[^>]*>([\s\S]*?)<\/content>/);
-    const rawContent = contentMatch ? decode(contentMatch[1]) : "";
-    const description = normalizeCollectedContent(rawContent, {
-      title,
-      category: config.category,
-      source: `r/${config.sub}`,
-    }).join(" ");
+function decodeRedditText(value: string) {
+  return value
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"');
+}
 
-    const linkMatch = item.match(/<link[^>]*href="([^"]+)"/);
-    const url = linkMatch?.[1] ?? "#";
+function extractImage(post: RedditPostData) {
+  const preview = post?.preview?.images?.[0]?.source?.url;
+  if (preview) return decodeRedditText(preview);
 
-    // Try to extract thumbnail from content
-    const imgMatch = item.match(/<media:thumbnail[^>]*url="([^"]+)"/i) ??
-      rawContent.match(/https?:\/\/[^\s"<>]+\.(?:jpg|jpeg|png|webp|gif)/i);
-    const image_url = imgMatch?.[1] ?? imgMatch?.[0] ?? null;
-
-    results.push({
-      title,
-      description,
-      image_url,
-      source: `r/${config.sub}`,
-      category: config.category,
-      url,
-      sub: config.sub,
-    });
+  const thumbnail = post?.thumbnail;
+  if (thumbnail && /^https?:\/\//i.test(thumbnail)) {
+    return thumbnail;
   }
 
-  return results;
+  return null;
+}
+
+function mapListingToArticles(listing: RedditListing, config: SubredditConfig): RedditArticle[] {
+  const children = listing.data?.children ?? [];
+
+  return children
+    .map((child) => child.data)
+    .filter((post): post is NonNullable<typeof post> => Boolean(post?.title))
+    .slice(0, 3)
+    .map((post) => {
+      const title = normalizeCollectedTitle(post.title ?? "");
+      const description = decodeRedditText(post.selftext?.trim() || title);
+      const permalink = post.permalink?.startsWith("/")
+        ? `https://www.reddit.com${post.permalink}`
+        : post.permalink ?? "#";
+
+      return {
+        title,
+        description,
+        image_url: extractImage(post),
+        source: `r/${config.sub}`,
+        category: config.category,
+        url: permalink,
+        sub: config.sub,
+      };
+    });
 }
 
 async function fetchSubreddit(config: SubredditConfig): Promise<RedditArticle[]> {
-  const url = `https://www.reddit.com/r/${config.sub}/top/.rss?t=day`;
+  const url = `https://www.reddit.com/r/${config.sub}/top.json?t=day&limit=3&raw_json=1`;
+
   try {
     const res = await fetch(url, {
       signal: AbortSignal.timeout(5000),
       headers: { "User-Agent": "Liftly/1.0 (content collector)" },
     });
-    if (!res.ok) return [];
-    const xml = await res.text();
-    return parseRedditRSS(xml, config);
+
+    if (!res.ok) {
+      return [];
+    }
+
+    const listing = (await res.json()) as RedditListing;
+    return mapListingToArticles(listing, config);
   } catch {
     return [];
   }

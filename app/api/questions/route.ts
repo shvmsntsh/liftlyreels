@@ -19,32 +19,19 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from("posts")
-      .select(
-        `
-        id,
-        title,
-        category,
-        author_id,
-        is_anonymous,
-        created_at,
-        (select count(*) from advice where question_id = posts.id)::int as advice_count
-        `
-      )
+      .select("id,title,category,author_id,is_anonymous,created_at")
       .eq("type", "question");
 
     if (category) {
       query = query.eq("category", category);
     }
 
+    // Trending requires count enrichment before pagination, so we fetch a wider window and sort in memory.
     if (sort === "trending") {
-      // Sort by advice count descending, then by created_at
-      query = query.order("advice_count", { ascending: false });
+      query = query.order("created_at", { ascending: false }).range(0, Math.max(offset + limit + 99, 99));
     } else {
-      // Default: newest first
-      query = query.order("created_at", { ascending: false });
+      query = query.order("created_at", { ascending: false }).range(offset, offset + limit - 1);
     }
-
-    query = query.range(offset, offset + limit - 1);
 
     const { data: questions, error } = await query;
 
@@ -52,7 +39,44 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ questions: questions ?? [] });
+    const questionRows = questions ?? [];
+    const questionIds = questionRows.map((question) => question.id);
+
+    const adviceCounts = new Map<string, number>();
+    if (questionIds.length > 0) {
+      const { data: adviceRows, error: adviceError } = await supabase
+        .from("advice")
+        .select("question_id")
+        .in("question_id", questionIds);
+
+      if (adviceError) {
+        return NextResponse.json({ error: adviceError.message }, { status: 500 });
+      }
+
+      for (const row of adviceRows ?? []) {
+        const questionId = String(row.question_id);
+        adviceCounts.set(questionId, (adviceCounts.get(questionId) ?? 0) + 1);
+      }
+    }
+
+    const enrichedQuestions = questionRows.map((question) => ({
+      ...question,
+      advice_count: adviceCounts.get(String(question.id)) ?? 0,
+    }));
+
+    const finalQuestions =
+      sort === "trending"
+        ? enrichedQuestions
+            .sort((a, b) => {
+              if (b.advice_count !== a.advice_count) {
+                return b.advice_count - a.advice_count;
+              }
+              return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            })
+            .slice(offset, offset + limit)
+        : enrichedQuestions;
+
+    return NextResponse.json({ questions: finalQuestions });
   } catch (err) {
     console.error("[questions] Error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -142,6 +166,7 @@ export async function POST(request: NextRequest) {
           post_id: data.id,
           action_taken: "Asked a question",
         });
+        await supabase.rpc("update_user_streak", { user_uuid: user.id });
       } catch {
         // Non-blocking, ignore errors
       }

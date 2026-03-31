@@ -69,16 +69,18 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     // Get updated upvote count
-    const { data: countData, error: countError } = await supabase
+    const { count: upvotesCount, error: countError } = await supabase
       .from("advice_upvotes")
       .select("id", { count: "exact", head: true })
       .eq("advice_id", id);
 
-    const upvotesCount = countData?.length ?? 0;
+    if (countError) {
+      return NextResponse.json({ error: countError.message }, { status: 500 });
+    }
 
     // If upvote was added and reached threshold, give points to advice author
     if (action === "added") {
-      const pointsToAdd = calculateAdvicePoints(upvotesCount);
+      const pointsToAdd = calculateAdvicePoints(upvotesCount ?? 0);
 
       if (pointsToAdd > 0 && advice.user_id) {
         const { data: authorProfile } = await supabase

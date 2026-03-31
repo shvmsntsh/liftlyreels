@@ -87,7 +87,7 @@ export function NotificationsSheet({ isOpen, onClose, onUnreadChange }: Props) {
       })
       .catch(() => null)
       .finally(() => setLoading(false));
-  }, [isOpen]);
+  }, [isOpen, onUnreadChange]);
 
   function handleNotificationTap(n: Notification) {
     onClose();

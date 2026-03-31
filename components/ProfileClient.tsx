@@ -1027,7 +1027,7 @@ export function ProfileClient({
               {/* Today's Proves section — own profile only */}
               {isOwnProfile && todayProofs.length > 0 && (
                 <div className="mb-4 rounded-2xl border bg-surface-1 p-4">
-                  <p className="text-sm font-bold text-foreground mb-3">Today's Proves ({todayProofs.length}/5)</p>
+                  <p className="text-sm font-bold text-foreground mb-3">Today&apos;s Proves ({todayProofs.length}/5)</p>
                   <div className="w-full bg-white/10 rounded-full h-2 mb-3">
                     <div className="bg-emerald-500 h-2 rounded-full transition-all" style={{ width: `${(todayProofs.length / 5) * 100}%` }} />
                   </div>

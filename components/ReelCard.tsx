@@ -69,15 +69,7 @@ type Props = {
 };
 
 const PREVIEW_POINT_LIMIT = 3;
-const PREVIEW_LAST_POINT_MAX_CHARS = 120;
-
-function truncatePoint(text: string, maxChars: number) {
-  if (text.length <= maxChars) return { text, truncated: false };
-  return {
-    text: `${text.slice(0, maxChars).trimEnd()}...`,
-    truncated: true,
-  };
-}
+const LONG_POINT_HINT = 180;
 
 export function ReelCard({ post, userId, onActionLogged, dailyLimitReached, onModalOpen }: Props) {
   const cardRef = useRef<HTMLElement>(null);
@@ -111,11 +103,9 @@ export function ReelCard({ post, userId, onActionLogged, dailyLimitReached, onMo
   const previewPoints = post.content.slice(0, PREVIEW_POINT_LIMIT);
   const hasHiddenPoints = post.content.length > PREVIEW_POINT_LIMIT;
   const lastPreviewIndex = previewPoints.length - 1;
-  const truncatedPreviewPoints = previewPoints.map((line, index) =>
-    index === lastPreviewIndex ? truncatePoint(line, PREVIEW_LAST_POINT_MAX_CHARS) : { text: line, truncated: false }
-  );
-  const hasTruncatedPreview =
-    hasHiddenPoints || truncatedPreviewPoints.some((item) => item.truncated);
+  const lastPreviewPoint = previewPoints[lastPreviewIndex] ?? "";
+  const hasLongLastPoint = lastPreviewPoint.length > LONG_POINT_HINT;
+  const hasTruncatedPreview = hasHiddenPoints || hasLongLastPoint;
 
   useEffect(() => {
     actionOpenRef.current = actionOpen;
@@ -158,7 +148,7 @@ export function ReelCard({ post, userId, onActionLogged, dailyLimitReached, onMo
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [play, post.category, post.id, userId]);
+  }, [play, post.audio_track, post.category, post.id, userId]);
 
   // Lock feed scroll when proof modal is open
   useEffect(() => {
@@ -298,7 +288,7 @@ export function ReelCard({ post, userId, onActionLogged, dailyLimitReached, onMo
                 className="mt-3 rounded-2xl overflow-hidden"
                 style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}
               >
-                {truncatedPreviewPoints.map((line, i) => (
+                {previewPoints.map((line, i) => (
                   <div
                     key={i}
                     className="flex items-start gap-2.5 px-3.5 py-2.5"
@@ -307,8 +297,13 @@ export function ReelCard({ post, userId, onActionLogged, dailyLimitReached, onMo
                     <span className="mt-0.5 flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white/50">
                       {i + 1}
                     </span>
-                    <p className="text-[13.5px] leading-[1.45] text-white/90 font-medium">
-                      {line.text}
+                    <p
+                      className={clsx(
+                        "text-[13.5px] leading-[1.45] text-white/90 font-medium",
+                        i === lastPreviewIndex && hasTruncatedPreview && "line-clamp-4"
+                      )}
+                    >
+                      {line}
                     </p>
                   </div>
                 ))}

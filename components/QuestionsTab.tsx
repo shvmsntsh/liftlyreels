@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import clsx from "clsx";
 import { ChevronDown, Plus } from "lucide-react";
@@ -30,6 +30,7 @@ const CATEGORIES = [
 export function QuestionsTab() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [sort, setSort] = useState<"newest" | "trending">("newest");
   const [offset, setOffset] = useState(0);
@@ -38,9 +39,9 @@ export function QuestionsTab() {
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [showAskModal, setShowAskModal] = useState(false);
 
-  async function fetchQuestions(newOffset: number = 0) {
-    if (loading) return;
+  const fetchQuestions = useCallback(async (newOffset: number = 0) => {
     setLoading(true);
+    setError(null);
 
     try {
       const params = new URLSearchParams({
@@ -54,6 +55,10 @@ export function QuestionsTab() {
       }
 
       const res = await fetch(`/api/questions?${params}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "Failed to load questions");
+      }
       const data = await res.json();
 
       if (newOffset === 0) {
@@ -67,16 +72,18 @@ export function QuestionsTab() {
     } catch (err) {
       console.error("Error fetching questions:", err);
       setQuestions([]);
+      setHasMore(false);
+      setError(err instanceof Error ? err.message : "Failed to load questions");
     } finally {
       setLoading(false);
     }
-  }
+  }, [selectedCategory, sort]);
 
   // Fetch on mount and when filters change
   useEffect(() => {
     setOffset(0);
     fetchQuestions(0);
-  }, [selectedCategory, sort]);
+  }, [fetchQuestions]);
 
   function handleLoadMore() {
     if (!loading && hasMore) {
@@ -87,6 +94,16 @@ export function QuestionsTab() {
   function handleQuestionSubmitted(newQuestion: Question) {
     setQuestions((prev) => [newQuestion, ...prev]);
     setShowAskModal(false);
+  }
+
+  function handleAdviceAdded(questionId: string) {
+    setQuestions((prev) =>
+      prev.map((question) =>
+        question.id === questionId
+          ? { ...question, advice_count: question.advice_count + 1 }
+          : question
+      )
+    );
   }
 
   return (
@@ -169,6 +186,12 @@ export function QuestionsTab() {
 
       {/* Questions list */}
       <div className="space-y-3 px-4 pt-1 pb-4">
+        {error && (
+          <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+            {error}
+          </div>
+        )}
+
         {questions.length === 0 && !loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
@@ -232,6 +255,7 @@ export function QuestionsTab() {
         <QuestionsDetailModal
           question={selectedQuestion}
           onClose={() => setSelectedQuestion(null)}
+          onAdviceAdded={handleAdviceAdded}
         />
       )}
 

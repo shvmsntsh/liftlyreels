@@ -61,7 +61,7 @@ export function CommentsSheet({ postId, isOpen, onClose, commentsCount, onCountC
         onCountChange(data.comments?.length ?? 0);
       })
       .finally(() => setLoading(false));
-  }, [isOpen, postId]);
+  }, [isOpen, onCountChange, postId]);
 
   useEffect(() => {
     if (isOpen) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
 import { User } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/lib/supabase";
 import { ProfileRecord } from "@/lib/types";
@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const supabase = getSupabaseClient();
-  async function fetchProfile(userId: string) {
+  const fetchProfile = useCallback(async (userId: string) => {
     if (!supabase) return;
     const { data } = await supabase
       .from("profiles")
@@ -37,11 +37,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq("id", userId)
       .single();
     if (data) setProfile(data as ProfileRecord);
-  }
+  }, [supabase]);
 
-  async function refreshProfile() {
+  const refreshProfile = useCallback(async () => {
     if (user) await fetchProfile(user.id);
-  }
+  }, [fetchProfile, user]);
 
   useEffect(() => {
     if (!supabase) {
@@ -97,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [fetchProfile, supabase]);
 
   return (
     <AuthContext.Provider value={{ user, profile, loading, refreshProfile }}>

@@ -89,6 +89,7 @@ export async function POST(request: NextRequest) {
           post_id: question_id,
           action_taken: "Gave advice",
         });
+        await supabase.rpc("update_user_streak", { user_uuid: user.id });
       } catch {
         // Non-blocking, ignore errors
       }
