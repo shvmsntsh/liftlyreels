@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Bookmark, MessageCircle, Share2, Zap, Flame, CheckCircle, UserPlus, UserCheck, Hash, Flag } from "lucide-react";
+import { Bookmark, MessageCircle, Share2, Zap, Flame, CheckCircle, UserPlus, UserCheck, Hash, Flag, X } from "lucide-react";
 import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -68,6 +68,17 @@ type Props = {
   onModalOpen?: (open: boolean) => void;
 };
 
+const PREVIEW_POINT_LIMIT = 3;
+const PREVIEW_LAST_POINT_MAX_CHARS = 120;
+
+function truncatePoint(text: string, maxChars: number) {
+  if (text.length <= maxChars) return { text, truncated: false };
+  return {
+    text: `${text.slice(0, maxChars).trimEnd()}...`,
+    truncated: true,
+  };
+}
+
 export function ReelCard({ post, userId, onActionLogged, dailyLimitReached, onModalOpen }: Props) {
   const cardRef = useRef<HTMLElement>(null);
   const { play } = useAudio();
@@ -93,9 +104,18 @@ export function ReelCard({ post, userId, onActionLogged, dailyLimitReached, onMo
   const [shareLabel, setShareLabel] = useState("Share");
   const [isFollowing, setIsFollowing] = useState(post.author_is_following ?? false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [fullReelOpen, setFullReelOpen] = useState(false);
 
   const gradient = REEL_GRADIENTS[post.gradient ?? "ocean"] ?? REEL_GRADIENTS.ocean;
   const isFallback = post.id.startsWith("fallback-");
+  const previewPoints = post.content.slice(0, PREVIEW_POINT_LIMIT);
+  const hasHiddenPoints = post.content.length > PREVIEW_POINT_LIMIT;
+  const lastPreviewIndex = previewPoints.length - 1;
+  const truncatedPreviewPoints = previewPoints.map((line, index) =>
+    index === lastPreviewIndex ? truncatePoint(line, PREVIEW_LAST_POINT_MAX_CHARS) : { text: line, truncated: false }
+  );
+  const hasTruncatedPreview =
+    hasHiddenPoints || truncatedPreviewPoints.some((item) => item.truncated);
 
   useEffect(() => {
     actionOpenRef.current = actionOpen;
@@ -142,11 +162,11 @@ export function ReelCard({ post, userId, onActionLogged, dailyLimitReached, onMo
 
   // Lock feed scroll when proof modal is open
   useEffect(() => {
-    onModalOpen?.(actionOpen);
+    onModalOpen?.(actionOpen || fullReelOpen);
     return () => {
-      if (actionOpen) onModalOpen?.(false);
+      if (actionOpen || fullReelOpen) onModalOpen?.(false);
     };
-  }, [actionOpen, onModalOpen]);
+  }, [actionOpen, fullReelOpen, onModalOpen]);
 
   const toggleReaction = useCallback(
     async (type: ReactionType) => {
@@ -278,7 +298,7 @@ export function ReelCard({ post, userId, onActionLogged, dailyLimitReached, onMo
                 className="mt-3 rounded-2xl overflow-hidden"
                 style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}
               >
-                {post.content.map((line, i) => (
+                {truncatedPreviewPoints.map((line, i) => (
                   <div
                     key={i}
                     className="flex items-start gap-2.5 px-3.5 py-2.5"
@@ -288,10 +308,22 @@ export function ReelCard({ post, userId, onActionLogged, dailyLimitReached, onMo
                       {i + 1}
                     </span>
                     <p className="text-[13.5px] leading-[1.45] text-white/90 font-medium">
-                      {line}
+                      {line.text}
                     </p>
                   </div>
                 ))}
+
+                {hasTruncatedPreview && (
+                  <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                    <button
+                      type="button"
+                      onClick={() => setFullReelOpen(true)}
+                      className="flex w-full items-center justify-center px-3.5 py-2.5 text-[12px] font-bold text-sky-300 transition hover:bg-white/5 tap-highlight"
+                    >
+                      View More
+                    </button>
+                  </div>
+                )}
               </motion.div>
             )}
 
@@ -462,6 +494,53 @@ export function ReelCard({ post, userId, onActionLogged, dailyLimitReached, onMo
         isOpen={reportOpen}
         onClose={() => setReportOpen(false)}
       />
+
+      {fullReelOpen && (
+        <div className="fixed inset-0 z-[130] bg-black/70 backdrop-blur-sm">
+          <button
+            type="button"
+            onClick={() => setFullReelOpen(false)}
+            className="absolute inset-0 h-full w-full"
+            aria-label="Close full reel"
+          />
+
+          <div className="absolute bottom-0 left-0 right-0 mx-auto flex max-h-[calc(100dvh-1rem)] w-full max-w-md flex-col rounded-t-3xl border-t border-white/10 bg-[rgba(8,15,30,0.98)]">
+            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/45">
+                  Full Reel
+                </p>
+                <h3 className="mt-1 line-clamp-2 text-sm font-bold text-white">
+                  {post.title}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFullReelOpen(false)}
+                className="ml-3 rounded-full border border-white/10 bg-white/5 p-2 text-white/70 transition hover:bg-white/10"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 overflow-y-auto px-4 py-4">
+              {post.content.map((line, i) => (
+                <div
+                  key={i}
+                  className="flex items-start gap-3 rounded-2xl border border-white/8 bg-white/5 px-3.5 py-3"
+                >
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/8 text-[10px] font-bold text-white/55">
+                    {i + 1}
+                  </span>
+                  <p className="text-[14px] leading-[1.6] text-white/92">
+                    {line}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

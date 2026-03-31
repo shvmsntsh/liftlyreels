@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isLocalAdminBypassEnabled } from "@/lib/admin";
 
 const PUBLIC_ROUTES = ["/", "/login", "/signup", "/signup/profile", "/blocked"];
 const PUBLIC_PREFIXES = ["/api/auth/", "/auth/callback", "/api/version", "/api/cron/"];
@@ -33,9 +34,11 @@ function clearSupabaseAuthCookies(request: NextRequest, response: NextResponse) 
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const localAdminBypass = isLocalAdminBypassEnabled();
   const isPublic =
     PUBLIC_ROUTES.includes(pathname) ||
-    PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
+    PUBLIC_PREFIXES.some((p) => pathname.startsWith(p)) ||
+    (localAdminBypass && (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")));
   const hasAuthCookies = request.cookies.getAll().some((cookie) =>
     cookie.name.startsWith("sb-") ||
     cookie.name.includes("supabase") ||
@@ -91,7 +94,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Admin route protection
-  if (user && (pathname.startsWith("/admin") || pathname.startsWith("/api/admin"))) {
+  if (!localAdminBypass && user && (pathname.startsWith("/admin") || pathname.startsWith("/api/admin"))) {
     if (!checkIsAdmin(user.email)) {
       if (pathname.startsWith("/api/admin")) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });

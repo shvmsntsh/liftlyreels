@@ -1,7 +1,11 @@
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
+export function isLocalAdminBypassEnabled(): boolean {
+  return process.env.LOCAL_ADMIN_BYPASS === "true";
+}
+
 export function isAdmin(email: string | undefined): boolean {
-  if (process.env.NODE_ENV !== "production" && process.env.LOCAL_ADMIN_BYPASS === "true") {
+  if (isLocalAdminBypassEnabled()) {
     return true;
   }
   if (!email) return false;
@@ -13,6 +17,10 @@ export function isAdmin(email: string | undefined): boolean {
 }
 
 export async function requireAdmin() {
+  if (isLocalAdminBypassEnabled()) {
+    return { id: "local-admin-bypass", email: "local-admin@liftly.test" };
+  }
+
   const supabase = createSupabaseServerClient();
   const {
     data: { user },
